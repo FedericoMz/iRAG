@@ -29,6 +29,10 @@ Every record has three simulated profile answers:
 - `validate_dataset.py`: structural, temporal, grounding, profile, style, and nuanced-drift audit.
 - `schema.json`: QA-record JSON Schema.
 - `manifest.json`: counts, changed-article lists, checksums, and generator metadata.
+- `generate_embeddings.py`: reproducibly embeds the unmodified `question` field with Ollama.
+- `embedding_requirements.txt`: NumPy dependency for generating and reading embeddings.
+- `embeddings/qwen3-embedding-4b/Q1.npz`--`Q4.npz`: compressed, precomputed question embeddings keyed by record `id`.
+- `embeddings/qwen3-embedding-4b/manifest.json`: embedding model identity, representation details, and source/output checksums.
 
 ## Rebuild and validate
 
@@ -38,3 +42,16 @@ python3 "experiment data/validate_dataset.py"
 ```
 
 The validator also checks that each documentation anchor exists, every changed answer links to the correct preceding record, Intern drift answers are exactly stale, and release changes differ in non-numeric policy language.
+
+## Precomputed question embeddings
+
+Install the preprocessing dependency, ensure Ollama is running with `qwen3-embedding:4b` installed, and generate the files with:
+
+```sh
+python3 -m pip install -r "experiment data/embedding_requirements.txt"
+python3 "experiment data/generate_embeddings.py"
+```
+
+Each quarterly `.npz` archive contains two arrays: `ids`, holding stable QA-record IDs, and `embeddings`, with shape `(500, 2560)`. Consumers must join embeddings to records by `id`, not by JSON or array position. The script embeds the exact, unmodified `question` text, converts the output to `float32`, explicitly L2-normalizes every vector, and records SHA-256 checksums in the embedding manifest. For these normalized vectors, dot product and cosine similarity are equivalent.
+
+Generation refuses to overwrite an existing set unless `--force` is supplied. The model digest and source-file checksums in the manifest make stale or incompatible files detectable. New query embeddings used during an experiment must undergo the same `float32` conversion and L2 normalization before retrieval.
