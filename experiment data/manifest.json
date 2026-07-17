@@ -1,0 +1,139 @@
+{
+  "dataset": "SalesX Quarterly Support QA",
+  "schema_version": "2.0.0",
+  "generator_seed": 20260717,
+  "knowledge_articles": 100,
+  "questions_per_article": 5,
+  "categories": [
+    "billing",
+    "integrations",
+    "permissions",
+    "reporting",
+    "onboarding"
+  ],
+  "quarters": {
+    "Q1": {
+      "documentation": "Q1.md",
+      "questions": "Q1_qa.json",
+      "record_count": 500,
+      "article_count": 100,
+      "category_counts": {
+        "billing": 100,
+        "onboarding": 100,
+        "reporting": 100,
+        "integrations": 100,
+        "permissions": 100
+      },
+      "difficulty_counts": {
+        "normal": 200,
+        "easy": 200,
+        "hard": 100
+      },
+      "drift_count": 0,
+      "changed_articles": [],
+      "sha256": "3cd68c7bd767087f232e9aab14c7014ed6570622ffbbed065fad63a5139939e2"
+    },
+    "Q2": {
+      "documentation": "Q2.md",
+      "questions": "Q2_qa.json",
+      "record_count": 500,
+      "article_count": 100,
+      "category_counts": {
+        "integrations": 100,
+        "permissions": 100,
+        "onboarding": 100,
+        "reporting": 100,
+        "billing": 100
+      },
+      "difficulty_counts": {
+        "normal": 200,
+        "easy": 200,
+        "hard": 100
+      },
+      "drift_count": 50,
+      "changed_articles": [
+        "billing.refunds",
+        "billing.seat_billing",
+        "integrations.conflict_resolution",
+        "integrations.webhook_security",
+        "onboarding.deduplication",
+        "onboarding.imports",
+        "permissions.explicit_denies",
+        "permissions.permission_sets",
+        "reporting.exports",
+        "reporting.subscriptions"
+      ],
+      "sha256": "88661786e1da2b8efabdff603149929e9f59ce5a5fc676bc13fd37194ce99d1d"
+    },
+    "Q3": {
+      "documentation": "Q3.md",
+      "questions": "Q3_qa.json",
+      "record_count": 500,
+      "article_count": 100,
+      "category_counts": {
+        "reporting": 100,
+        "permissions": 100,
+        "billing": 100,
+        "integrations": 100,
+        "onboarding": 100
+      },
+      "difficulty_counts": {
+        "easy": 200,
+        "normal": 200,
+        "hard": 100
+      },
+      "drift_count": 50,
+      "changed_articles": [
+        "billing.downgrades",
+        "billing.overages",
+        "integrations.oauth",
+        "integrations.service_accounts",
+        "onboarding.domain_verification",
+        "onboarding.identity_setup",
+        "permissions.delegated_admin",
+        "permissions.scim",
+        "reporting.currency",
+        "reporting.row_visibility"
+      ],
+      "sha256": "13fc0e1604fe000a7ba45289ec5640a51baf6c77e9cb9aa96ba4dcf28ccd3cc9"
+    },
+    "Q4": {
+      "documentation": "Q4.md",
+      "questions": "Q4_qa.json",
+      "record_count": 500,
+      "article_count": 100,
+      "category_counts": {
+        "permissions": 100,
+        "billing": 100,
+        "onboarding": 100,
+        "reporting": 100,
+        "integrations": 100
+      },
+      "difficulty_counts": {
+        "easy": 200,
+        "normal": 200,
+        "hard": 100
+      },
+      "drift_count": 50,
+      "changed_articles": [
+        "billing.invoices",
+        "billing.renewals",
+        "integrations.api_versions",
+        "integrations.event_streaming",
+        "onboarding.assisted_migration",
+        "onboarding.go_live",
+        "permissions.access_reviews",
+        "permissions.guest_access",
+        "reporting.dashboard_refresh",
+        "reporting.schedules"
+      ],
+      "sha256": "67172b366aec49b940fb455402d8e0158cdc7ff82f4641dd8fb7c6d8411a1f43"
+    }
+  },
+  "notes": [
+    "Q1 is the baseline and has no possible prior-quarter drift subset.",
+    "Q2-Q4 each change ten articles and contain exactly 50 changed-answer near-duplicates.",
+    "Drift changes policy or workflow semantics rather than only scalar limits.",
+    "Generated files are deterministic outputs of generate_dataset.py."
+  ]
+}
