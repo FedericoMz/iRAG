@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://salesx.example/schemas/qa-record-2.0.json",
+  "title": "SalesX quarterly support record",
+  "type": "object",
+  "required": ["id", "quarter", "sequence_in_quarter", "shuffled_order", "difficulty", "category", "policy_key", "article_title", "question", "gold_answer", "profile_answers", "documentation_anchor", "is_changed_answer_near_duplicate", "near_duplicate_of", "similar_question_ids", "drift", "generation", "evaluation"],
+  "properties": {
+    "id": {"type":"string", "pattern":"^SX-Q[1-4]-[A-Z]{3}-[0-9]{3}$"},
+    "quarter": {"enum":["Q1","Q2","Q3","Q4"]},
+    "sequence_in_quarter": {"type":"integer", "minimum":1, "maximum":500},
+    "shuffled_order": {"type":"integer", "minimum":1, "maximum":500},
+    "difficulty": {"enum":["easy","normal","hard"]},
+    "category": {"enum":["billing","integrations","permissions","reporting","onboarding"]},
+    "policy_key": {"type":"string", "pattern":"^(billing|integrations|permissions|reporting|onboarding)\\.[a-z_]+$"},
+    "article_title": {"type":"string", "minLength":3},
+    "question": {"type":"string", "minLength":30},
+    "gold_answer": {"type":"string", "minLength":30},
+    "profile_answers": {
+      "type":"object", "required":["ceo","domain_expert_out_of_domain","intern"],
+      "properties": {
+        "ceo":{"$ref":"#/$defs/profileAnswer"},
+        "domain_expert_out_of_domain":{"$ref":"#/$defs/profileAnswer"},
+        "intern":{"$ref":"#/$defs/profileAnswer"}
+      }, "additionalProperties":false
+    },
+    "documentation_anchor": {"type":"string", "pattern":"^Q[1-4]\\.md#"},
+    "is_changed_answer_near_duplicate": {"type":"boolean"},
+    "near_duplicate_of": {"type":["string","null"]},
+    "similar_question_ids": {"type":"array", "minItems":4, "uniqueItems":true, "items":{"type":"string"}},
+    "drift": {"type":["object","null"]},
+    "generation": {"type":"object"},
+    "evaluation": {"type":"object"}
+  },
+  "$defs": {
+    "profileAnswer": {
+      "type":"object", "required":["answer","is_correct"],
+      "properties":{"answer":{"type":"string"},"is_correct":{"type":"boolean"},"behavior":{"type":"string"},"applicability":{"type":"string"},"error_type":{"type":["string","null"]}}
+    }
+  },
+  "additionalProperties": false
+}
