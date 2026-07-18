@@ -353,6 +353,22 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 **/__pycache__/
 *.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+config.env
+outputs/
+logs/
+*.log
+.DS_Store
+
+# Keep compressed benchmark embeddings; ignore accidental uncompressed exports.
+experiment data/embeddings/**/*.npy
+experiment data/embeddings/**/*.bin
 
 # Cake - Uncomment if you are using it
 #tools/**
