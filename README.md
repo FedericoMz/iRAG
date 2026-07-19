@@ -164,7 +164,7 @@ The equivalent Bedrock override is:
 }
 ```
 
-To run the complete grid declared in the paper—15 assisted conditions, three profile baselines, and the no-decay ablation—use:
+To run the complete grid declared in the paper—12 assisted conditions, three profile baselines, and the no-decay ablation—use:
 
 ```sh
 curl -X POST http://localhost:8000/v1/experiments/paper-suite/bundled \

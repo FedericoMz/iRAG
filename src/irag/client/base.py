@@ -20,11 +20,10 @@ JUDGMENT_SCHEMA = {
     "type": "object",
     "properties": {
         "human_equivalent": {"type": "boolean"},
-        "gold_equivalent": {"type": "boolean"},
         "confidence": {"type": "number", "minimum": 0, "maximum": 1},
         "reason": {"type": "string", "maxLength": 500},
     },
-    "required": ["human_equivalent", "gold_equivalent", "confidence", "reason"],
+    "required": ["human_equivalent", "confidence", "reason"],
     "additionalProperties": False,
 }
 
@@ -80,18 +79,13 @@ class BaseModelClient(ABC):
             result["evidence_ids"] = []
         return result
 
-    def judge(self, answer: str, human_answer: str, gold_answer: str) -> dict[str, Any]:
+    def judge(self, answer: str, human_answer: str) -> dict[str, Any]:
         system = (
             "Judge semantic equivalence for a SalesX support decision. Equivalent answers "
             "must prescribe the same outcomes, conditions, responsibilities, procedures, "
-            "and material exceptions. Compare ANSWER A independently with the human answer "
-            "and the gold answer."
+            "and material exceptions. Compare the model answer with the human answer only."
         )
-        user = (
-            f"ANSWER A:\n{answer}\n\n"
-            f"HUMAN ANSWER:\n{human_answer}\n\n"
-            f"GOLD ANSWER:\n{gold_answer}"
-        )
+        user = f"MODEL ANSWER:\n{answer}\n\nHUMAN ANSWER:\n{human_answer}"
         result, elapsed = self._chat(
             self.auxiliary_model,
             system,

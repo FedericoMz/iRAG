@@ -33,7 +33,7 @@ class DecisionClient(Protocol):
 
     def decide(self, question: str, retrieved: list[dict]) -> dict: ...
 
-    def judge(self, answer: str, human_answer: str, gold_answer: str) -> dict: ...
+    def judge(self, answer: str, human_answer: str) -> dict: ...
 
     def judge_gold(self, answer: str, gold_answer: str) -> dict: ...
 
@@ -303,6 +303,8 @@ class ExperimentRunner:
         retrieved = []
         model_decision = None
         judgment = None
+        gold_judgment = None
+        gold_judgment_reused = False
         delta = None
         accepted_suggestion = None
         final_answer = human.answer
@@ -325,15 +327,32 @@ class ExperimentRunner:
             if state_before in (SystemState.SO, SystemState.SC):
                 if not abstained:
                     judgment = self.client.judge(
-                        model_decision["answer"], human.answer, record.gold_answer
+                        model_decision["answer"], human.answer
                     )
-                    model_gold = bool(judgment["gold_equivalent"])
+                    equivalent_to_human = bool(judgment["human_equivalent"])
+                    if assigned_profile == Profile.CEO:
+                        model_gold = equivalent_to_human
+                        gold_judgment_reused = True
+                        gold_judgment = {
+                            "gold_equivalent": model_gold,
+                            "confidence": judgment["confidence"],
+                            "reason": (
+                                "Reused the model-to-human comparison because the CEO "
+                                "answer is the gold answer."
+                            ),
+                            "model": judgment.get("model"),
+                            "provider": judgment.get("provider"),
+                            "latency_seconds": 0.0,
+                        }
+                    else:
+                        gold_judgment = self.client.judge_gold(
+                            model_decision["answer"], record.gold_answer
+                        )
+                        model_gold = bool(gold_judgment["gold_equivalent"])
                     context.recent_model_gold.append(model_gold)
                     context.recent_model_gold = context.recent_model_gold[
                         -condition.recent_gold_window :
                     ]
-                    equivalent_to_human = bool(judgment["human_equivalent"])
-
                     if state_before == SystemState.SC and not equivalent_to_human:
                         accepted_suggestion = accepts_suggestion(
                             condition.acceptance_regime, rng
@@ -372,11 +391,11 @@ class ExperimentRunner:
                 if abstained:
                     final_origin = "human_on_abstention"
                 else:
-                    judgment = self.client.judge_gold(
+                    gold_judgment = self.client.judge_gold(
                         model_decision["answer"], record.gold_answer
                     )
                     final_answer = model_decision["answer"]
-                    final_is_correct = bool(judgment["gold_equivalent"])
+                    final_is_correct = bool(gold_judgment["gold_equivalent"])
                     correctness_source = "auxiliary_model"
                     final_origin = "model"
 
@@ -409,6 +428,8 @@ class ExperimentRunner:
             "model_decision": model_decision,
             "model_evidence_is_valid": evidence_ids.issubset(retrieved_ids),
             "auxiliary_judgment": judgment,
+            "gold_judgment": gold_judgment,
+            "gold_judgment_reused": gold_judgment_reused,
             "suggestion_accepted": accepted_suggestion,
             "reliability_observation": delta,
             "observations_before": observations_before,
@@ -658,7 +679,6 @@ def build_paper_request(request: PaperSuiteRequest) -> ExperimentRequest:
         ("single-ceo", AssignmentStrategy.SINGLE, Profile.CEO),
         ("single-domain-expert", AssignmentStrategy.SINGLE, Profile.DOMAIN_EXPERT),
         ("single-intern", AssignmentStrategy.SINGLE, Profile.INTERN),
-        ("random-mixture", AssignmentStrategy.RANDOM, None),
         ("informed-mixture", AssignmentStrategy.INFORMED, None),
     ]
     regimes = list(AcceptanceRegime)

@@ -81,10 +81,9 @@ class FakeClient:
             "reason": "test",
         }
 
-    def judge(self, answer, human_answer, gold_answer):
+    def judge(self, answer, human_answer):
         return {
             "human_equivalent": answer == human_answer,
-            "gold_equivalent": answer == gold_answer,
             "confidence": 1.0,
             "reason": "test",
         }
@@ -108,6 +107,24 @@ class ConcurrentFakeClient(FakeClient):
             self.thread_names.add(threading.current_thread().name)
         self.barrier.wait(timeout=2)
         return super().decide(question, retrieved)
+
+
+class CEOAcceptanceClient(FakeClient):
+    def __init__(self):
+        self.decisions = iter(["correct", "wrong"])
+        self.gold_judge_calls = 0
+
+    def decide(self, question, retrieved):
+        return {
+            "answer": next(self.decisions),
+            "abstain": False,
+            "evidence_ids": [],
+            "reason": "test",
+        }
+
+    def judge_gold(self, answer, gold_answer):
+        self.gold_judge_calls += 1
+        return super().judge_gold(answer, gold_answer)
 
 
 def test_runner_reaches_contestation_then_autonomy():
@@ -143,6 +160,40 @@ def test_runner_reaches_contestation_then_autonomy():
     assert (
         "metric_component_drift.assisted.stable" in result["conditions"][0]["aggregate"]
     )
+
+
+def test_ceo_gold_judgment_reuses_human_comparison_when_suggestion_is_accepted():
+    condition = ExperimentCondition(
+        name="ceo-reuse",
+        assignment_strategy=AssignmentStrategy.SINGLE,
+        single_profile=Profile.CEO,
+        acceptance_regime=AcceptanceRegime.ALWAYS,
+        repetitions=1,
+        seed=7,
+        alpha=0.5,
+        beta=0.1,
+        gamma=1.0,
+        minimum_observations=1,
+    )
+    request = ExperimentRequest(
+        name="test",
+        quarters=[
+            QuarterBatch(
+                quarter=Quarter.Q1,
+                records=[make_ticket(1), make_ticket(2)],
+            )
+        ],
+        conditions=[condition],
+    )
+    client = CEOAcceptanceClient()
+
+    result = ExperimentRunner(FakeDataset(), client).run("test-id", request)
+    tickets = result["conditions"][0]["repetitions"][0]["tickets"]
+
+    assert tickets[1]["suggestion_accepted"] is True
+    assert tickets[1]["gold_judgment_reused"] is True
+    assert tickets[1]["gold_judgment"]["gold_equivalent"] is False
+    assert client.gold_judge_calls == 0
 
 
 def test_informed_routing_priority_order():
@@ -206,6 +257,10 @@ def test_paper_suite_expands_declared_grid():
     )
     request = build_paper_request(paper)
 
-    assert len(request.conditions) == 19
+    assert len(request.conditions) == 16
     assert all(condition.repetitions == 2 for condition in request.conditions)
+    assert all(
+        condition.assignment_strategy != AssignmentStrategy.RANDOM
+        for condition in request.conditions
+    )
     assert request.conditions[-1].decay == 1.0
