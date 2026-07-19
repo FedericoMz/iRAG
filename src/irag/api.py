@@ -6,10 +6,10 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, status
 from fastapi.responses import FileResponse
 
 from irag import __version__
+from irag.client import BaseModelClient, OllamaClient, OpenRouterClient
 from irag.config import settings
 from irag.dataset import SalesXDataset
 from irag.experiment import ExperimentRunner, build_paper_request
-from irag.model_client import BaseModelClient
 from irag.models import (
     AcceptanceRegime,
     AssignmentStrategy,
@@ -29,10 +29,8 @@ from irag.models import (
     QuarterBatch,
     RunAcceptance,
 )
-from irag.ollama_client import OllamaClient
-from irag.openrouter_client import OpenRouterClient
 from irag.store import ExperimentStore
-from tools.logger import logger
+from irag.tools.logger import logger
 
 
 app = FastAPI(

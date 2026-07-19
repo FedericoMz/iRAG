@@ -6,7 +6,7 @@ import urllib.error
 import urllib.request
 from typing import Any
 
-from irag.model_client import BaseModelClient
+from irag.client.base import BaseModelClient
 
 
 class OllamaClient(BaseModelClient):

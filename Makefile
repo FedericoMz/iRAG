@@ -1,5 +1,6 @@
 PYTHON := .venv/bin/python
 PIP := .venv/bin/pip
+export PYTHONPATH := $(CURDIR)/src
 
 .DEFAULT_GOAL := help
 
@@ -23,9 +24,10 @@ help:
 install:
 	python3 -m venv .venv
 	$(PIP) install -r requirements-dev.txt
+	$(PIP) install --no-deps -e .
 
 run:
-	$(PYTHON) -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+	$(PYTHON) -m uvicorn irag.main:app --host 0.0.0.0 --port 8000 --reload
 
 test:
 	$(PYTHON) -m pytest -q
@@ -37,14 +39,14 @@ validate:
 	$(PYTHON) "experiment data/validate_dataset.py"
 
 smoke:
-	$(PYTHON) ollama_smoke_test.py
+	$(PYTHON) -m irag.tools.ollama_smoke_test
 
 sample:
-	$(PYTHON) -m scripts.run_sample_experiment --tickets-per-quarter 20
+	$(PYTHON) -m irag.tools.run_sample_experiment --tickets-per-quarter 20
 
 plot:
 	@test -n "$(RESULT)" || (echo "Usage: make plot RESULT=outputs/<folder>/<result>.json"; exit 2)
-	$(PYTHON) -m scripts.plot_experiment_result "$(RESULT)"
+	$(PYTHON) -m irag.tools.plot_experiment_result "$(RESULT)"
 
 docker-build:
 	docker compose build

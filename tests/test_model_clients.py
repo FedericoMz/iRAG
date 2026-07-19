@@ -2,8 +2,7 @@ import json
 
 import pytest
 
-from irag.ollama_client import OllamaClient
-from irag.openrouter_client import OpenRouterClient
+from irag.client import OllamaClient, OpenRouterClient
 
 
 def test_ollama_client_uses_native_structured_format(monkeypatch):

@@ -5,6 +5,7 @@ import argparse
 import random
 import sys
 
+from irag.client import OllamaClient
 from irag.config import settings
 from irag.dataset import SalesXDataset
 from irag.experiment import ExperimentRunner
@@ -18,7 +19,6 @@ from irag.models import (
     Quarter,
     QuarterBatch,
 )
-from irag.ollama_client import OllamaClient
 from irag.store import ExperimentStore
 
 

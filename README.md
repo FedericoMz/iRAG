@@ -4,6 +4,22 @@ FastAPI application for the SalesX experiments in the paper. This is deliberatel
 
 The runner implements the paper's insertion-decayed retrieval, semantic gate, Fading Empirical Accuracy, SO/SC/DS state machine, profile routing, acceptance regimes, chronological quarter processing, repeated seeded shuffles, baselines, and joint-decay ablation.
 
+## Project structure
+
+```text
+src/irag/
+├── client/       # Base, Ollama, and OpenRouter model clients
+├── tools/        # Logger, plotting, sample-run, and smoke-test utilities
+├── api.py        # FastAPI routes and background jobs
+├── experiment.py # Experiment execution and state machine
+├── dataset.py    # SalesX metadata and embedding loading
+├── retrieval.py  # Exact vector retrieval and temporal scoring
+├── store.py      # Job status and output persistence
+└── main.py       # ASGI application entry point
+tests/            # Deterministic test suite
+experiment data/ # Quarterly benchmark and precomputed embeddings
+```
+
 ## Model providers
 
 Generation and semantic judging can run through either:
@@ -29,7 +45,7 @@ Plot FEA and cumulative final-decision error rate from any result with:
 make plot RESULT=outputs/<experiment-folder>/result.json
 ```
 
-The chart infers quarter boundaries from ticket metadata and draws a vertical divider between quarters. Use `--condition`, `--repetition`, or `--output` with `python -m scripts.plot_experiment_result` for non-default selections.
+The chart infers quarter boundaries from ticket metadata and draws a vertical divider between quarters. Use `--condition`, `--repetition`, or `--output` with `python -m irag.tools.plot_experiment_result` for non-default selections.
 
 ## Start locally
 

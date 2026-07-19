@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = ROOT / "experiment data"
 DEFAULT_MODEL = "qwen3.5:9b"
 DEFAULT_AUXILIARY_MODEL = "qwen3.5:4b"

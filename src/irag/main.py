@@ -1,5 +1,5 @@
 from irag.api import app
-from tools.logger import logger
+from irag.tools.logger import logger
 
 
 if __name__ == "__main__":
