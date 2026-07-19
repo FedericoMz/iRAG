@@ -6,7 +6,7 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, status
 from fastapi.responses import FileResponse
 
 from irag import __version__
-from irag.client import BaseModelClient, OllamaClient, OpenRouterClient
+from irag.client import BedrockClient, BaseModelClient, OllamaClient, OpenRouterClient
 from irag.config import settings
 from irag.dataset import SalesXDataset
 from irag.experiment import ExperimentRunner, build_paper_request
@@ -273,6 +273,7 @@ def build_parallel_request(request: ParallelRunRequest) -> ExperimentRequest:
             "generation_model": request.generation_model,
             "auxiliary_model": request.auxiliary_model,
             "ollama_base_url": request.ollama_base_url,
+            "bedrock_region": request.bedrock_region,
             "timeout": request.timeout,
             "retries": request.retries,
         },
@@ -367,7 +368,7 @@ def make_model_client(request: ExperimentRequest) -> BaseModelClient:
         provider = models.provider or ModelProvider(settings.model_provider.lower())
     except ValueError as exc:
         raise ValueError(
-            "MODEL_PROVIDER must be either 'ollama' or 'openrouter'"
+            "MODEL_PROVIDER must be 'ollama', 'openrouter', or 'bedrock'"
         ) from exc
 
     timeout = models.timeout or settings.model_timeout
@@ -382,15 +383,28 @@ def make_model_client(request: ExperimentRequest) -> BaseModelClient:
             timeout=timeout,
             retries=retries,
         )
-    return OpenRouterClient(
-        api_key=settings.openrouter_api_key,
-        base_url=settings.openrouter_base_url,
+    if provider == ModelProvider.OPENROUTER:
+        return OpenRouterClient(
+            api_key=settings.openrouter_api_key,
+            base_url=settings.openrouter_base_url,
+            generation_model=(
+                models.generation_model or settings.openrouter_generation_model
+            ),
+            auxiliary_model=(
+                models.auxiliary_model or settings.openrouter_auxiliary_model
+            ),
+            timeout=timeout,
+            retries=retries,
+            http_referer=settings.openrouter_http_referer,
+            app_title=settings.openrouter_app_title,
+        )
+    return BedrockClient(
+        region=models.bedrock_region or settings.bedrock_region,
+        profile=settings.bedrock_profile,
         generation_model=(
-            models.generation_model or settings.openrouter_generation_model
+            models.generation_model or settings.bedrock_generation_model
         ),
-        auxiliary_model=(models.auxiliary_model or settings.openrouter_auxiliary_model),
+        auxiliary_model=(models.auxiliary_model or settings.bedrock_auxiliary_model),
         timeout=timeout,
         retries=retries,
-        http_referer=settings.openrouter_http_referer,
-        app_title=settings.openrouter_app_title,
     )

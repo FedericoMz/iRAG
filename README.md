@@ -8,7 +8,7 @@ The runner implements the paper's insertion-decayed retrieval, semantic gate, Fa
 
 ```text
 src/irag/
-├── client/       # Base, Ollama, and OpenRouter model clients
+├── client/       # Base, Ollama, OpenRouter, and Bedrock model clients
 ├── tools/        # Logger, plotting, sample-run, and smoke-test utilities
 ├── api.py        # FastAPI routes and background jobs
 ├── experiment.py # Experiment execution and state machine
@@ -22,12 +22,25 @@ experiment data/ # Quarterly benchmark and precomputed embeddings
 
 ## Model providers
 
-Generation and semantic judging can run through either:
+Generation and semantic judging can run through any of:
 
 - `ollama`: local models served by Ollama.
 - `openrouter`: models exposed through OpenRouter's chat-completions API.
+- `bedrock`: AWS models and inference profiles exposed through Bedrock Runtime's Converse API.
 
-Set `MODEL_PROVIDER` and the corresponding model names in `config.env`. OpenRouter additionally requires `OPENROUTER_API_KEY`. The key is read only from the environment and is never accepted in API payloads or written to experiment results.
+Set `MODEL_PROVIDER` and the corresponding model names in `config.env`. OpenRouter additionally requires `OPENROUTER_API_KEY`. Bedrock uses the standard AWS credential chain and requires `bedrock:InvokeModel` permission for the selected model resources. Credentials and AWS profile selection are configuration-only: they are never accepted in API payloads or written to experiment results.
+
+For Bedrock, the cost-oriented defaults use the EU inference profile for Amazon Nova 2 Lite in both roles. The decision and auxiliary models remain independently selectable, so final runs can use a different auxiliary judge when model independence is important:
+
+```env
+MODEL_PROVIDER="bedrock"
+BEDROCK_REGION="eu-west-1"
+BEDROCK_PROFILE="research" # optional for local shared AWS credentials
+BEDROCK_GENERATION_MODEL="eu.amazon.nova-2-lite-v1:0"
+BEDROCK_AUXILIARY_MODEL="eu.amazon.nova-2-lite-v1:0"
+```
+
+The Bedrock adapter uses JSON-schema structured output through `Converse`. If different model IDs are selected, both models must support Converse structured outputs in the configured region. Boto3 obtains credentials from its normal environment, shared-file, container-role, or instance-role sources. For Docker, supply AWS credentials through the container environment or an AWS workload role; a host `BEDROCK_PROFILE` works only if its shared AWS configuration is also available inside the container.
 
 The question embeddings are always read from the checked-in compressed `.npz` files under `experiment data/embeddings/qwen3-embedding-4b`. Neither provider is called for embeddings, and no runtime embedding generation is implemented.
 
@@ -49,7 +62,7 @@ The chart infers quarter boundaries from ticket metadata and draws a vertical di
 
 ## Start locally
 
-For Ollama, the configured local generation and auxiliary models must be installed before starting the application. For OpenRouter, choose models that support structured outputs.
+For Ollama, the configured local generation and auxiliary models must be installed before starting the application. For OpenRouter and Bedrock, choose models that support structured outputs.
 
 ```sh
 cp config.env.example config.env
@@ -83,7 +96,7 @@ curl -X POST \
   'http://localhost:8000/v1/runs?expert=informed_mixture&acceptance=randomize&repetitions=10&decay=0.99861'
 ```
 
-The endpoint reads all four quarters and their complete QA metadata from `experiment data`. Every repetition has an independent seeded shuffle and fresh RAG state. Repetitions are submitted concurrently; the configured model server ultimately controls how many requests execute simultaneously. Provider, generation model, auxiliary model, Ollama URL, timeout, and retries can be selected for the job. Any empty model field falls back to `config.env`; the OpenRouter API key is always environment-only.
+The endpoint reads all four quarters and their complete QA metadata from `experiment data`. Every repetition has an independent seeded shuffle and fresh RAG state. Repetitions are submitted concurrently; the configured model service ultimately controls how many requests execute simultaneously. Provider, generation model, auxiliary model, Ollama URL, Bedrock region, timeout, and retries can be selected for the job. Any empty model field falls back to `config.env`; OpenRouter and AWS credentials are always environment-only.
 
 Its `202` response contains a job ID and status URL. The status response includes `output_directory`. A directory such as the following is created immediately:
 
@@ -140,6 +153,17 @@ To use OpenRouter for an individual experiment while leaving the application def
 
 Use this as the value of the top-level `models` field in any complete experiment request.
 
+The equivalent Bedrock override is:
+
+```json
+{
+  "provider": "bedrock",
+  "generation_model": "eu.amazon.nova-2-lite-v1:0",
+  "auxiliary_model": "eu.amazon.nova-2-lite-v1:0",
+  "bedrock_region": "eu-west-1"
+}
+```
+
 To run the complete grid declared in the paper—15 assisted conditions, three profile baselines, and the no-decay ablation—use:
 
 ```sh
@@ -174,4 +198,4 @@ make test
 make lint
 ```
 
-`make smoke` runs the existing live Ollama smoke test separately from the deterministic unit suite. OpenRouter calls are intentionally not included in automated tests because they consume external API credit.
+`make smoke` runs the existing live Ollama smoke test separately from the deterministic unit suite. OpenRouter and Bedrock calls are intentionally not included in automated tests because they consume external API credit.

@@ -66,6 +66,7 @@ class JobStatus(str, Enum):
 class ModelProvider(str, Enum):
     OLLAMA = "ollama"
     OPENROUTER = "openrouter"
+    BEDROCK = "bedrock"
 
 
 class ExpertSelection(str, Enum):
@@ -136,6 +137,7 @@ class ModelSettings(StrictModel):
     generation_model: str | None = None
     auxiliary_model: str | None = None
     ollama_base_url: str | None = None
+    bedrock_region: str | None = None
     timeout: int | None = Field(default=None, ge=1, le=3600)
     retries: int | None = Field(default=None, ge=1, le=10)
 
@@ -267,7 +269,11 @@ class ParallelRunRequest(StrictModel):
     )
     ollama_base_url: str | None = Field(
         default=None,
-        description="Ollama server URL; ignored for OpenRouter.",
+        description="Ollama server URL; ignored by other providers.",
+    )
+    bedrock_region: str | None = Field(
+        default=None,
+        description="AWS region for Bedrock; leave empty to use config.env.",
     )
     timeout: int | None = Field(
         default=None,

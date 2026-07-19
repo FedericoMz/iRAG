@@ -78,6 +78,32 @@ def test_model_factory_selects_openrouter_without_putting_key_in_request(monkeyp
     assert client.api_key == "environment-key"
 
 
+def test_model_factory_selects_bedrock_without_api_credentials(monkeypatch):
+    captured = {}
+
+    def fake_bedrock_client(**arguments):
+        captured.update(arguments)
+        return SimpleNamespace(provider="bedrock")
+
+    monkeypatch.setattr(api, "BedrockClient", fake_bedrock_client)
+    request = SimpleNamespace(
+        models=ModelSettings(
+            provider="bedrock",
+            generation_model="eu.vendor/generation",
+            auxiliary_model="eu.vendor/judge",
+            bedrock_region="eu-west-1",
+        )
+    )
+
+    client = api.make_model_client(request)
+
+    assert client.provider == "bedrock"
+    assert captured["region"] == "eu-west-1"
+    assert captured["profile"] == api.settings.bedrock_profile
+    assert captured["generation_model"] == "eu.vendor/generation"
+    assert captured["auxiliary_model"] == "eu.vendor/judge"
+
+
 def test_parallel_run_endpoint_uses_dropdown_values_and_parameter_folder(
     monkeypatch, tmp_path
 ):
@@ -134,6 +160,11 @@ def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
         "always_accept",
         "randomize",
     ]
+    assert schemas["ModelProvider"]["enum"] == [
+        "ollama",
+        "openrouter",
+        "bedrock",
+    ]
     parameters = {
         parameter["name"]: parameter
         for parameter in api.app.openapi()["paths"]["/v1/runs"]["post"]["parameters"]
@@ -143,6 +174,7 @@ def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
     )
     assert "generation_model" in parameters
     assert "auxiliary_model" in parameters
+    assert "bedrock_region" in parameters
     assert parameters["checkpoint_interval"]["schema"]["default"] == 50
 
 

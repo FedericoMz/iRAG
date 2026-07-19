@@ -2,7 +2,51 @@ import json
 
 import pytest
 
-from irag.client import OllamaClient, OpenRouterClient
+from irag.client import BedrockClient, OllamaClient, OpenRouterClient
+
+
+class FakeBedrockRuntime:
+    def __init__(self):
+        self.request = None
+
+    def converse(self, **request):
+        self.request = request
+        return {
+            "ResponseMetadata": {"RequestId": "bedrock-request"},
+            "output": {
+                "message": {
+                    "content": [
+                        {
+                            "text": json.dumps(
+                                {
+                                    "answer": "answer",
+                                    "abstain": False,
+                                    "evidence_ids": [],
+                                    "reason": "test",
+                                }
+                            )
+                        }
+                    ]
+                }
+            },
+            "stopReason": "end_turn",
+            "usage": {"inputTokens": 10, "outputTokens": 5},
+            "metrics": {"latencyMs": 100},
+        }
+
+
+class FakeBedrockSession:
+    def __init__(self, credentials=object()):
+        self.credentials = credentials
+        self.runtime = FakeBedrockRuntime()
+
+    def client(self, service, **kwargs):
+        assert service == "bedrock-runtime"
+        assert kwargs["region_name"] == "eu-west-1"
+        return self.runtime
+
+    def get_credentials(self):
+        return self.credentials
 
 
 def test_ollama_client_uses_native_structured_format(monkeypatch):
@@ -126,3 +170,44 @@ def test_openrouter_model_check_records_catalog_metadata(monkeypatch):
     client.check_models()
 
     assert client.model_metadata["vendor/generation"]["context_length"] == 1000
+
+
+def test_bedrock_client_uses_converse_structured_output():
+    session = FakeBedrockSession()
+    client = BedrockClient(
+        region="eu-west-1",
+        generation_model="eu.vendor/generation",
+        auxiliary_model="eu.vendor/judge",
+        timeout=30,
+        retries=2,
+        session=session,
+    )
+
+    result = client.decide("question", [])
+
+    request = session.runtime.request
+    schema = json.loads(
+        request["outputConfig"]["textFormat"]["structure"]["jsonSchema"]["schema"]
+    )
+    assert request["modelId"] == "eu.vendor/generation"
+    assert request["inferenceConfig"] == {"maxTokens": 500, "temperature": 0}
+    assert request["system"][0]["text"].startswith("Answer the current SalesX")
+    assert schema["additionalProperties"] is False
+    assert "maxLength" not in schema["properties"]["reason"]
+    assert result["provider"] == "bedrock"
+    assert result["api_response"]["request_id"] == "bedrock-request"
+    assert result["api_response"]["usage"]["outputTokens"] == 5
+
+
+def test_bedrock_client_requires_aws_credentials():
+    client = BedrockClient(
+        region="eu-west-1",
+        generation_model="eu.vendor/generation",
+        auxiliary_model="eu.vendor/judge",
+        timeout=30,
+        retries=2,
+        session=FakeBedrockSession(credentials=None),
+    )
+
+    with pytest.raises(RuntimeError, match="AWS credentials"):
+        client.check_models()

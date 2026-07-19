@@ -34,6 +34,19 @@ class Settings:
     )
     openrouter_http_referer: str | None = os.getenv("OPENROUTER_HTTP_REFERER")
     openrouter_app_title: str = os.getenv("OPENROUTER_APP_TITLE", "iRAG experiments")
+    bedrock_region: str = os.getenv(
+        "BEDROCK_REGION",
+        os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "eu-west-1")),
+    )
+    bedrock_profile: str | None = os.getenv("BEDROCK_PROFILE") or None
+    bedrock_generation_model: str = os.getenv(
+        "BEDROCK_GENERATION_MODEL",
+        "eu.amazon.nova-2-lite-v1:0",
+    )
+    bedrock_auxiliary_model: str = os.getenv(
+        "BEDROCK_AUXILIARY_MODEL",
+        "eu.amazon.nova-2-lite-v1:0",
+    )
     model_timeout: int = int(
         os.getenv("MODEL_TIMEOUT", os.getenv("OLLAMA_TIMEOUT", "300"))
     )
