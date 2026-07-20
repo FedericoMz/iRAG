@@ -1,3 +1,5 @@
+import json
+import logging
 import threading
 
 import numpy as np
@@ -133,7 +135,7 @@ def test_runner_reaches_contestation_then_autonomy():
         name="state-test",
         assignment_strategy=AssignmentStrategy.SINGLE,
         single_profile=Profile.CEO,
-        acceptance_regime=AcceptanceRegime.NEVER,
+        acceptance_regime=AcceptanceRegime.ALWAYS,
         repetitions=1,
         seed=7,
         alpha=0.5,
@@ -160,6 +162,68 @@ def test_runner_reaches_contestation_then_autonomy():
     assert (
         "metric_component_drift.assisted.stable" in result["conditions"][0]["aggregate"]
     )
+
+
+def test_never_accept_regime_cannot_enter_autonomous_state():
+    condition = ExperimentCondition(
+        name="never-autonomy",
+        assignment_strategy=AssignmentStrategy.SINGLE,
+        single_profile=Profile.CEO,
+        acceptance_regime=AcceptanceRegime.NEVER,
+        repetitions=1,
+        seed=7,
+        alpha=0.5,
+        beta=0.1,
+        gamma=0.9,
+        minimum_observations=1,
+    )
+    request = ExperimentRequest(
+        name="test",
+        quarters=[
+            QuarterBatch(
+                quarter=Quarter.Q1,
+                records=[make_ticket(number) for number in range(1, 4)],
+            )
+        ],
+        conditions=[condition],
+    )
+
+    result = ExperimentRunner(FakeDataset(), FakeClient()).run("test-id", request)
+    repetition = result["conditions"][0]["repetitions"][0]
+
+    assert [item["to"] for item in repetition["transitions"]] == [
+        "skeptical_contestator"
+    ]
+    assert all(ticket["state_after"] != "deferring_surrogate" for ticket in repetition["tickets"])
+
+
+def test_ticket_log_contains_experiment_run_and_decision_context(caplog):
+    condition = ExperimentCondition(
+        name="logging-test",
+        assignment_strategy=AssignmentStrategy.SINGLE,
+        single_profile=Profile.CEO,
+        repetitions=1,
+    )
+    request = ExperimentRequest(
+        name="test",
+        quarters=[QuarterBatch(quarter=Quarter.Q1, records=[make_ticket(1)])],
+        conditions=[condition],
+    )
+
+    with caplog.at_level(logging.INFO, logger="iRAG_logger"):
+        ExperimentRunner(FakeDataset(), FakeClient()).run("logged-id", request)
+
+    events = [json.loads(record.message) for record in caplog.records]
+    ticket_event = next(event for event in events if event["event"] == "ticket_processed")
+    assert ticket_event["experiment_id"] == "logged-id"
+    assert ticket_event["condition"] == "logging-test"
+    assert ticket_event["repetition"] == 1
+    assert ticket_event["repetitions"] == 1
+    assert ticket_event["processed_tickets"] == 1
+    assert ticket_event["total_tickets"] == 1
+    assert ticket_event["ticket_id"] == "SX-Q1-BIL-001"
+    assert ticket_event["model_action"] == "answer"
+    assert ticket_event["final_origin"] == "human"
 
 
 def test_ceo_gold_judgment_reuses_human_comparison_when_suggestion_is_accepted():

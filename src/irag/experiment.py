@@ -21,6 +21,7 @@ from irag.models import (
     TicketRecord,
 )
 from irag.retrieval import KBRecord, retrieve
+from irag.tools.logger import log_event
 
 
 class DecisionClient(Protocol):
@@ -87,6 +88,7 @@ class ExperimentRunner:
             for repetition in range(condition.repetitions):
                 repetition_seed = condition.seed + repetition
                 run_result = self.run_repetition(
+                    experiment_id,
                     request,
                     condition,
                     repetition,
@@ -126,6 +128,7 @@ class ExperimentRunner:
 
         def execute_repetition(repetition: int) -> tuple[dict, dict]:
             run_result = self.run_repetition(
+                experiment_id,
                 request,
                 condition,
                 repetition,
@@ -223,6 +226,7 @@ class ExperimentRunner:
 
     def run_repetition(
         self,
+        experiment_id: str,
         request: ExperimentRequest,
         condition: ExperimentCondition,
         repetition: int,
@@ -239,10 +243,22 @@ class ExperimentRunner:
         ticket_batch = []
         summary = TicketSummary()
         global_position = 0
+        total_tickets = sum(len(batch.records) for batch in request.quarters)
+
+        log_event(
+            "repetition_started",
+            experiment_id=experiment_id,
+            condition=condition.name,
+            repetition=repetition + 1,
+            repetitions=condition.repetitions,
+            seed=seed,
+            total_tickets=total_tickets,
+        )
 
         for batch in request.quarters:
             quarter_records = list(batch.records)
             rng.shuffle(quarter_records)
+            quarter_total = len(quarter_records)
             for quarter_position, record in enumerate(quarter_records, start=1):
                 global_position += 1
                 assigned_profile = assign_profile(record, condition, rng)
@@ -263,6 +279,38 @@ class ExperimentRunner:
                     quarter_position=quarter_position,
                 )
                 summary.observe(output)
+                model_decision = output["model_decision"]
+                log_event(
+                    "ticket_processed",
+                    experiment_id=experiment_id,
+                    condition=condition.name,
+                    repetition=repetition + 1,
+                    repetitions=condition.repetitions,
+                    seed=seed,
+                    processed_tickets=global_position,
+                    total_tickets=total_tickets,
+                    quarter=record.quarter.value,
+                    quarter_position=quarter_position,
+                    quarter_tickets=quarter_total,
+                    ticket_id=record.id,
+                    assigned_profile=output["assigned_profile"],
+                    state_before=output["state_before"],
+                    state_after=output["state_after"],
+                    retrieved_records=len(output["retrieved"]),
+                    model_action=(
+                        "disabled"
+                        if model_decision is None
+                        else "abstain"
+                        if model_decision["abstain"]
+                        else "answer"
+                    ),
+                    suggestion_accepted=output["suggestion_accepted"],
+                    final_origin=output["final_origin"],
+                    final_answer_is_correct=output["final_answer_is_correct"],
+                    final_decision_error=output["final_decision_error"],
+                    fea=output["fea_after"],
+                    observations=output["observations_after"],
+                )
                 if on_ticket_batch is None:
                     outputs.append(output)
                 else:
@@ -274,10 +322,25 @@ class ExperimentRunner:
         if on_ticket_batch is not None and ticket_batch:
             on_ticket_batch(repetition + 1, ticket_batch)
 
+        repetition_summary = summary.result()
+        log_event(
+            "repetition_completed",
+            experiment_id=experiment_id,
+            condition=condition.name,
+            repetition=repetition + 1,
+            repetitions=condition.repetitions,
+            seed=seed,
+            processed_tickets=global_position,
+            total_tickets=total_tickets,
+            error_rate=repetition_summary["overall"]["error_rate"],
+            final_state=context.state.value,
+            observations=reliability.observations,
+            fea=reliability.fea,
+        )
         result = {
             "repetition": repetition + 1,
             "seed": seed,
-            "summary": summary.result(),
+            "summary": repetition_summary,
             "transitions": context.transitions,
             "fea_trajectory": context.fea_trajectory,
         }
@@ -464,7 +527,10 @@ class ExperimentRunner:
         elif previous == SystemState.SC:
             if reliability.fea < condition.beta:
                 context.state = SystemState.SO
-            elif reliability.fea > condition.gamma:
+            elif (
+                condition.acceptance_regime != AcceptanceRegime.NEVER
+                and reliability.fea > condition.gamma
+            ):
                 context.state = SystemState.DS
 
         if context.state != previous:

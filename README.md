@@ -4,6 +4,10 @@ FastAPI application for the SalesX experiments in the paper. This is deliberatel
 
 The runner implements the paper's insertion-decayed retrieval, semantic gate, Fading Empirical Accuracy, SO/SC/DS state machine, profile routing, acceptance regimes, chronological quarter processing, repeated seeded shuffles, baselines, and joint-decay ablation.
 
+The never-accept regime can enter SC but never DS: a simulated human who never accepts model suggestions does not grant the model autonomous control.
+
+At `LOG_LEVEL=INFO`, every repetition emits JSON events for its start, each processed ticket, and completion. Ticket events include the experiment and condition IDs, repetition and seed, global and quarterly progress, profile, state transition, retrieval count, model action, acceptance outcome, final-decision origin and correctness, FEA, and observation count. This keeps parallel-run logs attributable even when repetitions interleave.
+
 ## Project structure
 
 ```text
