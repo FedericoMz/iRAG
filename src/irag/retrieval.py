@@ -25,17 +25,17 @@ def retrieve(
         return []
 
     matrix = np.stack([record.vector for record in kb])
-    cosine_scores = matrix @ query_vector
-    normalized_scores = (1.0 + cosine_scores) / 2.0
+    cosine_scores = np.clip(matrix @ query_vector, -1.0, 1.0)
+    rectified_scores = np.maximum(0.0, cosine_scores)
     size = len(kb)
     ranked = []
-    for record, cosine, normalized in zip(
-        kb, cosine_scores, normalized_scores, strict=True
+    for record, cosine, rectified in zip(
+        kb, cosine_scores, rectified_scores, strict=True
     ):
-        if float(normalized) < semantic_threshold:
+        if float(cosine) <= 0.0 or float(cosine) < semantic_threshold:
             continue
         age = size - record.insertion_index
-        temporal_score = float(normalized) * decay**age
+        temporal_score = float(rectified) * decay**age
         ranked.append(
             {
                 "record_id": record.id,
@@ -44,7 +44,7 @@ def retrieve(
                 "insertion_index": record.insertion_index,
                 "age": age,
                 "cosine_similarity": float(cosine),
-                "normalized_similarity": float(normalized),
+                "rectified_similarity": float(rectified),
                 "temporal_score": temporal_score,
             }
         )

@@ -193,7 +193,7 @@ class ExperimentRunner:
             "name": request.name,
             "started_at": datetime.now(UTC).isoformat(),
             "paper_defaults": {
-                "semantic_threshold": 0.6,
+                "semantic_threshold": 0.7,
                 "top_k": 5,
                 "alpha": 0.75,
                 "beta": 0.55,

@@ -213,19 +213,19 @@ def retrieve(
     semantic_threshold: float,
     decay: float,
 ) -> list[dict[str, Any]]:
-    """Apply the paper's normalized cosine gate and insertion-based decay."""
+    """Apply the paper's raw cosine gate and insertion-based decay."""
     m = len(kb)
     ranked: list[dict[str, Any]] = []
     for index, (record, vector) in enumerate(zip(kb, vectors), start=1):
-        cosine = dot(query_vector, vector)
-        normalized_similarity = (1.0 + cosine) / 2.0
-        temporal_score = normalized_similarity * decay ** (m - index)
-        if normalized_similarity >= semantic_threshold:
+        cosine = max(-1.0, min(1.0, dot(query_vector, vector)))
+        rectified_similarity = max(0.0, cosine)
+        temporal_score = rectified_similarity * decay ** (m - index)
+        if cosine > 0.0 and cosine >= semantic_threshold:
             ranked.append(
                 {
                     "record": record,
                     "cosine": cosine,
-                    "normalized_similarity": normalized_similarity,
+                    "rectified_similarity": rectified_similarity,
                     "temporal_score": temporal_score,
                 }
             )
@@ -283,7 +283,7 @@ def run_tests(
     for rank, item in enumerate(retrieved, start=1):
         print(
             f"{rank}. {item['record']['id']}  cosine={item['cosine']:.4f}  "
-            f"normalized={item['normalized_similarity']:.4f}  "
+            f"rectified={item['rectified_similarity']:.4f}  "
             f"decayed={item['temporal_score']:.4f}"
         )
 
@@ -379,7 +379,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--url", default=DEFAULT_URL)
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--top-k", type=int, default=5)
-    parser.add_argument("--semantic-threshold", type=float, default=0.6)
+    parser.add_argument("--semantic-threshold", type=float, default=0.7)
     parser.add_argument("--decay", type=float, default=0.99861)
     return parser.parse_args()
 

@@ -155,7 +155,7 @@ class ExperimentCondition(StrictModel):
     gamma: float = Field(default=0.8, ge=0, le=1)
     minimum_observations: int = Field(default=30, ge=1)
     top_k: int = Field(default=5, ge=1, le=100)
-    semantic_threshold: float = Field(default=0.6, ge=0, le=1)
+    semantic_threshold: float = Field(default=0.7, ge=0, le=1)
     decay: float = Field(default=0.99861, gt=0, le=1, alias="lambda")
     recent_gold_window: int = Field(default=30, ge=1, le=1000)
     system_enabled: bool = True
