@@ -19,22 +19,22 @@ ANSWER_SCHEMA = {
 JUDGMENT_SCHEMA = {
     "type": "object",
     "properties": {
-        "human_equivalent": {"type": "boolean"},
+        "human_reference_covered": {"type": "boolean"},
         "confidence": {"type": "number", "minimum": 0, "maximum": 1},
         "reason": {"type": "string", "maxLength": 500},
     },
-    "required": ["human_equivalent", "confidence", "reason"],
+    "required": ["human_reference_covered", "confidence", "reason"],
     "additionalProperties": False,
 }
 
 GOLD_JUDGMENT_SCHEMA = {
     "type": "object",
     "properties": {
-        "gold_equivalent": {"type": "boolean"},
+        "gold_reference_covered": {"type": "boolean"},
         "confidence": {"type": "number", "minimum": 0, "maximum": 1},
         "reason": {"type": "string", "maxLength": 500},
     },
-    "required": ["gold_equivalent", "confidence", "reason"],
+    "required": ["gold_reference_covered", "confidence", "reason"],
     "additionalProperties": False,
 }
 
@@ -53,11 +53,16 @@ class BaseModelClient(ABC):
 
     def decide(self, question: str, retrieved: list[dict]) -> dict[str, Any]:
         system = (
-            "Answer the current SalesX support ticket using only the retrieved prior "
-            "question--final-answer records. If those records do not contain sufficient "
-            "evidence, abstain and return an empty answer. Otherwise preserve every "
-            "material outcome, condition, responsibility, procedure, and exception. "
-            "Cite only supplied record IDs in evidence_ids."
+            "Answer only the issue or issues raised in the current SalesX support "
+            "ticket. Use only retrieved records that directly support the answer, and "
+            "ignore details that address a different issue. From the supporting records "
+            "you select, preserve every condition, responsibility, procedure, or "
+            "exception that materially changes the answer. Do not combine requirements "
+            "from unrelated records. The records are ordered from highest to lowest "
+            "relevance after semantic and temporal reranking. If the records are "
+            "insufficient or contain a conflict that cannot be resolved from the "
+            "available evidence, abstain and return an empty answer. Cite only the "
+            "supplied record IDs actually used in evidence_ids."
         )
         user = (
             f"CURRENT TICKET:\n{question}\n\n"
@@ -81,17 +86,24 @@ class BaseModelClient(ABC):
 
     def judge(self, answer: str, human_answer: str) -> dict[str, Any]:
         system = (
-            "Judge semantic equivalence for a SalesX support decision. Equivalent answers "
-            "must prescribe the same outcomes, conditions, responsibilities, procedures, "
-            "and material exceptions. Compare the model answer with the human answer only."
+            "Assess whether the model answer faithfully covers the human reference for a "
+            "SalesX support decision. Return human_reference_covered=true only when every "
+            "material outcome, condition, responsibility, procedure, and exception in the "
+            "human reference is stated explicitly or clearly entailed by the model answer. "
+            "The wording, structure, and level of non-material detail need not be identical, "
+            "and relevant elaboration is allowed. Return false if the model answer omits "
+            "material reference information, contradicts it, or adds any outcome, "
+            "obligation, permission, prohibition, condition, responsibility, procedure, or "
+            "exception that materially changes the decision. Treat the human answer only "
+            "as the reference; do not use outside knowledge to judge its correctness."
         )
-        user = f"MODEL ANSWER:\n{answer}\n\nHUMAN ANSWER:\n{human_answer}"
+        user = f"MODEL ANSWER:\n{answer}\n\nHUMAN REFERENCE:\n{human_answer}"
         result, elapsed = self._chat(
             self.auxiliary_model,
             system,
             user,
             JUDGMENT_SCHEMA,
-            schema_name="salesx_equivalence_judgment",
+            schema_name="salesx_human_reference_coverage",
             max_tokens=300,
         )
         result["latency_seconds"] = elapsed
@@ -101,17 +113,23 @@ class BaseModelClient(ABC):
 
     def judge_gold(self, answer: str, gold_answer: str) -> dict[str, Any]:
         system = (
-            "Judge semantic equivalence for a SalesX support decision. Return true only "
-            "when both answers prescribe the same outcomes, conditions, responsibilities, "
-            "procedures, and material exceptions."
+            "Assess whether the candidate answer faithfully covers the gold reference for "
+            "a SalesX support decision. Return gold_reference_covered=true only when every "
+            "material outcome, condition, responsibility, procedure, and exception in the "
+            "gold reference is stated explicitly or clearly entailed by the candidate "
+            "answer. The wording, structure, and level of non-material detail need not be "
+            "identical, and relevant elaboration is allowed. Return false if the candidate "
+            "answer omits material reference information, contradicts it, or adds any "
+            "outcome, obligation, permission, prohibition, condition, responsibility, "
+            "procedure, or exception that materially changes the decision."
         )
-        user = f"ANSWER:\n{answer}\n\nGOLD ANSWER:\n{gold_answer}"
+        user = f"CANDIDATE ANSWER:\n{answer}\n\nGOLD REFERENCE:\n{gold_answer}"
         result, elapsed = self._chat(
             self.auxiliary_model,
             system,
             user,
             GOLD_JUDGMENT_SCHEMA,
-            schema_name="salesx_gold_judgment",
+            schema_name="salesx_gold_reference_coverage",
             max_tokens=250,
         )
         result["latency_seconds"] = elapsed

@@ -392,12 +392,14 @@ class ExperimentRunner:
                     judgment = self.client.judge(
                         model_decision["answer"], human.answer
                     )
-                    equivalent_to_human = bool(judgment["human_equivalent"])
+                    human_reference_covered = bool(
+                        judgment["human_reference_covered"]
+                    )
                     if assigned_profile == Profile.CEO:
-                        model_gold = equivalent_to_human
+                        model_gold = human_reference_covered
                         gold_judgment_reused = True
                         gold_judgment = {
-                            "gold_equivalent": model_gold,
+                            "gold_reference_covered": model_gold,
                             "confidence": judgment["confidence"],
                             "reason": (
                                 "Reused the model-to-human comparison because the CEO "
@@ -411,12 +413,14 @@ class ExperimentRunner:
                         gold_judgment = self.client.judge_gold(
                             model_decision["answer"], record.gold_answer
                         )
-                        model_gold = bool(gold_judgment["gold_equivalent"])
+                        model_gold = bool(
+                            gold_judgment["gold_reference_covered"]
+                        )
                     context.recent_model_gold.append(model_gold)
                     context.recent_model_gold = context.recent_model_gold[
                         -condition.recent_gold_window :
                     ]
-                    if state_before == SystemState.SC and not equivalent_to_human:
+                    if state_before == SystemState.SC and not human_reference_covered:
                         accepted_suggestion = accepts_suggestion(
                             condition.acceptance_regime, rng
                         )
@@ -429,7 +433,7 @@ class ExperimentRunner:
                         else:
                             delta = 0
                     else:
-                        delta = int(equivalent_to_human)
+                        delta = int(human_reference_covered)
 
                     reliability.observe(delta)
                     context.fea_trajectory.append(
@@ -458,7 +462,9 @@ class ExperimentRunner:
                         model_decision["answer"], record.gold_answer
                     )
                     final_answer = model_decision["answer"]
-                    final_is_correct = bool(gold_judgment["gold_equivalent"])
+                    final_is_correct = bool(
+                        gold_judgment["gold_reference_covered"]
+                    )
                     correctness_source = "auxiliary_model"
                     final_origin = "model"
 

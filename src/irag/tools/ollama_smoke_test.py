@@ -3,8 +3,8 @@
 
 The test builds a small chronological KB from SalesX records, embeds only its
 questions, applies the paper's semantic gate and temporal ranking, retrieves
-complete question--final-answer records, generates a decision, checks semantic
-equivalence only when the generator does not abstain, updates FEA, and appends
+complete question--final-answer records, generates a decision, checks reference
+coverage only when the generator does not abstain, updates FEA, and appends
 the current question/final-answer pair directly to the KB.
 
 No third-party Python packages are required. Ollama must be running and the
@@ -288,13 +288,15 @@ def run_tests(
         )
 
     answer, elapsed = client.chat(
-        "Answer the current SalesX support ticket using only the retrieved prior "
-        "question--final-answer records. Evidence is sufficient when a record's "
-        "stated policy and procedure resolve the current ticket even if wording "
-        "differs. If no record supports an answer, set abstain=true and answer to "
-        "an empty string. Otherwise synthesize a complete answer: preserve every "
-        "material outcome, condition, responsibility, procedural step, and exception "
-        "needed by the ticket, and cite record IDs.",
+        "Answer only the issue or issues raised in the current SalesX support ticket. "
+        "Use only retrieved records that directly support the answer, and ignore "
+        "details that address a different issue. From the supporting records you "
+        "select, preserve every condition, responsibility, procedure, or exception "
+        "that materially changes the answer. Do not combine requirements from "
+        "unrelated records. The records are ordered from highest to lowest relevance "
+        "after semantic and temporal reranking. If the records are insufficient or "
+        "contain a conflict that cannot be resolved from the available evidence, set "
+        "abstain=true and answer to an empty string. Cite only record IDs actually used.",
         f"CURRENT TICKET:\n{ticket['question']}\n\n"
         f"RETRIEVED RECORDS:\n{format_context(retrieved)}",
         ANSWER_SCHEMA,
@@ -302,25 +304,29 @@ def run_tests(
     )
     print_result("model_decision", answer, elapsed)
 
-    equivalent = None
+    covered = None
     if not answer["abstain"]:
-        equivalent, elapsed = client.chat(
-            "Judge semantic equivalence. Return true only if both answers prescribe "
-            "the same outcome, conditions, responsibilities, and material exceptions. "
-            "Explain the verdict in one concise sentence.",
-            f"ANSWER A:\n{answer['answer']}\n\nANSWER B:\n{ticket['gold_answer']}",
+        covered, elapsed = client.chat(
+            "Assess whether the candidate answer faithfully covers the gold reference. "
+            "Return verdict=true only when every material outcome, condition, "
+            "responsibility, procedure, and exception in the reference is explicit or "
+            "clearly entailed by the candidate. Wording need not be identical and "
+            "relevant elaboration is allowed, but omissions, contradictions, and "
+            "additional decision-changing claims require verdict=false.",
+            f"CANDIDATE ANSWER:\n{answer['answer']}\n\n"
+            f"GOLD REFERENCE:\n{ticket['gold_answer']}",
             JUDGMENT_SCHEMA,
             model=client.auxiliary_model,
             max_tokens=250,
         )
-        print_result("equivalence_judgment", equivalent, elapsed)
+        print_result("reference_coverage_judgment", covered, elapsed)
 
     # Silent Observer: the human answer remains final. A reliability observation
-    # exists only when the generator did not abstain and equivalence was checked.
+    # exists only when the generator did not abstain and coverage was checked.
     A = W = 0.0
     observations = 0
-    if equivalent is not None:
-        delta = int(bool(equivalent["verdict"]))
+    if covered is not None:
+        delta = int(bool(covered["verdict"]))
         A = decay * A + delta
         W = decay * W + 1
         observations += 1
@@ -355,9 +361,9 @@ def run_tests(
         "retrieval returned at most top-K records": 0 < len(retrieved) <= top_k,
         "a current-quarter precedent was retrieved": current_precedent_retrieved,
         "grounded decision did not abstain": not answer["abstain"],
-        "non-abstaining decision was checked": equivalent is not None,
-        "decision matches the final human answer": equivalent is not None
-        and equivalent["verdict"],
+        "non-abstaining decision was checked": covered is not None,
+        "decision covers the final human answer": covered is not None
+        and covered["verdict"],
         "FEA observation was recorded": observations == 1,
         "KB stored the original question": kb[-1]["question"] == ticket["question"],
         "KB stored the final answer": kb[-1]["final_answer"] == ticket["gold_answer"],

@@ -85,14 +85,14 @@ class FakeClient:
 
     def judge(self, answer, human_answer):
         return {
-            "human_equivalent": answer == human_answer,
+            "human_reference_covered": answer == human_answer,
             "confidence": 1.0,
             "reason": "test",
         }
 
     def judge_gold(self, answer, gold_answer):
         return {
-            "gold_equivalent": answer == gold_answer,
+            "gold_reference_covered": answer == gold_answer,
             "confidence": 1.0,
             "reason": "test",
         }
@@ -256,7 +256,7 @@ def test_ceo_gold_judgment_reuses_human_comparison_when_suggestion_is_accepted()
 
     assert tickets[1]["suggestion_accepted"] is True
     assert tickets[1]["gold_judgment_reused"] is True
-    assert tickets[1]["gold_judgment"]["gold_equivalent"] is False
+    assert tickets[1]["gold_judgment"]["gold_reference_covered"] is False
     assert client.gold_judge_calls == 0
 
 

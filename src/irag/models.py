@@ -265,7 +265,7 @@ class ParallelRunRequest(StrictModel):
     )
     auxiliary_model: str | None = Field(
         default=None,
-        description="Semantic-equivalence judge; leave empty to use config.env.",
+        description="Reference-coverage judge; leave empty to use config.env.",
     )
     ollama_base_url: str | None = Field(
         default=None,

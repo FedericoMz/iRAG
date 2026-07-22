@@ -80,7 +80,44 @@ def test_ollama_client_uses_native_structured_format(monkeypatch):
     assert captured["path"] == "/api/chat"
     assert captured["payload"]["format"]["additionalProperties"] is False
     assert captured["payload"]["options"]["temperature"] == 0
+    assert "ignore details that address a different issue" in captured["payload"][
+        "messages"
+    ][0]["content"]
     assert result["provider"] == "ollama"
+
+
+def test_ollama_judges_asymmetric_reference_coverage(monkeypatch):
+    client = OllamaClient(
+        base_url="http://ollama.test",
+        generation_model="local-generation",
+        auxiliary_model="local-judge",
+        timeout=1,
+        retries=1,
+    )
+    captured = {}
+
+    def fake_request(method, path, payload=None):
+        captured.update(method=method, path=path, payload=payload)
+        return {
+            "message": {
+                "content": json.dumps(
+                    {
+                        "human_reference_covered": True,
+                        "confidence": 1.0,
+                        "reason": "All material reference information is covered.",
+                    }
+                )
+            }
+        }
+
+    monkeypatch.setattr(client, "_request", fake_request)
+    result = client.judge("expanded answer", "reference answer")
+
+    system = captured["payload"]["messages"][0]["content"]
+    schema = captured["payload"]["format"]
+    assert "relevant elaboration is allowed" in system
+    assert "human_reference_covered" in schema["properties"]
+    assert result["human_reference_covered"] is True
 
 
 def test_openrouter_client_uses_chat_completions_json_schema(monkeypatch):
@@ -191,7 +228,9 @@ def test_bedrock_client_uses_converse_structured_output():
     )
     assert request["modelId"] == "eu.vendor/generation"
     assert request["inferenceConfig"] == {"maxTokens": 500, "temperature": 0}
-    assert request["system"][0]["text"].startswith("Answer the current SalesX")
+    assert request["system"][0]["text"].startswith(
+        "Answer only the issue or issues raised"
+    )
     assert schema["additionalProperties"] is False
     assert "maxLength" not in schema["properties"]["reason"]
     assert result["provider"] == "bedrock"
