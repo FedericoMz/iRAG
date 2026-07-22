@@ -11,25 +11,45 @@ class FakeBedrockRuntime:
 
     def converse(self, **request):
         self.request = request
+        if "toolConfig" in request:
+            tool_name = request["toolConfig"]["toolChoice"]["tool"]["name"]
+            content = [
+                {
+                    "toolUse": {
+                        "toolUseId": "tool-use-id",
+                        "name": tool_name,
+                        "input": {
+                            "answer": "answer",
+                            "abstain": False,
+                            "evidence_ids": [],
+                            "reason": "test",
+                        },
+                    }
+                }
+            ]
+            stop_reason = "tool_use"
+        else:
+            content = [
+                {
+                    "text": json.dumps(
+                        {
+                            "answer": "answer",
+                            "abstain": False,
+                            "evidence_ids": [],
+                            "reason": "test",
+                        }
+                    )
+                }
+            ]
+            stop_reason = "end_turn"
         return {
             "ResponseMetadata": {"RequestId": "bedrock-request"},
             "output": {
                 "message": {
-                    "content": [
-                        {
-                            "text": json.dumps(
-                                {
-                                    "answer": "answer",
-                                    "abstain": False,
-                                    "evidence_ids": [],
-                                    "reason": "test",
-                                }
-                            )
-                        }
-                    ]
+                    "content": content
                 }
             },
-            "stopReason": "end_turn",
+            "stopReason": stop_reason,
             "usage": {"inputTokens": 10, "outputTokens": 5},
             "metrics": {"latencyMs": 100},
         }
@@ -42,7 +62,7 @@ class FakeBedrockSession:
 
     def client(self, service, **kwargs):
         assert service == "bedrock-runtime"
-        assert kwargs["region_name"] == "eu-west-1"
+        assert kwargs["region_name"].startswith("eu-")
         return self.runtime
 
     def get_credentials(self):
@@ -236,6 +256,30 @@ def test_bedrock_client_uses_converse_structured_output():
     assert result["provider"] == "bedrock"
     assert result["api_response"]["request_id"] == "bedrock-request"
     assert result["api_response"]["usage"]["outputTokens"] == 5
+
+
+def test_bedrock_nova_uses_forced_tool_for_structured_output():
+    session = FakeBedrockSession()
+    client = BedrockClient(
+        region="eu-north-1",
+        generation_model="eu.amazon.nova-2-lite-v1:0",
+        auxiliary_model="eu.amazon.nova-2-lite-v1:0",
+        timeout=30,
+        retries=2,
+        session=session,
+    )
+
+    result = client.decide("question", [])
+
+    request = session.runtime.request
+    tool_config = request["toolConfig"]
+    tool_spec = tool_config["tools"][0]["toolSpec"]
+    schema = tool_spec["inputSchema"]["json"]
+    assert "outputConfig" not in request
+    assert tool_config["toolChoice"]["tool"]["name"] == "salesx_decision"
+    assert "additionalProperties" not in schema
+    assert result["answer"] == "answer"
+    assert result["api_response"]["stop_reason"] == "tool_use"
 
 
 def test_bedrock_client_accepts_bearer_token(monkeypatch):

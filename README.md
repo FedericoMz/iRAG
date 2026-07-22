@@ -45,7 +45,7 @@ BEDROCK_GENERATION_MODEL="eu.amazon.nova-2-lite-v1:0"
 BEDROCK_AUXILIARY_MODEL="eu.amazon.nova-2-lite-v1:0"
 ```
 
-The Bedrock adapter uses JSON-schema structured output through `Converse`. If different model IDs are selected, both models must support Converse structured outputs in the configured region. Boto3 reads `AWS_BEARER_TOKEN_BEDROCK` automatically. Compose passes it from `config.env` into the container. As alternatives, Boto3 can use its normal environment, shared-file, container-role, or instance-role credential sources; a host `BEDROCK_PROFILE` works inside Docker only if its shared AWS configuration is also mounted in the container.
+The Bedrock adapter uses JSON-schema structured output through `Converse`: Nova models return the schema through a forced tool call, while models supporting native structured output use `outputConfig`. If different model IDs are selected, both must support one of these mechanisms in the configured region. Boto3 reads `AWS_BEARER_TOKEN_BEDROCK` automatically. Compose passes it from `config.env` into the container. As alternatives, Boto3 can use its normal environment, shared-file, container-role, or instance-role credential sources; a host `BEDROCK_PROFILE` works inside Docker only if its shared AWS configuration is also mounted in the container.
 
 The question embeddings are always read from the checked-in compressed `.npz` files under `experiment data/embeddings/qwen3-embedding-4b`. Neither provider is called for embeddings, and no runtime embedding generation is implemented.
 

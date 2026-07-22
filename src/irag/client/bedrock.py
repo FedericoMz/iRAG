@@ -82,7 +82,10 @@ class BedrockClient(BaseModelClient):
         schema_name: str,
         max_tokens: int,
     ) -> tuple[dict[str, Any], float]:
+        uses_tool_output = "amazon.nova" in model.lower()
         compatible_schema = bedrock_schema(schema)
+        if uses_tool_output:
+            compatible_schema = bedrock_tool_schema(compatible_schema)
         request = {
             "modelId": model,
             "system": [{"text": system}],
@@ -96,7 +99,25 @@ class BedrockClient(BaseModelClient):
                 "maxTokens": max_tokens,
                 "temperature": 0,
             },
-            "outputConfig": {
+        }
+        if uses_tool_output:
+            request["toolConfig"] = {
+                "tools": [
+                    {
+                        "toolSpec": {
+                            "name": schema_name,
+                            "description": (
+                                "Return the final structured result for this request. "
+                                "Call this tool exactly once."
+                            ),
+                            "inputSchema": {"json": compatible_schema},
+                        }
+                    }
+                ],
+                "toolChoice": {"tool": {"name": schema_name}},
+            }
+        else:
+            request["outputConfig"] = {
                 "textFormat": {
                     "type": "json_schema",
                     "structure": {
@@ -110,8 +131,7 @@ class BedrockClient(BaseModelClient):
                         }
                     },
                 }
-            },
-        }
+            }
         started = time.perf_counter()
         try:
             response = self.runtime.converse(**request)
@@ -123,8 +143,18 @@ class BedrockClient(BaseModelClient):
 
         try:
             content = response["output"]["message"]["content"]
-            text = next(block["text"] for block in content if "text" in block)
-            result = json.loads(text)
+            if uses_tool_output:
+                tool_use = next(
+                    block["toolUse"]
+                    for block in content
+                    if block.get("toolUse", {}).get("name") == schema_name
+                )
+                result = tool_use["input"]
+                if not isinstance(result, dict):
+                    raise TypeError("Bedrock tool input is not an object")
+            else:
+                text = next(block["text"] for block in content if "text" in block)
+                result = json.loads(text)
         except (KeyError, StopIteration, TypeError, json.JSONDecodeError) as exc:
             raise RuntimeError(
                 f"Bedrock model {model} returned an invalid response: {response!r}"
@@ -147,6 +177,18 @@ def bedrock_schema(value: Any) -> Any:
         }
     if isinstance(value, list):
         return [bedrock_schema(item) for item in value]
+    return value
+
+
+def bedrock_tool_schema(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: bedrock_tool_schema(item)
+            for key, item in value.items()
+            if key != "additionalProperties"
+        }
+    if isinstance(value, list):
+        return [bedrock_tool_schema(item) for item in value]
     return value
 
 
