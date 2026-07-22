@@ -34,6 +34,8 @@ class BedrockClient(BaseModelClient):
         retries: int,
         throttle_retries: int = 100,
         throttle_max_delay: float = 60.0,
+        response_retries: int = 10,
+        response_max_delay: float = 10.0,
         profile: str | None = None,
         session: Any | None = None,
     ) -> None:
@@ -45,6 +47,8 @@ class BedrockClient(BaseModelClient):
         self.retry_mode = "adaptive"
         self.throttle_retries = throttle_retries
         self.throttle_max_delay = throttle_max_delay
+        self.response_retries = response_retries
+        self.response_max_delay = response_max_delay
 
         client_config = None
         if session is None:
@@ -83,6 +87,8 @@ class BedrockClient(BaseModelClient):
                 "max_attempts": self.retries,
                 "throttle_retries": self.throttle_retries,
                 "throttle_max_delay": self.throttle_max_delay,
+                "response_retries": self.response_retries,
+                "response_max_delay": self.response_max_delay,
             }
             for model in {self.generation_model, self.auxiliary_model}
         }
@@ -147,32 +153,46 @@ class BedrockClient(BaseModelClient):
                 }
         }
         started = time.perf_counter()
-        try:
-            response = self._converse_with_throttle_backoff(request, model)
-        except Exception as exc:
-            raise RuntimeError(
-                f"Bedrock Converse failed for {model} in {self.region}: {exc}"
-            ) from exc
-        elapsed = time.perf_counter() - started
-
-        try:
-            content = response["output"]["message"]["content"]
-            if uses_tool_output:
-                tool_use = next(
-                    block["toolUse"]
-                    for block in content
-                    if block.get("toolUse", {}).get("name") == schema_name
+        response_attempt = 0
+        while True:
+            try:
+                response = self._converse_with_throttle_backoff(request, model)
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Bedrock Converse failed for {model} in {self.region}: {exc}"
+                ) from exc
+            try:
+                result = bedrock_structured_result(
+                    response,
+                    schema_name,
+                    uses_tool_output,
+                    schema,
                 )
-                result = tool_use["input"]
-                if not isinstance(result, dict):
-                    raise TypeError("Bedrock tool input is not an object")
-            else:
-                text = next(block["text"] for block in content if "text" in block)
-                result = json.loads(text)
-        except (KeyError, StopIteration, TypeError, json.JSONDecodeError) as exc:
-            raise RuntimeError(
-                f"Bedrock model {model} returned an invalid response: {response!r}"
-            ) from exc
+                break
+            except (KeyError, StopIteration, TypeError, ValueError) as exc:
+                if response_attempt >= self.response_retries:
+                    raise RuntimeError(
+                        f"Bedrock model {model} returned an invalid response after "
+                        f"{response_attempt + 1} attempts: {response!r}"
+                    ) from exc
+                response_attempt += 1
+                delay_cap = min(
+                    self.response_max_delay,
+                    2 ** min(response_attempt - 1, 6),
+                )
+                delay = random.uniform(delay_cap / 2.0, delay_cap)
+                logger.warning(
+                    "Bedrock returned invalid structured output from %s "
+                    "(stopReason=%s, requestId=%s); response retry %d/%d in %.1fs",
+                    model,
+                    response.get("stopReason"),
+                    response.get("ResponseMetadata", {}).get("RequestId"),
+                    response_attempt,
+                    self.response_retries,
+                    delay,
+                )
+                time.sleep(delay)
+        elapsed = time.perf_counter() - started
         result["api_response"] = {
             "request_id": response.get("ResponseMetadata", {}).get("RequestId"),
             "stop_reason": response.get("stopReason"),
@@ -208,6 +228,39 @@ class BedrockClient(BaseModelClient):
                     delay,
                 )
                 time.sleep(delay)
+
+
+def bedrock_structured_result(
+    response: dict[str, Any],
+    schema_name: str,
+    uses_tool_output: bool,
+    schema: dict[str, Any],
+) -> dict[str, Any]:
+    content = response["output"]["message"]["content"]
+    if not isinstance(content, list):
+        raise TypeError("Bedrock content is not a list")
+    if uses_tool_output:
+        tool_use = next(
+            block["toolUse"]
+            for block in content
+            if isinstance(block, dict)
+            and isinstance(block.get("toolUse"), dict)
+            and block["toolUse"].get("name") == schema_name
+        )
+        result = tool_use["input"]
+    else:
+        text = next(
+            block["text"]
+            for block in content
+            if isinstance(block, dict) and "text" in block
+        )
+        result = json.loads(text)
+    if not isinstance(result, dict):
+        raise TypeError("Bedrock structured result is not an object")
+    missing = [field for field in schema.get("required", []) if field not in result]
+    if missing:
+        raise ValueError(f"Bedrock structured result is missing fields: {missing}")
+    return result
 
 
 def bedrock_schema(value: Any) -> Any:

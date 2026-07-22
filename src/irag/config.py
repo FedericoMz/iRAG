@@ -60,6 +60,12 @@ class Settings:
     bedrock_throttle_max_delay: float = float(
         os.getenv("BEDROCK_THROTTLE_MAX_DELAY", "60")
     )
+    bedrock_response_retries: int = int(
+        os.getenv("BEDROCK_RESPONSE_RETRIES", "10")
+    )
+    bedrock_response_max_delay: float = float(
+        os.getenv("BEDROCK_RESPONSE_MAX_DELAY", "10")
+    )
 
 
 settings = Settings()

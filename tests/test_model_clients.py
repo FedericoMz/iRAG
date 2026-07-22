@@ -91,6 +91,25 @@ class ThrottlingBedrockRuntime(FakeBedrockRuntime):
         return super().converse(**request)
 
 
+class MalformedBedrockRuntime(FakeBedrockRuntime):
+    def __init__(self, failures):
+        super().__init__()
+        self.failures = failures
+        self.calls = 0
+
+    def converse(self, **request):
+        self.calls += 1
+        if self.calls <= self.failures:
+            return {
+                "ResponseMetadata": {"RequestId": f"malformed-{self.calls}"},
+                "output": {"message": {"role": "assistant", "content": []}},
+                "stopReason": "malformed_tool_use",
+                "usage": {"inputTokens": 0, "outputTokens": 0, "totalTokens": 0},
+                "metrics": {"latencyMs": 1},
+            }
+        return super().converse(**request)
+
+
 def test_ollama_client_uses_native_structured_format(monkeypatch):
     client = OllamaClient(
         base_url="http://ollama.test",
@@ -326,6 +345,30 @@ def test_bedrock_continues_after_sdk_throttling_is_exhausted(monkeypatch):
     assert result["answer"] == "answer"
     assert runtime.calls == 3
     assert sleeps == [0, 0]
+
+
+def test_bedrock_retries_malformed_tool_response(monkeypatch):
+    runtime = MalformedBedrockRuntime(failures=1)
+    session = FakeBedrockSession()
+    session.runtime = runtime
+    sleeps = []
+    monkeypatch.setattr("irag.client.bedrock.time.sleep", sleeps.append)
+    client = BedrockClient(
+        region="eu-north-1",
+        generation_model="eu.amazon.nova-2-lite-v1:0",
+        auxiliary_model="eu.amazon.nova-2-lite-v1:0",
+        timeout=30,
+        retries=2,
+        response_retries=1,
+        response_max_delay=0,
+        session=session,
+    )
+
+    result = client.decide("question", [])
+
+    assert result["answer"] == "answer"
+    assert runtime.calls == 2
+    assert sleeps == [0]
 
 
 def test_bedrock_client_accepts_bearer_token(monkeypatch):
