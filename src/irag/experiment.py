@@ -17,6 +17,7 @@ from irag.models import (
     PaperSuiteRequest,
     Profile,
     ProfileAnswer,
+    Quarter,
     SystemState,
     TicketRecord,
 )
@@ -197,9 +198,9 @@ class ExperimentRunner:
             "paper_defaults": {
                 "semantic_threshold": 0.7,
                 "top_k": 5,
-                "alpha": 0.75,
+                "alpha": 0.7,
                 "beta": 0.55,
-                "gamma": 0.8,
+                "gamma": 0.75,
                 "minimum_observations": 30,
                 "lambda": 0.99861,
                 "autonomous_review": "not exercised by the simulated profiles",
@@ -587,13 +588,14 @@ class ExperimentRunner:
                         }
                     )
 
-                self._transition_after_observation(
-                    record,
-                    condition,
-                    reliability,
-                    context,
-                    global_position,
-                )
+                if not is_ceo_bootstrap_ticket(record, condition):
+                    self._transition_after_observation(
+                        record,
+                        condition,
+                        reliability,
+                        context,
+                        global_position,
+                    )
             else:
                 component = "autonomous_model"
                 if abstained:
@@ -711,6 +713,8 @@ def assign_profile(
     condition: ExperimentCondition,
     rng: random.Random,
 ) -> Profile:
+    if is_ceo_bootstrap_ticket(record, condition):
+        return Profile.CEO
     if condition.assignment_strategy == AssignmentStrategy.SINGLE:
         assert condition.single_profile is not None
         return condition.single_profile
@@ -723,6 +727,17 @@ def assign_profile(
     if record.difficulty.value == "easy":
         return Profile.INTERN
     return rng.choice([Profile.CEO, Profile.DOMAIN_EXPERT])
+
+
+def is_ceo_bootstrap_ticket(
+    record: TicketRecord,
+    condition: ExperimentCondition,
+) -> bool:
+    return (
+        condition.assignment_strategy
+        == AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED
+        and record.quarter == Quarter.Q1
+    )
 
 
 def human_answer(
@@ -893,6 +908,11 @@ def build_paper_request(request: PaperSuiteRequest) -> ExperimentRequest:
         ("single-domain-expert", AssignmentStrategy.SINGLE, Profile.DOMAIN_EXPERT),
         ("single-intern", AssignmentStrategy.SINGLE, Profile.INTERN),
         ("informed-mixture", AssignmentStrategy.INFORMED, None),
+        (
+            "ceo-bootstrapped-informed-mixture",
+            AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED,
+            None,
+        ),
     ]
     regimes = list(AcceptanceRegime)
     for assignment_name, strategy, profile in assignments:

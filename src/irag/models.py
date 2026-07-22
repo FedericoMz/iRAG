@@ -42,6 +42,7 @@ class AssignmentStrategy(str, Enum):
     SINGLE = "single_profile"
     RANDOM = "random_mixture"
     INFORMED = "informed_mixture"
+    CEO_BOOTSTRAPPED_INFORMED = "ceo_bootstrapped_informed_mixture"
 
 
 class AcceptanceRegime(str, Enum):
@@ -75,6 +76,7 @@ class ExpertSelection(str, Enum):
     INTERN = "intern"
     RANDOM_MIXTURE = "random_mixture"
     INFORMED_MIXTURE = "informed_mixture"
+    CEO_BOOTSTRAPPED_INFORMED_MIXTURE = "ceo_bootstrapped_informed_mixture"
 
 
 class RunAcceptance(str, Enum):
@@ -150,9 +152,9 @@ class ExperimentCondition(StrictModel):
     domain_expert_category: Category = Category.BILLING
     repetitions: int = Field(default=10, ge=1, le=100)
     seed: int = 20260717
-    alpha: float = Field(default=0.75, ge=0, le=1)
+    alpha: float = Field(default=0.7, ge=0, le=1)
     beta: float = Field(default=0.55, ge=0, le=1)
-    gamma: float = Field(default=0.8, ge=0, le=1)
+    gamma: float = Field(default=0.75, ge=0, le=1)
     minimum_observations: int = Field(default=30, ge=1)
     top_k: int = Field(default=5, ge=1, le=100)
     semantic_threshold: float = Field(default=0.7, ge=0, le=1)

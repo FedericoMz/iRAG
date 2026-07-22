@@ -303,8 +303,11 @@ def build_parallel_request(request: ParallelRunRequest) -> ExperimentRequest:
     elif request.expert == ExpertSelection.RANDOM_MIXTURE:
         assignment = AssignmentStrategy.RANDOM
         profile = None
-    else:
+    elif request.expert == ExpertSelection.INFORMED_MIXTURE:
         assignment = AssignmentStrategy.INFORMED
+        profile = None
+    else:
+        assignment = AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED
         profile = None
 
     acceptance = {

@@ -13,6 +13,7 @@ from irag.models import (
     ExperimentRequest,
     JobStatus,
     ModelSettings,
+    ParallelRunRequest,
     Profile,
     Quarter,
     QuarterBatch,
@@ -154,6 +155,7 @@ def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
         "intern",
         "random_mixture",
         "informed_mixture",
+        "ceo_bootstrapped_informed_mixture",
     ]
     assert schemas["RunAcceptance"]["enum"] == [
         "always_refuse",
@@ -176,6 +178,24 @@ def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
     assert "auxiliary_model" in parameters
     assert "bedrock_region" in parameters
     assert parameters["checkpoint_interval"]["schema"]["default"] == 50
+
+
+def test_parallel_request_supports_ceo_bootstrapped_informed_mixture():
+    request = ParallelRunRequest(
+        expert="ceo_bootstrapped_informed_mixture",
+        acceptance="randomize",
+        repetitions=1,
+    )
+
+    built = api.build_parallel_request(request)
+    condition = built.conditions[0]
+
+    assert (
+        condition.assignment_strategy
+        == AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED
+    )
+    assert condition.alpha == 0.7
+    assert condition.gamma == 0.75
 
 
 def test_parallel_background_job_persists_each_repetition(monkeypatch, tmp_path):

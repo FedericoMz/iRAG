@@ -445,3 +445,4 @@ FodyWeavers.xsd
 *.msp
 
 *.tex
+!main.tex

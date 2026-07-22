@@ -19,11 +19,16 @@ from irag.models import (
 )
 
 
-def make_ticket(number: int, difficulty: str = "easy", category: str = "billing"):
+def make_ticket(
+    number: int,
+    difficulty: str = "easy",
+    category: str = "billing",
+    quarter: str = "Q1",
+):
     return TicketRecord.model_validate(
         {
-            "id": f"SX-Q1-BIL-{number:03d}",
-            "quarter": "Q1",
+            "id": f"SX-{quarter}-BIL-{number:03d}",
+            "quarter": quarter,
             "sequence_in_quarter": number,
             "shuffled_order": number,
             "difficulty": difficulty,
@@ -40,7 +45,7 @@ def make_ticket(number: int, difficulty: str = "easy", category: str = "billing"
                 },
                 "intern": {"answer": "correct", "is_correct": True},
             },
-            "documentation_anchor": "Q1.md#policy",
+            "documentation_anchor": f"{quarter}.md#policy",
             "is_changed_answer_near_duplicate": False,
             "near_duplicate_of": None,
             "similar_question_ids": [],
@@ -282,6 +287,45 @@ def test_informed_routing_priority_order():
     )
 
 
+def test_ceo_bootstrap_routes_q1_to_ceo_and_locks_silent_observer():
+    condition = ExperimentCondition(
+        name="ceo-bootstrap",
+        assignment_strategy=AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED,
+        acceptance_regime=AcceptanceRegime.NEVER,
+        repetitions=1,
+        minimum_observations=1,
+    )
+    request = ExperimentRequest(
+        name="ceo bootstrap",
+        quarters=[
+            QuarterBatch(
+                quarter=Quarter.Q1,
+                records=[
+                    make_ticket(1, "easy", "reporting"),
+                    make_ticket(2, "normal", "reporting"),
+                ],
+            ),
+            QuarterBatch(
+                quarter=Quarter.Q2,
+                records=[
+                    make_ticket(1, "easy", "reporting", quarter="Q2"),
+                    make_ticket(2, "easy", "reporting", quarter="Q2"),
+                ],
+            ),
+        ],
+        conditions=[condition],
+    )
+
+    result = ExperimentRunner(FakeDataset(), FakeClient()).run("bootstrap-id", request)
+    tickets = result["conditions"][0]["repetitions"][0]["tickets"]
+
+    assert [ticket["assigned_profile"] for ticket in tickets[:2]] == ["ceo", "ceo"]
+    assert all(ticket["state_after"] == "silent_observer" for ticket in tickets[:2])
+    assert all(ticket["assigned_profile"] == "intern" for ticket in tickets[2:])
+    assert tickets[2]["state_before"] == "silent_observer"
+    assert tickets[2]["state_after"] == "skeptical_contestator"
+
+
 def test_parallel_runner_executes_repetitions_concurrently():
     records = [make_ticket(number) for number in range(1, 4)]
     condition = ExperimentCondition(
@@ -371,10 +415,17 @@ def test_paper_suite_expands_declared_grid():
     )
     request = build_paper_request(paper)
 
-    assert len(request.conditions) == 16
+    assert len(request.conditions) == 19
     assert all(condition.repetitions == 2 for condition in request.conditions)
     assert all(
         condition.assignment_strategy != AssignmentStrategy.RANDOM
         for condition in request.conditions
     )
     assert request.conditions[-1].decay == 1.0
+    assert request.conditions[0].alpha == 0.7
+    assert request.conditions[0].gamma == 0.75
+    assert any(
+        condition.assignment_strategy
+        == AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED
+        for condition in request.conditions
+    )

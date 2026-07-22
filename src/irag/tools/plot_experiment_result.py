@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import tempfile
 from pathlib import Path
 
@@ -39,6 +40,29 @@ def cumulative_error_rate(tickets: list[dict]) -> list[float]:
     return rates
 
 
+def cumulative_observation_rate(
+    tickets: list[dict],
+    field: str,
+) -> list[float | None]:
+    positives = 0
+    observations = 0
+    rates = []
+    for ticket in tickets:
+        judgment = ticket.get("gold_judgment") if field == "gold" else None
+        value = (
+            judgment.get("gold_reference_covered")
+            if judgment is not None and field == "gold"
+            else ticket.get("reliability_observation")
+            if field == "human"
+            else None
+        )
+        if value is not None:
+            observations += 1
+            positives += int(bool(value))
+        rates.append(positives / observations if observations else None)
+    return rates
+
+
 def quarter_ranges(tickets: list[dict]) -> list[tuple[str, int, int]]:
     ranges = []
     start = 1
@@ -58,29 +82,44 @@ def plot_result(
     condition_number: int,
     repetition_number: int,
 ) -> None:
-    result = json.loads(result_path.read_text(encoding="utf-8"))
-    if "tickets" in result:
-        repetition = result
-        condition = {"configuration": result.get("configuration", {})}
-        repetition_number = result.get("repetition", repetition_number)
+    if result_path.name.endswith(".partial.jsonl"):
+        tickets = [
+            json.loads(line)
+            for line in result_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        metadata = json.loads(
+            (result_path.parent / "metadata.json").read_text(encoding="utf-8")
+        )
+        configuration = metadata["configuration"]
+        match = re.search(r"run-(\d+)", result_path.name)
+        if match:
+            repetition_number = int(match.group(1))
     else:
-        try:
-            condition = result["conditions"][condition_number - 1]
-            repetition = condition["repetitions"][repetition_number - 1]
-        except (IndexError, KeyError) as exc:
-            raise ValueError("Condition or repetition number is out of range") from exc
-    tickets = repetition["tickets"]
+        result = json.loads(result_path.read_text(encoding="utf-8"))
+        if "tickets" in result:
+            repetition = result
+            configuration = result.get("configuration", {})
+            repetition_number = result.get("repetition", repetition_number)
+        else:
+            try:
+                condition = result["conditions"][condition_number - 1]
+                repetition = condition["repetitions"][repetition_number - 1]
+            except (IndexError, KeyError) as exc:
+                raise ValueError("Condition or repetition number is out of range") from exc
+            configuration = condition["configuration"]
+        tickets = repetition["tickets"]
     if not tickets:
         raise ValueError("The selected repetition contains no tickets")
 
     positions = [ticket["global_position"] for ticket in tickets]
     fea = [ticket["fea_after"] for ticket in tickets]
     error_rate = cumulative_error_rate(tickets)
+    gold_coverage = cumulative_observation_rate(tickets, "gold")
+    human_coverage = cumulative_observation_rate(tickets, "human")
     ranges = quarter_ranges(tickets)
-    configuration = condition["configuration"]
 
-    figure, fea_axis = plt.subplots(figsize=(13, 6.5))
-    error_axis = fea_axis.twinx()
+    figure, fea_axis = plt.subplots(figsize=(14, 7))
     fea_line = fea_axis.plot(
         positions,
         fea,
@@ -88,16 +127,30 @@ def plot_result(
         linewidth=2.2,
         label="FEA",
     )[0]
-    error_line = error_axis.plot(
+    gold_line = fea_axis.plot(
+        positions,
+        gold_coverage,
+        color="#16a34a",
+        linewidth=2.2,
+        label="Cumulative LLM gold coverage",
+    )[0]
+    human_line = fea_axis.plot(
+        positions,
+        human_coverage,
+        color="#0891b2",
+        linewidth=1.8,
+        label="Cumulative human-reference coverage",
+    )[0]
+    error_line = fea_axis.plot(
         positions,
         error_rate,
         color="#dc2626",
-        linewidth=2.2,
+        linewidth=1.8,
         label="Cumulative final-decision error rate",
     )[0]
 
     thresholds = [
-        ("alpha", "#16a34a"),
+        ("alpha", "#15803d"),
         ("beta", "#f59e0b"),
         ("gamma", "#7c3aed"),
     ]
@@ -109,6 +162,16 @@ def plot_result(
             linestyle="--",
             linewidth=1,
             alpha=0.7,
+        )
+        fea_axis.text(
+            0.995,
+            value + 0.006,
+            f"{name}={value:.2f}",
+            transform=fea_axis.get_yaxis_transform(),
+            ha="right",
+            va="bottom",
+            fontsize=9,
+            color=color,
         )
 
     for index, (quarter, start, end) in enumerate(ranges):
@@ -133,21 +196,22 @@ def plot_result(
 
     fea_axis.set_xlim(1, len(tickets))
     fea_axis.set_ylim(0, 1)
-    error_axis.set_ylim(0, 1)
     fea_axis.set_xlabel("Ticket processing order")
-    fea_axis.set_ylabel("Fading Empirical Accuracy", color="#2563eb")
-    error_axis.set_ylabel("Cumulative error rate", color="#dc2626")
-    fea_axis.tick_params(axis="y", colors="#2563eb")
-    error_axis.tick_params(axis="y", colors="#dc2626")
+    fea_axis.set_ylabel("Rate")
     fea_axis.grid(axis="both", color="#d1d5db", linewidth=0.7, alpha=0.55)
     fea_axis.set_title(
-        f"FEA and Error Rate — {configuration['name']} — "
-        f"Repetition {repetition_number}",
+        f"Early Run Diagnostics — {configuration['name']} — "
+        f"Repetition {repetition_number} — {len(tickets)} tickets",
         pad=18,
     )
     fea_axis.legend(
-        [fea_line, error_line],
-        [fea_line.get_label(), error_line.get_label()],
+        [fea_line, gold_line, human_line, error_line],
+        [
+            fea_line.get_label(),
+            gold_line.get_label(),
+            human_line.get_label(),
+            error_line.get_label(),
+        ],
         loc="lower right",
         frameon=True,
     )
