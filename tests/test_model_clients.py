@@ -296,6 +296,8 @@ def test_bedrock_client_accepts_bearer_token(monkeypatch):
     client.check_models()
 
     assert client.model_metadata["eu.vendor/generation"]["region"] == "eu-west-1"
+    assert client.model_metadata["eu.vendor/generation"]["retry_mode"] == "adaptive"
+    assert client.model_metadata["eu.vendor/generation"]["max_attempts"] == 2
 
 
 def test_bedrock_client_requires_credentials_or_bearer_token(monkeypatch):

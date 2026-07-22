@@ -35,6 +35,7 @@ class BedrockClient(BaseModelClient):
         self.profile = profile
         self.timeout = timeout
         self.retries = retries
+        self.retry_mode = "adaptive"
 
         client_config = None
         if session is None:
@@ -49,7 +50,7 @@ class BedrockClient(BaseModelClient):
             client_config = Config(
                 connect_timeout=timeout,
                 read_timeout=timeout,
-                retries={"total_max_attempts": retries, "mode": "standard"},
+                retries={"total_max_attempts": retries, "mode": self.retry_mode},
             )
 
         self.session = session
@@ -69,6 +70,8 @@ class BedrockClient(BaseModelClient):
             model: {
                 "region": self.region,
                 "resource_type": bedrock_resource_type(model),
+                "retry_mode": self.retry_mode,
+                "max_attempts": self.retries,
             }
             for model in {self.generation_model, self.auxiliary_model}
         }

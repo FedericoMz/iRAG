@@ -53,6 +53,7 @@ class Settings:
     model_retries: int = int(
         os.getenv("MODEL_RETRIES", os.getenv("OLLAMA_RETRIES", "3"))
     )
+    bedrock_retries: int = int(os.getenv("BEDROCK_RETRIES", "10"))
 
 
 settings = Settings()

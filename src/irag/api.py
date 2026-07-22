@@ -372,7 +372,11 @@ def make_model_client(request: ExperimentRequest) -> BaseModelClient:
         ) from exc
 
     timeout = models.timeout or settings.model_timeout
-    retries = models.retries or settings.model_retries
+    retries = models.retries or (
+        settings.bedrock_retries
+        if provider == ModelProvider.BEDROCK
+        else settings.model_retries
+    )
     if provider == ModelProvider.OLLAMA:
         return OllamaClient(
             base_url=models.ollama_base_url or settings.ollama_base_url,
