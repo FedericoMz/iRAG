@@ -405,8 +405,17 @@ class ExperimentRunner:
                 f"fea_before is {saved_fea_before}, expected {reliability.fea}"
             )
 
+        saved_gold_judgment = saved.get("gold_judgment")
         if saved.get("suggestion_accepted") is not None:
-            accepted = accepts_suggestion(condition.acceptance_regime, rng)
+            accepted = accepts_suggestion(
+                condition.acceptance_regime,
+                rng,
+                gold_reference_covered=(
+                    bool(saved_gold_judgment["gold_reference_covered"])
+                    if saved_gold_judgment is not None
+                    else None
+                ),
+            )
             if accepted != saved["suggestion_accepted"]:
                 raise ValueError(
                     f"Resume checkpoint diverges at ticket {global_position}: "
@@ -415,7 +424,7 @@ class ExperimentRunner:
 
         state_before = SystemState(saved["state_before"])
         model_decision = saved.get("model_decision")
-        gold_judgment = saved.get("gold_judgment")
+        gold_judgment = saved_gold_judgment
         if (
             state_before in (SystemState.SO, SystemState.SC)
             and model_decision is not None
@@ -564,7 +573,9 @@ class ExperimentRunner:
                     ]
                     if state_before == SystemState.SC and not human_reference_covered:
                         accepted_suggestion = accepts_suggestion(
-                            condition.acceptance_regime, rng
+                            condition.acceptance_regime,
+                            rng,
+                            gold_reference_covered=model_gold,
                         )
                         if accepted_suggestion:
                             final_answer = model_decision["answer"]
@@ -758,11 +769,21 @@ def human_answer(
     return record.profile_answers.domain_expert_out_of_domain
 
 
-def accepts_suggestion(regime: AcceptanceRegime, rng: random.Random) -> bool:
+def accepts_suggestion(
+    regime: AcceptanceRegime,
+    rng: random.Random,
+    gold_reference_covered: bool | None = None,
+) -> bool:
     if regime == AcceptanceRegime.ALWAYS:
         return True
     if regime == AcceptanceRegime.NEVER:
         return False
+    if regime == AcceptanceRegime.GOLD_SIMILARITY:
+        if gold_reference_covered is None:
+            raise ValueError(
+                "gold_reference_covered is required for gold-similarity acceptance"
+            )
+        return gold_reference_covered
     return rng.random() < 0.5
 
 

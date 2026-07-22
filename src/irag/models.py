@@ -49,6 +49,7 @@ class AcceptanceRegime(str, Enum):
     ALWAYS = "always_accept"
     NEVER = "never_accept"
     STOCHASTIC = "stochastic_50"
+    GOLD_SIMILARITY = "gold_similarity"
 
 
 class SystemState(str, Enum):
@@ -83,6 +84,7 @@ class RunAcceptance(str, Enum):
     ALWAYS_REFUSE = "always_refuse"
     ALWAYS_ACCEPT = "always_accept"
     RANDOMIZE = "randomize"
+    GOLD_SIMILARITY = "gold_similarity"
 
 
 class ProfileAnswer(StrictModel):

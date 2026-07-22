@@ -314,6 +314,7 @@ def build_parallel_request(request: ParallelRunRequest) -> ExperimentRequest:
         RunAcceptance.ALWAYS_REFUSE: AcceptanceRegime.NEVER,
         RunAcceptance.ALWAYS_ACCEPT: AcceptanceRegime.ALWAYS,
         RunAcceptance.RANDOMIZE: AcceptanceRegime.STOCHASTIC,
+        RunAcceptance.GOLD_SIMILARITY: AcceptanceRegime.GOLD_SIMILARITY,
     }[request.acceptance]
     condition = ExperimentCondition(
         name=f"{request.expert.value}__{request.acceptance.value}",

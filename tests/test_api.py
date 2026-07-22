@@ -161,6 +161,7 @@ def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
         "always_refuse",
         "always_accept",
         "randomize",
+        "gold_similarity",
     ]
     assert schemas["ModelProvider"]["enum"] == [
         "ollama",
@@ -183,7 +184,7 @@ def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
 def test_parallel_request_supports_ceo_bootstrapped_informed_mixture():
     request = ParallelRunRequest(
         expert="ceo_bootstrapped_informed_mixture",
-        acceptance="randomize",
+        acceptance="gold_similarity",
         repetitions=1,
     )
 
@@ -196,6 +197,7 @@ def test_parallel_request_supports_ceo_bootstrapped_informed_mixture():
     )
     assert condition.alpha == 0.7
     assert condition.gamma == 0.75
+    assert condition.acceptance_regime == AcceptanceRegime.GOLD_SIMILARITY
 
 
 def test_parallel_background_job_persists_each_repetition(monkeypatch, tmp_path):

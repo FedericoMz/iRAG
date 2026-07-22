@@ -97,7 +97,7 @@ Compose reads the selected provider from `config.env`, connects to host Ollama t
 
 Open `http://localhost:8000/docs`, expand `POST /v1/runs`, and select **Try it out**. Expert, acceptance, model provider, and domain-expert category are dropdowns. Repetitions and decay are editable numeric fields with the paper defaults of `10` and `0.99861`. Generation and auxiliary model names are editable because Ollama installations and the OpenRouter catalogue are not fixed. `checkpoint_interval` controls how many completed ticket traces are buffered before being written to disk and defaults to `50`.
 
-The expert choices are `ceo`, `domain_expert`, `intern`, `random_mixture`, `informed_mixture`, and `ceo_bootstrapped_informed_mixture`. The acceptance choices are `always_refuse`, `always_accept`, and `randomize`; these apply when the model suggestion conflicts with the human answer in the skeptical-contestator state.
+The expert choices are `ceo`, `domain_expert`, `intern`, `random_mixture`, `informed_mixture`, and `ceo_bootstrapped_informed_mixture`. The acceptance choices are `always_refuse`, `always_accept`, `randomize`, and `gold_similarity`; these apply when the model suggestion conflicts with the human answer in the skeptical-contestator state. `gold_similarity` accepts the suggestion exactly when the auxiliary judgment already computed against the benchmark gold answer reports `gold_reference_covered=true`. It is an oracle experimental regime because a deployment normally has no gold answer at decision time.
 
 `ceo_bootstrapped_informed_mixture` assigns every Q1 ticket to the CEO and holds the system in silent-observer state throughout Q1 while still building the KB and FEA history. From the first Q2 ticket onward it uses normal informed-mixture routing and enables state transitions. This makes Q1 an explicitly supervised calibration phase and prevents direct autonomy during bootstrapping. New conditions default to $\alpha=0.70$, $\beta=0.55$, and $\gamma=0.75$; saved runs retain the thresholds stored in their metadata when resumed.
 
@@ -186,7 +186,7 @@ The equivalent Bedrock override is:
 }
 ```
 
-To run the complete grid declared in the paper—15 assisted conditions, three profile baselines, and the no-decay ablation—use:
+To run the complete grid declared in the paper—20 assisted conditions, three profile baselines, and the no-decay ablation—use:
 
 ```sh
 curl -X POST http://localhost:8000/v1/experiments/paper-suite/bundled \

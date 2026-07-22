@@ -4,7 +4,12 @@ import threading
 
 import numpy as np
 
-from irag.experiment import ExperimentRunner, assign_profile, build_paper_request
+from irag.experiment import (
+    ExperimentRunner,
+    accepts_suggestion,
+    assign_profile,
+    build_paper_request,
+)
 from irag.models import (
     AcceptanceRegime,
     AssignmentStrategy,
@@ -265,6 +270,45 @@ def test_ceo_gold_judgment_reuses_human_comparison_when_suggestion_is_accepted()
     assert client.gold_judge_calls == 0
 
 
+def test_gold_similarity_accepts_gold_correct_disagreement():
+    condition = ExperimentCondition(
+        name="gold-acceptance",
+        assignment_strategy=AssignmentStrategy.SINGLE,
+        single_profile=Profile.DOMAIN_EXPERT,
+        domain_expert_category=Category.BILLING,
+        acceptance_regime=AcceptanceRegime.GOLD_SIMILARITY,
+        repetitions=1,
+        seed=0,
+        alpha=0.5,
+        beta=0.1,
+        gamma=1.0,
+        minimum_observations=1,
+    )
+    request = ExperimentRequest(
+        name="gold acceptance",
+        quarters=[
+            QuarterBatch(
+                quarter=Quarter.Q1,
+                records=[
+                    make_ticket(1, "easy", "billing"),
+                    make_ticket(2, "easy", "reporting"),
+                ],
+            )
+        ],
+        conditions=[condition],
+    )
+
+    result = ExperimentRunner(FakeDataset(), FakeClient()).run("test-id", request)
+    tickets = result["conditions"][0]["repetitions"][0]["tickets"]
+
+    assert tickets[0]["state_after"] == "skeptical_contestator"
+    assert tickets[1]["gold_judgment"]["gold_reference_covered"] is True
+    assert tickets[1]["auxiliary_judgment"]["human_reference_covered"] is False
+    assert tickets[1]["suggestion_accepted"] is True
+    assert tickets[1]["final_origin"] == "human_revised_to_model"
+    assert tickets[1]["final_answer_is_correct"] is True
+
+
 def test_informed_routing_priority_order():
     condition = ExperimentCondition(
         name="routing",
@@ -285,6 +329,25 @@ def test_informed_routing_priority_order():
         assign_profile(make_ticket(3, "easy", "reporting"), condition, rng)
         == Profile.INTERN
     )
+
+
+def test_gold_similarity_acceptance_uses_existing_gold_judgment_without_rng():
+    import random
+
+    rng = random.Random(7)
+    state_before = rng.getstate()
+
+    assert accepts_suggestion(
+        AcceptanceRegime.GOLD_SIMILARITY,
+        rng,
+        gold_reference_covered=True,
+    )
+    assert not accepts_suggestion(
+        AcceptanceRegime.GOLD_SIMILARITY,
+        rng,
+        gold_reference_covered=False,
+    )
+    assert rng.getstate() == state_before
 
 
 def test_ceo_bootstrap_routes_q1_to_ceo_and_locks_silent_observer():
@@ -415,7 +478,7 @@ def test_paper_suite_expands_declared_grid():
     )
     request = build_paper_request(paper)
 
-    assert len(request.conditions) == 19
+    assert len(request.conditions) == 24
     assert all(condition.repetitions == 2 for condition in request.conditions)
     assert all(
         condition.assignment_strategy != AssignmentStrategy.RANDOM
