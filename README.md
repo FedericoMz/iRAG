@@ -32,19 +32,20 @@ Generation and semantic judging can run through any of:
 - `openrouter`: models exposed through OpenRouter's chat-completions API.
 - `bedrock`: AWS models and inference profiles exposed through Bedrock Runtime's Converse API.
 
-Set `MODEL_PROVIDER` and the corresponding model names in `config.env`. OpenRouter additionally requires `OPENROUTER_API_KEY`. Bedrock uses the standard AWS credential chain and requires `bedrock:InvokeModel` permission for the selected model resources. Credentials and AWS profile selection are configuration-only: they are never accepted in API payloads or written to experiment results.
+Set `MODEL_PROVIDER` and the corresponding model names in `config.env`. OpenRouter additionally requires `OPENROUTER_API_KEY`. For Bedrock Runtime, set `AWS_BEARER_TOKEN_BEDROCK`, or use the standard AWS credential chain or an AWS profile. Credentials and AWS profile selection are configuration-only: they are never accepted in API payloads or written to experiment results.
 
 For Bedrock, the cost-oriented defaults use the EU inference profile for Amazon Nova 2 Lite in both roles. The decision and auxiliary models remain independently selectable, so final runs can use a different auxiliary judge when model independence is important:
 
 ```env
 MODEL_PROVIDER="bedrock"
+AWS_BEARER_TOKEN_BEDROCK="..." # sufficient for Bedrock Runtime calls
 BEDROCK_REGION="eu-west-1"
-BEDROCK_PROFILE="research" # optional for local shared AWS credentials
+BEDROCK_PROFILE="" # optional alternative: local shared AWS profile
 BEDROCK_GENERATION_MODEL="eu.amazon.nova-2-lite-v1:0"
 BEDROCK_AUXILIARY_MODEL="eu.amazon.nova-2-lite-v1:0"
 ```
 
-The Bedrock adapter uses JSON-schema structured output through `Converse`. If different model IDs are selected, both models must support Converse structured outputs in the configured region. Boto3 obtains credentials from its normal environment, shared-file, container-role, or instance-role sources. For Docker, supply AWS credentials through the container environment or an AWS workload role; a host `BEDROCK_PROFILE` works only if its shared AWS configuration is also available inside the container.
+The Bedrock adapter uses JSON-schema structured output through `Converse`. If different model IDs are selected, both models must support Converse structured outputs in the configured region. Boto3 reads `AWS_BEARER_TOKEN_BEDROCK` automatically. Compose passes it from `config.env` into the container. As alternatives, Boto3 can use its normal environment, shared-file, container-role, or instance-role credential sources; a host `BEDROCK_PROFILE` works inside Docker only if its shared AWS configuration is also mounted in the container.
 
 The question embeddings are always read from the checked-in compressed `.npz` files under `experiment data/embeddings/qwen3-embedding-4b`. Neither provider is called for embeddings, and no runtime embedding generation is implemented.
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 from typing import Any
 
@@ -58,10 +59,11 @@ class BedrockClient(BaseModelClient):
         self.runtime = session.client("bedrock-runtime", **client_arguments)
 
     def check_models(self) -> None:
-        if self.session.get_credentials() is None:
+        bearer_token = os.getenv("AWS_BEARER_TOKEN_BEDROCK", "").strip()
+        if self.session.get_credentials() is None and not bearer_token:
             raise RuntimeError(
-                "AWS credentials are unavailable. Configure the standard AWS credential "
-                "chain or set BEDROCK_PROFILE."
+                "Bedrock credentials are unavailable. Set AWS_BEARER_TOKEN_BEDROCK, "
+                "configure the standard AWS credential chain, or set BEDROCK_PROFILE."
             )
         self.model_metadata = {
             model: {

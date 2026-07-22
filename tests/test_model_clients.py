@@ -238,7 +238,8 @@ def test_bedrock_client_uses_converse_structured_output():
     assert result["api_response"]["usage"]["outputTokens"] == 5
 
 
-def test_bedrock_client_requires_aws_credentials():
+def test_bedrock_client_accepts_bearer_token(monkeypatch):
+    monkeypatch.setenv("AWS_BEARER_TOKEN_BEDROCK", "test-bedrock-token")
     client = BedrockClient(
         region="eu-west-1",
         generation_model="eu.vendor/generation",
@@ -248,5 +249,21 @@ def test_bedrock_client_requires_aws_credentials():
         session=FakeBedrockSession(credentials=None),
     )
 
-    with pytest.raises(RuntimeError, match="AWS credentials"):
+    client.check_models()
+
+    assert client.model_metadata["eu.vendor/generation"]["region"] == "eu-west-1"
+
+
+def test_bedrock_client_requires_credentials_or_bearer_token(monkeypatch):
+    monkeypatch.delenv("AWS_BEARER_TOKEN_BEDROCK", raising=False)
+    client = BedrockClient(
+        region="eu-west-1",
+        generation_model="eu.vendor/generation",
+        auxiliary_model="eu.vendor/judge",
+        timeout=30,
+        retries=2,
+        session=FakeBedrockSession(credentials=None),
+    )
+
+    with pytest.raises(RuntimeError, match="Bedrock credentials"):
         client.check_models()
