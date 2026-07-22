@@ -110,6 +110,34 @@ class MalformedBedrockRuntime(FakeBedrockRuntime):
         return super().converse(**request)
 
 
+class AbstentionWithoutAnswerBedrockRuntime(FakeBedrockRuntime):
+    def converse(self, **request):
+        self.request = request
+        tool_name = request["toolConfig"]["toolChoice"]["tool"]["name"]
+        return {
+            "ResponseMetadata": {"RequestId": "bedrock-abstention"},
+            "output": {
+                "message": {
+                    "content": [
+                        {
+                            "toolUse": {
+                                "toolUseId": "tool-use-id",
+                                "name": tool_name,
+                                "input": {
+                                    "abstain": True,
+                                    "reason": "Insufficient evidence.",
+                                },
+                            }
+                        }
+                    ]
+                }
+            },
+            "stopReason": "tool_use",
+            "usage": {"inputTokens": 10, "outputTokens": 5},
+            "metrics": {"latencyMs": 100},
+        }
+
+
 def test_ollama_client_uses_native_structured_format(monkeypatch):
     client = OllamaClient(
         base_url="http://ollama.test",
@@ -369,6 +397,25 @@ def test_bedrock_retries_malformed_tool_response(monkeypatch):
     assert result["answer"] == "answer"
     assert runtime.calls == 2
     assert sleeps == [0]
+
+
+def test_bedrock_accepts_abstention_without_redundant_answer():
+    session = FakeBedrockSession()
+    session.runtime = AbstentionWithoutAnswerBedrockRuntime()
+    client = BedrockClient(
+        region="eu-north-1",
+        generation_model="eu.amazon.nova-2-lite-v1:0",
+        auxiliary_model="eu.amazon.nova-2-lite-v1:0",
+        timeout=30,
+        retries=2,
+        session=session,
+    )
+
+    result = client.decide("question", [])
+
+    assert result["abstain"] is True
+    assert result["answer"] == ""
+    assert result["evidence_ids"] == []
 
 
 def test_bedrock_client_accepts_bearer_token(monkeypatch):

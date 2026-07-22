@@ -257,6 +257,9 @@ def bedrock_structured_result(
         result = json.loads(text)
     if not isinstance(result, dict):
         raise TypeError("Bedrock structured result is not an object")
+    if result.get("abstain") is True:
+        result.setdefault("answer", "")
+        result.setdefault("evidence_ids", [])
     missing = [field for field in schema.get("required", []) if field not in result]
     if missing:
         raise ValueError(f"Bedrock structured result is missing fields: {missing}")
