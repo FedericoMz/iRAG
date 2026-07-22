@@ -115,6 +115,7 @@ class ExperimentRunner:
         on_ticket_batch: Callable[[int, list[dict]], None] | None = None,
         ticket_batch_size: int = 50,
         on_repetition: Callable[[dict], str] | None = None,
+        resume_tickets: dict[int, list[dict]] | None = None,
     ) -> dict:
         if len(request.conditions) != 1:
             raise ValueError("Parallel execution requires exactly one condition")
@@ -135,6 +136,7 @@ class ExperimentRunner:
                 condition.seed + repetition,
                 on_ticket_batch=on_ticket_batch,
                 ticket_batch_size=ticket_batch_size,
+                resume_tickets=(resume_tickets or {}).get(repetition + 1),
             )
             output_file = (
                 on_repetition(run_result) if on_repetition is not None else None
@@ -233,13 +235,15 @@ class ExperimentRunner:
         seed: int,
         on_ticket_batch: Callable[[int, list[dict]], None] | None = None,
         ticket_batch_size: int = 50,
+        resume_tickets: list[dict] | None = None,
     ) -> dict:
         if ticket_batch_size < 1:
             raise ValueError("ticket_batch_size must be at least 1")
         rng = random.Random(seed)
         reliability = Reliability(decay=condition.decay)
         context = RunContext()
-        outputs = []
+        saved_tickets = resume_tickets or []
+        outputs = list(saved_tickets) if on_ticket_batch is None else []
         ticket_batch = []
         summary = TicketSummary()
         global_position = 0
@@ -253,6 +257,7 @@ class ExperimentRunner:
             repetitions=condition.repetitions,
             seed=seed,
             total_tickets=total_tickets,
+            resumed_tickets=len(saved_tickets),
         )
 
         for batch in request.quarters:
@@ -267,6 +272,21 @@ class ExperimentRunner:
                     assigned_profile,
                     condition.domain_expert_category,
                 )
+                if global_position <= len(saved_tickets):
+                    saved = saved_tickets[global_position - 1]
+                    self._restore_ticket(
+                        saved=saved,
+                        record=record,
+                        assigned_profile=assigned_profile,
+                        condition=condition,
+                        reliability=reliability,
+                        context=context,
+                        rng=rng,
+                        global_position=global_position,
+                        quarter_position=quarter_position,
+                    )
+                    summary.observe(saved)
+                    continue
                 output = self._process_ticket(
                     record=record,
                     human=human,
@@ -347,6 +367,127 @@ class ExperimentRunner:
         if on_ticket_batch is None:
             result["tickets"] = outputs
         return result
+
+    def _restore_ticket(
+        self,
+        saved: dict,
+        record: TicketRecord,
+        assigned_profile: Profile,
+        condition: ExperimentCondition,
+        reliability: Reliability,
+        context: RunContext,
+        rng: random.Random,
+        global_position: int,
+        quarter_position: int,
+    ) -> None:
+        """Replay checkpointed state without repeating any model calls."""
+        expected = {
+            "ticket_id": record.id,
+            "global_position": global_position,
+            "quarter_position": quarter_position,
+            "assigned_profile": assigned_profile.value,
+            "state_before": context.state.value,
+            "observations_before": reliability.observations,
+        }
+        for checkpoint_field, value in expected.items():
+            if saved.get(checkpoint_field) != value:
+                raise ValueError(
+                    f"Resume checkpoint diverges at ticket {global_position}: "
+                    f"{checkpoint_field} is {saved.get(checkpoint_field)!r}, "
+                    f"expected {value!r}"
+                )
+
+        saved_fea_before = float(saved.get("fea_before", 0.0))
+        if abs(saved_fea_before - reliability.fea) > 1e-12:
+            raise ValueError(
+                f"Resume checkpoint diverges at ticket {global_position}: "
+                f"fea_before is {saved_fea_before}, expected {reliability.fea}"
+            )
+
+        if saved.get("suggestion_accepted") is not None:
+            accepted = accepts_suggestion(condition.acceptance_regime, rng)
+            if accepted != saved["suggestion_accepted"]:
+                raise ValueError(
+                    f"Resume checkpoint diverges at ticket {global_position}: "
+                    "the stochastic acceptance decision does not match"
+                )
+
+        state_before = SystemState(saved["state_before"])
+        model_decision = saved.get("model_decision")
+        gold_judgment = saved.get("gold_judgment")
+        if (
+            state_before in (SystemState.SO, SystemState.SC)
+            and model_decision is not None
+            and not bool(model_decision["abstain"])
+            and gold_judgment is not None
+        ):
+            context.recent_model_gold.append(
+                bool(gold_judgment["gold_reference_covered"])
+            )
+            context.recent_model_gold = context.recent_model_gold[
+                -condition.recent_gold_window :
+            ]
+
+        delta = saved.get("reliability_observation")
+        if delta is not None:
+            reliability.observe(int(delta))
+            context.fea_trajectory.append(
+                {
+                    "ticket_id": record.id,
+                    "global_position": global_position,
+                    "observation": reliability.observations,
+                    "delta": int(delta),
+                    "fea": reliability.fea,
+                }
+            )
+
+        if saved.get("observations_after") != reliability.observations:
+            raise ValueError(
+                f"Resume checkpoint diverges at ticket {global_position}: "
+                "observations_after does not match"
+            )
+        saved_fea_after = float(saved.get("fea_after", 0.0))
+        if abs(saved_fea_after - reliability.fea) > 1e-12:
+            raise ValueError(
+                f"Resume checkpoint diverges at ticket {global_position}: "
+                f"fea_after is {saved_fea_after}, expected {reliability.fea}"
+            )
+
+        state_after = SystemState(saved["state_after"])
+        if state_after != state_before:
+            recent_accuracy = (
+                sum(context.recent_model_gold) / len(context.recent_model_gold)
+                if context.recent_model_gold
+                else None
+            )
+            context.transitions.append(
+                {
+                    "ticket_id": record.id,
+                    "global_position": global_position,
+                    "observation": reliability.observations,
+                    "from": state_before.value,
+                    "to": state_after.value,
+                    "fea": reliability.fea,
+                    "recent_model_gold_accuracy": recent_accuracy,
+                    "recent_model_gold_window_size": len(context.recent_model_gold),
+                    "fea_minus_gold_accuracy": (
+                        reliability.fea - recent_accuracy
+                        if recent_accuracy is not None
+                        and state_after == SystemState.DS
+                        else None
+                    ),
+                }
+            )
+        context.state = state_after
+        context.kb.append(
+            KBRecord(
+                id=record.id,
+                question=record.question,
+                final_answer=saved["final_answer"],
+                vector=self.dataset.vector(record.id),
+                insertion_index=len(context.kb) + 1,
+            )
+        )
 
     def _process_ticket(
         self,

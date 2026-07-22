@@ -314,6 +314,56 @@ def test_parallel_runner_executes_repetitions_concurrently():
     assert len(client.thread_names) == 2
 
 
+def test_repetition_resume_replays_state_without_repeating_model_calls():
+    class CountingClient(FakeClient):
+        def __init__(self):
+            self.decide_calls = 0
+
+        def decide(self, question, retrieved):
+            self.decide_calls += 1
+            return super().decide(question, retrieved)
+
+    records = [
+        make_ticket(number, difficulty="normal", category="reporting")
+        for number in range(1, 9)
+    ]
+    condition = ExperimentCondition(
+        name="resume-test",
+        assignment_strategy=AssignmentStrategy.INFORMED,
+        acceptance_regime=AcceptanceRegime.STOCHASTIC,
+        repetitions=1,
+        seed=19,
+        alpha=0.5,
+        beta=0.1,
+        gamma=1.0,
+        minimum_observations=1,
+    )
+    request = ExperimentRequest(
+        name="resume test",
+        quarters=[QuarterBatch(quarter=Quarter.Q1, records=records)],
+        conditions=[condition],
+    )
+    full_client = CountingClient()
+    full = ExperimentRunner(FakeDataset(), full_client).run_repetition(
+        "resume-id", request, condition, 0, condition.seed
+    )
+
+    checkpoint = full["tickets"][:3]
+    resumed_client = CountingClient()
+    resumed = ExperimentRunner(FakeDataset(), resumed_client).run_repetition(
+        "resume-id",
+        request,
+        condition,
+        0,
+        condition.seed,
+        resume_tickets=checkpoint,
+    )
+
+    assert resumed == full
+    assert full_client.decide_calls == len(records)
+    assert resumed_client.decide_calls == len(records) - len(checkpoint)
+
+
 def test_paper_suite_expands_declared_grid():
     paper = PaperSuiteRequest(
         quarters=[QuarterBatch(quarter=Quarter.Q1, records=[make_ticket(1)])],

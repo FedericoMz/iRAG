@@ -47,6 +47,58 @@ class ExperimentStore:
             status = self._jobs.get(experiment_id)
             return status.model_copy(deep=True) if status else None
 
+    def recover(
+        self,
+        experiment_id: str,
+        request: ExperimentRequest,
+        created_at: datetime,
+    ) -> ExperimentStatus:
+        directory = self.saved_directory(experiment_id)
+        status = ExperimentStatus(
+            experiment_id=experiment_id,
+            name=request.name,
+            status=JobStatus.FAILED,
+            created_at=created_at,
+            completed_at=datetime.now(UTC),
+            total_repetitions=sum(
+                condition.repetitions for condition in request.conditions
+            ),
+            output_directory=str(directory.resolve()),
+            error="Recovered from a previous process",
+        )
+        with self._lock:
+            self._jobs[experiment_id] = status
+            self._directories[experiment_id] = directory
+        return status.model_copy(deep=True)
+
+    def saved_directory(self, experiment_id: str) -> Path:
+        if not re.fullmatch(r"[0-9a-f]{32}", experiment_id):
+            raise ValueError("Invalid experiment ID")
+        matches = list(self.output_dir.glob(f"*__job-{experiment_id}"))
+        if len(matches) != 1 or not matches[0].is_dir():
+            raise ValueError(f"Could not find saved experiment {experiment_id}")
+        return matches[0]
+
+    def read_saved_metadata(self, experiment_id: str) -> dict:
+        source = self.saved_directory(experiment_id) / "metadata.json"
+        if not source.is_file():
+            raise ValueError("Saved experiment metadata is missing")
+        return json.loads(source.read_text(encoding="utf-8"))
+
+    def queue_resume(self, experiment_id: str) -> ExperimentStatus:
+        self._update(
+            experiment_id,
+            status=JobStatus.QUEUED,
+            started_at=None,
+            completed_at=None,
+            current_condition=None,
+            completed_repetitions=0,
+            error=None,
+        )
+        status = self.get(experiment_id)
+        assert status is not None
+        return status
+
     def start(self, experiment_id: str) -> None:
         self._update(
             experiment_id,
@@ -98,6 +150,35 @@ class ExperimentStore:
         destination = self.metadata_path(experiment_id)
         self._write_json(destination, metadata)
         return destination
+
+    def read_metadata(self, experiment_id: str) -> dict:
+        return json.loads(self.metadata_path(experiment_id).read_text(encoding="utf-8"))
+
+    def read_partial_tickets(
+        self,
+        experiment_id: str,
+        repetition: int,
+    ) -> list[dict]:
+        source = self.partial_run_path(experiment_id, repetition)
+        if not source.exists():
+            return []
+        tickets = []
+        with source.open(encoding="utf-8") as ticket_input:
+            for line_number, line in enumerate(ticket_input, start=1):
+                if not line.strip():
+                    continue
+                try:
+                    ticket = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    raise ValueError(
+                        f"Invalid checkpoint JSON on line {line_number}"
+                    ) from exc
+                if not isinstance(ticket, dict):
+                    raise ValueError(
+                        f"Invalid checkpoint ticket on line {line_number}"
+                    )
+                tickets.append(ticket)
+        return tickets
 
     def write_run(self, experiment_id: str, repetition: int, result: dict) -> Path:
         destination = self.run_path(experiment_id, repetition)

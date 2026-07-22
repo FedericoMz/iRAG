@@ -218,3 +218,56 @@ def test_parallel_background_job_persists_each_repetition(monkeypatch, tmp_path)
     )
     assert len(first_run["tickets"]) == 3
     assert not experiment_store.partial_run_path(job.experiment_id, 1).exists()
+
+
+def test_resume_endpoint_recovers_job_after_process_restart(monkeypatch, tmp_path):
+    request = ExperimentRequest(
+        name="resumable run",
+        quarters=[QuarterBatch(quarter=Quarter.Q1, records=[make_ticket(1)])],
+        conditions=[
+            ExperimentCondition(
+                name="resumable",
+                assignment_strategy=AssignmentStrategy.SINGLE,
+                single_profile=Profile.CEO,
+                acceptance_regime=AcceptanceRegime.NEVER,
+                repetitions=1,
+            )
+        ],
+    )
+    old_store = ExperimentStore(tmp_path)
+    old_job = old_store.create(request, "resumable")
+    old_store.write_metadata(
+        old_job.experiment_id,
+        {
+            "name": request.name,
+            "started_at": old_job.created_at.isoformat(),
+        },
+    )
+    old_store.append_run_tickets(
+        old_job.experiment_id,
+        1,
+        [{"global_position": 1}],
+    )
+
+    restarted_store = ExperimentStore(tmp_path)
+    submitted = []
+    monkeypatch.setattr(api, "store", restarted_store)
+    monkeypatch.setattr(api, "build_resume_request", lambda _: request)
+    monkeypatch.setattr(
+        api,
+        "run_parallel_experiment",
+        lambda *arguments: submitted.append(arguments),
+    )
+
+    response = TestClient(api.app).post(
+        f"/v1/runs/{old_job.experiment_id}/resume"
+    )
+
+    assert response.status_code == 202
+    assert response.json()["experiment_id"] == old_job.experiment_id
+    assert response.json()["status"] == "queued"
+    assert submitted[0][0] == old_job.experiment_id
+    assert submitted[0][3] == {1: [{"global_position": 1}]}
+    recovered = restarted_store.get(old_job.experiment_id)
+    assert recovered is not None
+    assert recovered.output_directory == old_job.output_directory

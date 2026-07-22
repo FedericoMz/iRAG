@@ -42,11 +42,13 @@ AWS_BEARER_TOKEN_BEDROCK="..." # sufficient for Bedrock Runtime calls
 BEDROCK_REGION="eu-west-1"
 BEDROCK_PROFILE="" # optional alternative: local shared AWS profile
 BEDROCK_RETRIES="10" # adaptive SDK attempts for throttling-heavy batch runs
+BEDROCK_THROTTLE_RETRIES="100" # application retries after SDK throttling is exhausted
+BEDROCK_THROTTLE_MAX_DELAY="60" # maximum backoff between application retries
 BEDROCK_GENERATION_MODEL="eu.amazon.nova-2-lite-v1:0"
 BEDROCK_AUXILIARY_MODEL="eu.amazon.nova-2-lite-v1:0"
 ```
 
-The Bedrock adapter uses JSON-schema structured output through `Converse`: Nova models return the schema through a forced tool call, while models supporting native structured output use `outputConfig`. If different model IDs are selected, both must support one of these mechanisms in the configured region. Boto3 reads `AWS_BEARER_TOKEN_BEDROCK` automatically. Compose passes it from `config.env` into the container. As alternatives, Boto3 can use its normal environment, shared-file, container-role, or instance-role credential sources; a host `BEDROCK_PROFILE` works inside Docker only if its shared AWS configuration is also mounted in the container. Bedrock uses adaptive SDK retries because a complete experiment makes thousands of calls to one runtime resource; `BEDROCK_RETRIES` controls total attempts per request without changing retry behaviour for Ollama or OpenRouter.
+The Bedrock adapter uses JSON-schema structured output through `Converse`: Nova models return the schema through a forced tool call, while models supporting native structured output use `outputConfig`. If different model IDs are selected, both must support one of these mechanisms in the configured region. Boto3 reads `AWS_BEARER_TOKEN_BEDROCK` automatically. Compose passes it from `config.env` into the container. As alternatives, Boto3 can use its normal environment, shared-file, container-role, or instance-role credential sources; a host `BEDROCK_PROFILE` works inside Docker only if its shared AWS configuration is also mounted in the container. Bedrock uses adaptive SDK retries because a complete experiment makes thousands of calls to one runtime resource; `BEDROCK_RETRIES` controls total SDK attempts per request. If the SDK's retry quota is depleted, throttling receives an additional jittered application backoff controlled by `BEDROCK_THROTTLE_RETRIES` and `BEDROCK_THROTTLE_MAX_DELAY`. These settings do not change retry behaviour for Ollama or OpenRouter.
 
 The question embeddings are always read from the checked-in compressed `.npz` files under `experiment data/embeddings/qwen3-embedding-4b`. Neither provider is called for embeddings, and no runtime embedding generation is implemented.
 
@@ -118,6 +120,15 @@ outputs/
 
 Each `run-NNN.json` contains that repetition's shuffled ticket trace, FEA trajectory, transitions, and summary. During execution, trace batches are appended to `run-NNN.partial.jsonl`, so a complete 2,000-ticket trace is never retained in RAM. On successful repetition completion, that partial file is streamed into `run-NNN.json` and removed. A failed repetition retains its partial file for diagnosis. The live retrieval KB and current batch remain in RAM because they are required by the algorithm. `metadata.json` stores the shared ticket/model/dataset metadata once. `result.json` contains the job-level aggregate and an index of run files. Completed run files are retained even if another parallel repetition fails.
 
+A failed one-repetition parallel run can be resumed from its last durable ticket batch, including after the API has restarted:
+
+```sh
+curl -X POST \
+  'http://localhost:8000/v1/runs/<job-id>/resume'
+```
+
+Resume reconstructs the seeded shuffle, stochastic profile/acceptance choices, FEA, state transitions, recent-gold window, and retrieval KB from the checkpoint. It validates the replay before making another model call and appends only new tickets to the existing partial file. Tickets processed after the last flushed batch must be processed again; lowering `checkpoint_interval` reduces that exposure. Resume currently applies to runs submitted with `repetitions=1`.
+
 Use these endpoints to inspect or download the outputs:
 
 - `GET /v1/experiments/{job-id}` — status, progress, and output directory.
@@ -125,6 +136,7 @@ Use these endpoints to inspect or download the outputs:
 - `GET /v1/experiments/{job-id}/runs` — currently available run files.
 - `GET /v1/experiments/{job-id}/runs/{repetition}` — one detailed run file.
 - `GET /v1/experiments/{job-id}/result` — aggregate result after completion.
+- `POST /v1/runs/{job-id}/resume` — continue a failed one-repetition run from its checkpoint.
 
 ### Other experiment APIs
 

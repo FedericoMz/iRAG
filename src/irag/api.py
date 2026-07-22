@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, status
@@ -21,6 +22,7 @@ from irag.models import (
     ExperimentStatus,
     ExpertSelection,
     JobStatus,
+    ModelSettings,
     ModelProvider,
     ParallelRunRequest,
     PaperSuiteRequest,
@@ -96,6 +98,62 @@ def create_parallel_run(
         job.experiment_id,
         experiment_request,
         request.checkpoint_interval,
+    )
+    return created_response(job)
+
+
+@app.post(
+    "/v1/runs/{experiment_id}/resume",
+    response_model=ExperimentCreated,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Resume a checkpointed parallel run",
+)
+def resume_parallel_run(
+    experiment_id: str,
+    background_tasks: BackgroundTasks,
+    checkpoint_interval: Annotated[int, Query(ge=1, le=500)] = 50,
+) -> ExperimentCreated:
+    job = store.get(experiment_id)
+    if job is not None and job.status in (JobStatus.QUEUED, JobStatus.RUNNING):
+        raise HTTPException(status_code=409, detail="Experiment is already active")
+    if job is not None and job.status == JobStatus.COMPLETED:
+        raise HTTPException(status_code=409, detail="Experiment is already complete")
+
+    try:
+        metadata = (
+            store.read_metadata(experiment_id)
+            if job is not None
+            else store.read_saved_metadata(experiment_id)
+        )
+        request = build_resume_request(metadata)
+        if len(request.conditions) != 1 or request.conditions[0].repetitions != 1:
+            raise ValueError(
+                "Resume currently supports parallel runs with one repetition"
+            )
+        if job is None:
+            started_at = datetime.fromisoformat(metadata["started_at"])
+            job = store.recover(experiment_id, request, started_at)
+        if store.run_path(experiment_id, 1).exists():
+            raise ValueError("The saved repetition is already finalized")
+        tickets = store.read_partial_tickets(experiment_id, 1)
+        total_tickets = sum(len(batch.records) for batch in request.quarters)
+        if len(tickets) > total_tickets:
+            raise ValueError("Checkpoint contains more tickets than the experiment")
+        for position, ticket in enumerate(tickets, start=1):
+            if ticket.get("global_position") != position:
+                raise ValueError(
+                    f"Checkpoint is not contiguous at saved ticket {position}"
+                )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    job = store.queue_resume(experiment_id)
+    background_tasks.add_task(
+        run_parallel_experiment,
+        experiment_id,
+        request,
+        checkpoint_interval,
+        {1: tickets},
     )
     return created_response(job)
 
@@ -280,6 +338,24 @@ def build_parallel_request(request: ParallelRunRequest) -> ExperimentRequest:
     )
 
 
+def build_resume_request(metadata: dict) -> ExperimentRequest:
+    models = metadata["models"]
+    generation = models["generation"]
+    auxiliary = models["auxiliary"]
+    return ExperimentRequest(
+        name=metadata["name"],
+        quarters=dataset.load_all_quarters(),
+        conditions=[ExperimentCondition.model_validate(metadata["configuration"])],
+        models=ModelSettings(
+            provider=models["provider"],
+            generation_model=generation["name"],
+            auxiliary_model=auxiliary["name"],
+            bedrock_region=generation.get("region") or auxiliary.get("region"),
+            retries=generation.get("max_attempts"),
+        ),
+    )
+
+
 def run_experiment(experiment_id: str, request: ExperimentRequest) -> None:
     logger.info(f"Starting experiment {experiment_id}: {request.name}")
     store.start(experiment_id)
@@ -304,6 +380,7 @@ def run_parallel_experiment(
     experiment_id: str,
     request: ExperimentRequest,
     checkpoint_interval: int = 50,
+    resume_tickets: dict[int, list[dict]] | None = None,
 ) -> None:
     logger.info(f"Starting parallel experiment {experiment_id}: {request.name}")
     store.start(experiment_id)
@@ -311,6 +388,23 @@ def run_parallel_experiment(
     configuration = condition.model_dump(mode="json", by_alias=True)
 
     def write_metadata(result: dict) -> None:
+        if resume_tickets is not None:
+            existing = store.read_metadata(experiment_id)
+            resume_event = {
+                "resumed_at": result["started_at"],
+                "checkpoint_tickets": {
+                    str(repetition): len(tickets)
+                    for repetition, tickets in resume_tickets.items()
+                },
+            }
+            result["started_at"] = existing.get("started_at", result["started_at"])
+            result["resume_events"] = [
+                *existing.get("resume_events", []),
+                resume_event,
+            ]
+            existing["resume_events"] = result["resume_events"]
+            store.write_metadata(experiment_id, existing)
+            return
         metadata = {
             key: value
             for key, value in result.items()
@@ -348,6 +442,7 @@ def run_parallel_experiment(
             on_ticket_batch=write_ticket_batch,
             ticket_batch_size=checkpoint_interval,
             on_repetition=write_repetition,
+            resume_tickets=resume_tickets,
         )
         summary = {
             key: value
@@ -411,4 +506,6 @@ def make_model_client(request: ExperimentRequest) -> BaseModelClient:
         auxiliary_model=(models.auxiliary_model or settings.bedrock_auxiliary_model),
         timeout=timeout,
         retries=retries,
+        throttle_retries=settings.bedrock_throttle_retries,
+        throttle_max_delay=settings.bedrock_throttle_max_delay,
     )

@@ -54,6 +54,12 @@ class Settings:
         os.getenv("MODEL_RETRIES", os.getenv("OLLAMA_RETRIES", "3"))
     )
     bedrock_retries: int = int(os.getenv("BEDROCK_RETRIES", "10"))
+    bedrock_throttle_retries: int = int(
+        os.getenv("BEDROCK_THROTTLE_RETRIES", "100")
+    )
+    bedrock_throttle_max_delay: float = float(
+        os.getenv("BEDROCK_THROTTLE_MAX_DELAY", "60")
+    )
 
 
 settings = Settings()

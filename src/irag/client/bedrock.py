@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
+import random
 import time
 from typing import Any
 
 from irag.client.base import BaseModelClient
+
+
+logger = logging.getLogger(__name__)
 
 
 UNSUPPORTED_SCHEMA_KEYWORDS = {
@@ -27,6 +32,8 @@ class BedrockClient(BaseModelClient):
         auxiliary_model: str,
         timeout: int,
         retries: int,
+        throttle_retries: int = 100,
+        throttle_max_delay: float = 60.0,
         profile: str | None = None,
         session: Any | None = None,
     ) -> None:
@@ -36,6 +43,8 @@ class BedrockClient(BaseModelClient):
         self.timeout = timeout
         self.retries = retries
         self.retry_mode = "adaptive"
+        self.throttle_retries = throttle_retries
+        self.throttle_max_delay = throttle_max_delay
 
         client_config = None
         if session is None:
@@ -72,6 +81,8 @@ class BedrockClient(BaseModelClient):
                 "resource_type": bedrock_resource_type(model),
                 "retry_mode": self.retry_mode,
                 "max_attempts": self.retries,
+                "throttle_retries": self.throttle_retries,
+                "throttle_max_delay": self.throttle_max_delay,
             }
             for model in {self.generation_model, self.auxiliary_model}
         }
@@ -134,10 +145,10 @@ class BedrockClient(BaseModelClient):
                         }
                     },
                 }
-            }
+        }
         started = time.perf_counter()
         try:
-            response = self.runtime.converse(**request)
+            response = self._converse_with_throttle_backoff(request, model)
         except Exception as exc:
             raise RuntimeError(
                 f"Bedrock Converse failed for {model} in {self.region}: {exc}"
@@ -170,6 +181,34 @@ class BedrockClient(BaseModelClient):
         }
         return result, elapsed
 
+    def _converse_with_throttle_backoff(
+        self, request: dict[str, Any], model: str
+    ) -> dict[str, Any]:
+        throttle_attempt = 0
+        while True:
+            try:
+                return self.runtime.converse(**request)
+            except Exception as exc:
+                if (
+                    bedrock_error_code(exc) != "ThrottlingException"
+                    or throttle_attempt >= self.throttle_retries
+                ):
+                    raise
+                throttle_attempt += 1
+                delay_cap = min(
+                    self.throttle_max_delay,
+                    5.0 * 2 ** min(throttle_attempt - 1, 6),
+                )
+                delay = random.uniform(delay_cap / 2.0, delay_cap)
+                logger.warning(
+                    "Bedrock throttled %s; application retry %d/%d in %.1fs",
+                    model,
+                    throttle_attempt,
+                    self.throttle_retries,
+                    delay,
+                )
+                time.sleep(delay)
+
 
 def bedrock_schema(value: Any) -> Any:
     if isinstance(value, dict):
@@ -193,6 +232,17 @@ def bedrock_tool_schema(value: Any) -> Any:
     if isinstance(value, list):
         return [bedrock_tool_schema(item) for item in value]
     return value
+
+
+def bedrock_error_code(exc: Exception) -> str | None:
+    response = getattr(exc, "response", None)
+    if not isinstance(response, dict):
+        return None
+    error = response.get("Error")
+    if not isinstance(error, dict):
+        return None
+    code = error.get("Code")
+    return code if isinstance(code, str) else None
 
 
 def bedrock_resource_type(model: str) -> str:

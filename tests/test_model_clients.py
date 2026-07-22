@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from botocore.exceptions import ClientError
 
 from irag.client import BedrockClient, OllamaClient, OpenRouterClient
 
@@ -67,6 +68,27 @@ class FakeBedrockSession:
 
     def get_credentials(self):
         return self.credentials
+
+
+class ThrottlingBedrockRuntime(FakeBedrockRuntime):
+    def __init__(self, failures):
+        super().__init__()
+        self.failures = failures
+        self.calls = 0
+
+    def converse(self, **request):
+        self.calls += 1
+        if self.calls <= self.failures:
+            raise ClientError(
+                {
+                    "Error": {
+                        "Code": "ThrottlingException",
+                        "Message": "Too many requests",
+                    }
+                },
+                "Converse",
+            )
+        return super().converse(**request)
 
 
 def test_ollama_client_uses_native_structured_format(monkeypatch):
@@ -280,6 +302,30 @@ def test_bedrock_nova_uses_forced_tool_for_structured_output():
     assert "additionalProperties" not in schema
     assert result["answer"] == "answer"
     assert result["api_response"]["stop_reason"] == "tool_use"
+
+
+def test_bedrock_continues_after_sdk_throttling_is_exhausted(monkeypatch):
+    runtime = ThrottlingBedrockRuntime(failures=2)
+    session = FakeBedrockSession()
+    session.runtime = runtime
+    sleeps = []
+    monkeypatch.setattr("irag.client.bedrock.time.sleep", sleeps.append)
+    client = BedrockClient(
+        region="eu-north-1",
+        generation_model="eu.amazon.nova-2-lite-v1:0",
+        auxiliary_model="eu.amazon.nova-2-lite-v1:0",
+        timeout=30,
+        retries=2,
+        throttle_retries=2,
+        throttle_max_delay=0,
+        session=session,
+    )
+
+    result = client.decide("question", [])
+
+    assert result["answer"] == "answer"
+    assert runtime.calls == 3
+    assert sleeps == [0, 0]
 
 
 def test_bedrock_client_accepts_bearer_token(monkeypatch):
