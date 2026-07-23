@@ -399,6 +399,37 @@ def test_bedrock_retries_malformed_tool_response(monkeypatch):
     assert sleeps == [0]
 
 
+def test_bedrock_uses_fail_safe_abstention_after_invalid_decisions(monkeypatch):
+    runtime = MalformedBedrockRuntime(failures=100)
+    session = FakeBedrockSession()
+    session.runtime = runtime
+    sleeps = []
+    monkeypatch.setattr("irag.client.bedrock.time.sleep", sleeps.append)
+    client = BedrockClient(
+        region="eu-north-1",
+        generation_model="eu.amazon.nova-2-lite-v1:0",
+        auxiliary_model="eu.amazon.nova-2-lite-v1:0",
+        timeout=30,
+        retries=2,
+        response_retries=10,
+        response_max_delay=0,
+        decision_response_retries=1,
+        session=session,
+    )
+
+    result = client.decide("question", [])
+
+    assert result["abstain"] is True
+    assert result["answer"] == ""
+    assert result["evidence_ids"] == []
+    assert result["api_response"]["fallback"] == (
+        "invalid_structured_decision_as_abstention"
+    )
+    assert result["api_response"]["response_attempts"] == 2
+    assert runtime.calls == 2
+    assert sleeps == [0]
+
+
 def test_bedrock_accepts_abstention_without_redundant_answer():
     session = FakeBedrockSession()
     session.runtime = AbstentionWithoutAnswerBedrockRuntime()

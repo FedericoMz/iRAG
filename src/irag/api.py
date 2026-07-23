@@ -514,4 +514,5 @@ def make_model_client(request: ExperimentRequest) -> BaseModelClient:
         throttle_max_delay=settings.bedrock_throttle_max_delay,
         response_retries=settings.bedrock_response_retries,
         response_max_delay=settings.bedrock_response_max_delay,
+        decision_response_retries=settings.bedrock_decision_response_retries,
     )

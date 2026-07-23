@@ -66,6 +66,9 @@ class Settings:
     bedrock_response_max_delay: float = float(
         os.getenv("BEDROCK_RESPONSE_MAX_DELAY", "10")
     )
+    bedrock_decision_response_retries: int = int(
+        os.getenv("BEDROCK_DECISION_RESPONSE_RETRIES", "3")
+    )
 
 
 settings = Settings()

@@ -36,6 +36,7 @@ class BedrockClient(BaseModelClient):
         throttle_max_delay: float = 60.0,
         response_retries: int = 10,
         response_max_delay: float = 10.0,
+        decision_response_retries: int = 3,
         profile: str | None = None,
         session: Any | None = None,
     ) -> None:
@@ -49,6 +50,7 @@ class BedrockClient(BaseModelClient):
         self.throttle_max_delay = throttle_max_delay
         self.response_retries = response_retries
         self.response_max_delay = response_max_delay
+        self.decision_response_retries = decision_response_retries
 
         client_config = None
         if session is None:
@@ -89,6 +91,7 @@ class BedrockClient(BaseModelClient):
                 "throttle_max_delay": self.throttle_max_delay,
                 "response_retries": self.response_retries,
                 "response_max_delay": self.response_max_delay,
+                "decision_response_retries": self.decision_response_retries,
             }
             for model in {self.generation_model, self.auxiliary_model}
         }
@@ -154,6 +157,12 @@ class BedrockClient(BaseModelClient):
         }
         started = time.perf_counter()
         response_attempt = 0
+        fallback_used = False
+        max_response_retries = (
+            self.decision_response_retries
+            if schema_name == "salesx_decision"
+            else self.response_retries
+        )
         while True:
             try:
                 response = self._converse_with_throttle_backoff(request, model)
@@ -170,7 +179,26 @@ class BedrockClient(BaseModelClient):
                 )
                 break
             except (KeyError, StopIteration, TypeError, ValueError) as exc:
-                if response_attempt >= self.response_retries:
+                if response_attempt >= max_response_retries:
+                    if schema_name == "salesx_decision":
+                        fallback_used = True
+                        result = {
+                            "answer": "",
+                            "abstain": True,
+                            "evidence_ids": [],
+                            "reason": (
+                                "The model did not return a valid structured decision "
+                                f"after {response_attempt + 1} attempts; treated as an "
+                                "abstention."
+                            ),
+                        }
+                        logger.error(
+                            "Bedrock returned invalid decision output from %s after "
+                            "%d attempts; using fail-safe abstention",
+                            model,
+                            response_attempt + 1,
+                        )
+                        break
                     raise RuntimeError(
                         f"Bedrock model {model} returned an invalid response after "
                         f"{response_attempt + 1} attempts: {response!r}"
@@ -188,7 +216,7 @@ class BedrockClient(BaseModelClient):
                     response.get("stopReason"),
                     response.get("ResponseMetadata", {}).get("RequestId"),
                     response_attempt,
-                    self.response_retries,
+                    max_response_retries,
                     delay,
                 )
                 time.sleep(delay)
@@ -199,6 +227,13 @@ class BedrockClient(BaseModelClient):
             "usage": response.get("usage"),
             "metrics": response.get("metrics"),
         }
+        if fallback_used:
+            result["api_response"].update(
+                {
+                    "fallback": "invalid_structured_decision_as_abstention",
+                    "response_attempts": response_attempt + 1,
+                }
+            )
         return result, elapsed
 
     def _converse_with_throttle_backoff(
