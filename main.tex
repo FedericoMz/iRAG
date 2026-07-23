@@ -234,7 +234,7 @@ The system returns to SO if $\mathrm{FEA}(M)<\beta$, and may transition to DS if
 \textbf{Deferring Surrogate.}
 $M$ becomes the primary decision-maker\footnote{Leaving the model in control may render XXX a \textit{high-risk AI system} under the EU AI Act, so the DS state should be employed responsibly and only in low-risk contexts; the Act's exclusion for systems not intended to replace or influence a previously completed human assessment without proper review supports the use of the SC state under appropriate supervision.}: for each $t$, $M$ produces $t_M$, and $H$ is consulted if $M$ abstains. Otherwise, $t_M$ becomes the final decision. Autonomous decisions do not normally update $\mathrm{FEA}(M)$, since they are not compared with a corresponding human decision. However, $H$ may review and override an autonomous decision. If the decision is flagged as incorrect, a new observation with $\delta=0$ is recorded and $\mathrm{FEA}(M)$ is updated. The system returns to SO if the updated $\mathrm{FEA}(M)$ is lower than $\beta$. Otherwise, it remains in DS unless the human explicitly retakes control.
 
-To obtain systematic post-release ground truth, a quarter entered in DS begins with a supervised recalibration window of $B$ tickets. The CEO acts as an oracle supervisor during this window: $t_F\gets t_{\mathrm{CEO}}$, while each non-abstaining $t_M$ is compared with $t_{\mathrm{CEO}}$ and updates FEA. Autonomy is restored after ticket $B$ only if $\mathrm{FEA}(M)>\gamma$; otherwise the system falls back to SC, or to SO when $\mathrm{FEA}(M)<\beta$. This makes release-boundary review an explicit concept-drift safeguard rather than assuming that incorrect autonomous decisions will eventually be detected.
+To obtain systematic post-release ground truth without introducing another system mode, a quarter entered in DS explicitly returns to SC for its first $B$ tickets. The CEO acts as the human supervisor during this window, so $t_H=t_{\mathrm{CEO}}$; otherwise, the ordinary SC procedure is unchanged, including its configured response to disputed model suggestions. Each non-abstaining $t_M$ is compared with the CEO answer and updates FEA. Transitions out of SC are suspended during the window. After ticket $B$, the usual thresholds apply: the system re-enters DS only if $\mathrm{FEA}(M)>\gamma$, remains in SC for intermediate values, and enters SO if $\mathrm{FEA}(M)<\beta$. This makes release-boundary review an explicit concept-drift safeguard rather than assuming that incorrect autonomous decisions will eventually be detected.
 
 \begin{algorithm}[H]
 \small
@@ -252,11 +252,15 @@ To obtain systematic post-release ground truth, a quarter entered in DS begins w
   $A\gets\lambda A+\delta$; $W\gets\lambda W+1$; $v\gets v+1$; $\mathrm{FEA}\gets A/W$\;
 }
 
-$D,D_E\gets\emptyset$; $A,W,v\gets0$; $\mathit{state}\gets SO$\;
+$D,D_E\gets\emptyset$; $A,W,v\gets0$; $\mathit{state}\gets SO$; $\mathit{reviewQuarter}\gets\mathit{false}$\;
 
 \For{$i\gets1$ \KwTo $|T|$}{
     $m\gets|D|$; $\mathcal{C}\gets\emptyset$\;
-    $\mathit{review}\gets\mathit{quarterStartedInDS}(t_i)\wedge\mathit{firstBOfQuarter}(t_i,B)$\;
+    \If{$\mathit{firstOfQuarter}(t_i)$}{
+        $\mathit{reviewQuarter}\gets(\mathit{state}=DS)$\;
+        \If{$\mathit{reviewQuarter}$}{$\mathit{state}\gets SC$}
+    }
+    $\mathit{review}\gets\mathit{reviewQuarter}\wedge\mathit{firstBOfQuarter}(t_i,B)$\;
     \If{$D\neq\emptyset$}{
         compute $c_j$ and $S_j$ for all $r_j\in D$ as in Eq.~\eqref{eq:score}; $\mathcal{C}\gets \mathit{retrieve}(\mathit{topK}(\{r_j:c_j>0\wedge c_j\geq\theta_{\mathrm{sem}}\},S,K))$\;
     }
@@ -267,18 +271,13 @@ $D,D_E\gets\emptyset$; $A,W,v\gets0$; $\mathit{state}\gets SO$\;
         \Else{$t_H\gets H(t_i)$}
         $t_F\gets t_H$\;
         \If{$t_M\neq\emptyset$}{
-            \If{$\neg\mathit{review}\wedge\mathit{state}=SC \wedge \neg M_A^{\mathrm{cov}}(t_M,t_H)$}{
+            \If{$\mathit{state}=SC \wedge \neg M_A^{\mathrm{cov}}(t_M,t_H)$}{
                 $\mathit{present}(t_M)$; $t_F\gets H(t_i,t_M)$ \tcp*{may revise}
             }
             \FnUpdate{$\mathbb{1}[M_A^{\mathrm{cov}}(t_M,t_F)]$}\;
         }
-        \uIf{$\mathit{review}\wedge\mathit{endOfReview}(t_i,B)$}{
-            \uIf{$\mathrm{FEA}<\beta$}{$\mathit{state}\gets SO$}
-            \ElseIf{$\mathrm{FEA}\leq\gamma$}{$\mathit{state}\gets SC$}
-            \Else{$\mathit{state}\gets DS$}
-        }
-        \ElseIf{$\mathit{state}=SO \wedge \mathrm{FEA}>\alpha \wedge v\geq N$}{$\mathit{state}\gets SC$}
-        \ElseIf{$\mathit{state}=SC$}{
+        \uIf{$\mathit{state}=SO \wedge \mathrm{FEA}>\alpha \wedge v\geq N$}{$\mathit{state}\gets SC$}
+        \ElseIf{$\mathit{state}=SC\wedge(\neg\mathit{review}\vee\mathit{endOfReview}(t_i,B))$}{
             \uIf{$\mathrm{FEA}<\beta$}{$\mathit{state}\gets SO$}
             \ElseIf{$\mathrm{FEA}>\gamma \vee \mathit{authorise}_H(DS)$}{$\mathit{state}\gets DS$}
         }
@@ -309,7 +308,7 @@ We evaluate \textsc{XXX} on a synthetic benchmark simulating customer-support ti
 
 \textbf{Human Profiles.} Following~\cite{Mazzoni2024frank}, we simulate three human profiles by perturbing gold answers: \textit{CEO} (oracle, always correct), \textit{Domain Expert} (reliable only within one declared topic), and \textit{Intern} (reliable on easy tickets only, and systematically defaults to the previous quarter's answer on the drift subset). We additionally evaluate an \textit{informed-mixture} assignment and a \textit{CEO-bootstrapped informed-mixture}, giving five profile/assignment settings in total. Each is crossed with an \textit{acceptance regime}, governing how the human responds to a disagreement in the SC state: \textit{always-accept} ($t_F\equiv t_M$, $\delta=1$ unconditionally), \textit{never-accept} ($t_F\equiv t_H$), \textit{stochastic} (50\% acceptance), or \textit{gold-similarity}. In the gold-similarity regime, a disputed suggestion is accepted iff the auxiliary comparison already used for evaluation reports that $t_M$ covers the gold answer. This is an oracle experimental condition rather than a deployable policy, because gold answers are not normally available at decision time. Under \textit{never-accept}, the profiles also never transition to DS, if prompted.
 
-\textbf{Experimental Conditions.} Quarters are processed in order ($Q_1\!\to\!Q_4$) to preserve drift events; tickets within a quarter are shuffled, with each configuration repeated $R$ times over independent permutations. Under the informed-mixture assignment, tickets are routed by competence: hard tickets and out-of-domain normal tickets (50\% of the time) go to the CEO; in-domain normal/easy tickets go to the Domain Expert; out-of-domain easy tickets go to the Intern; and the remaining out-of-domain normal tickets go to the Domain Expert (acting out-of-domain), with the one genuinely ambiguous case resolved by an independently re-sampled coin flip per repetition. Under this setting, $\mathrm{FEA}(M)$ reflects reliability against the aggregate assignment policy rather than a single profile. The CEO-bootstrapped variant assigns every $Q_1$ ticket to the CEO and locks the system in SO during $Q_1$, while still constructing the KB and updating FEA. Normal informed-mixture routing and state transitions begin with $Q_2$; consequently, the first possible transition is SO$\to$SC and the system cannot enter DS directly from the bootstrap phase. This variant tests whether a trusted, gold-aligned initial supervisor prevents the human-agreement signal from trapping an otherwise accurate model in SO. In every condition, a quarter that begins in DS routes its first $B=100$ tickets to the CEO for the supervised recalibration described above. As a metric, we report the error rate between $t_F$ and the gold answer, judged by an LLM call to $M_A$, over all decisions and separately on the drift subset. We report $Q_1$ separately for the bootstrapped variant because its oracle assignment makes its human error rate zero by construction. The never-accept regime for each single profile serves as the unassisted baseline: XXX's suggestions never influence the final decision and DS remains disabled.
+\textbf{Experimental Conditions.} Quarters are processed in order ($Q_1\!\to\!Q_4$) to preserve drift events; tickets within a quarter are shuffled, with each configuration repeated $R$ times over independent permutations. Under the informed-mixture assignment, tickets are routed by competence: hard tickets and out-of-domain normal tickets (50\% of the time) go to the CEO; in-domain normal/easy tickets go to the Domain Expert; out-of-domain easy tickets go to the Intern; and the remaining out-of-domain normal tickets go to the Domain Expert (acting out-of-domain), with the one genuinely ambiguous case resolved by an independently re-sampled coin flip per repetition. Under this setting, $\mathrm{FEA}(M)$ reflects reliability against the aggregate assignment policy rather than a single profile. The CEO-bootstrapped variant assigns every $Q_1$ ticket to the CEO and locks the system in SO during $Q_1$, while still constructing the KB and updating FEA. Normal informed-mixture routing and state transitions begin with $Q_2$; consequently, the first possible transition is SO$\to$SC and the system cannot enter DS directly from the bootstrap phase. This variant tests whether a trusted, gold-aligned initial supervisor prevents the human-agreement signal from trapping an otherwise accurate model in SO. In every condition, a quarter that begins in DS explicitly returns to SC and routes its first $B=100$ tickets to the CEO before permitting another state transition. As a metric, we report the error rate between $t_F$ and the gold answer, judged by an LLM call to $M_A$, over all decisions and separately on the drift subset. We report $Q_1$ separately for the bootstrapped variant because its oracle assignment makes its human error rate zero by construction. The never-accept regime for each single profile serves as the unassisted baseline: XXX's suggestions never influence the final decision and DS remains disabled.
 Table~\ref{tab:defaults} lists the default parameters used in our experiments. We choose $\lambda\approx0.99861$, giving a retrieval half-life of $\approx$ one quarter.
 
 \begin{table}[h]
@@ -322,7 +321,7 @@ $\theta_{\mathrm{sem}}$ & $0.7$ & raw-cosine gate retaining high recall while ex
 $K$ & $5$ & standard breadth/dilution trade-off \\
 $\alpha,\beta,\gamma$ & $0.70,0.55,0.80$ & satisfy $\beta<\alpha\le\gamma$; require stronger evidence before autonomy \\
 $N$ & $30$ & guards early-decision bias \\
-$B$ & $100$ & CEO-labelled release-boundary sample for detecting drift before resuming DS \\
+$B$ & $100$ & CEO-routed SC window for detecting release-boundary drift before resuming DS \\
 $\lambda$ & $\approx0.99861$ & half-life $=X$ insertions ($\approx1$ quarter) \\
 $R$ & $10$ & repetitions per configuration \\
 \bottomrule

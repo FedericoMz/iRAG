@@ -205,8 +205,8 @@ class ExperimentRunner:
                 "ds_quarterly_ceo_tickets": 100,
                 "lambda": 0.99861,
                 "autonomous_review": (
-                    "CEO supervises the first 100 tickets of each quarter "
-                    "that begins in DS"
+                    "A quarter beginning in DS returns to SC and routes its "
+                    "first 100 tickets to the CEO"
                 ),
                 "manual_ds_authorisation": "not exercised by the simulated profiles",
             },
@@ -270,6 +270,33 @@ class ExperimentRunner:
             rng.shuffle(quarter_records)
             quarter_total = len(quarter_records)
             quarter_started_in_ds = context.state == SystemState.DS
+            if (
+                quarter_started_in_ds
+                and condition.ds_quarterly_ceo_tickets > 0
+                and quarter_records
+            ):
+                context.state = SystemState.SC
+                recent_accuracy = (
+                    sum(context.recent_model_gold) / len(context.recent_model_gold)
+                    if context.recent_model_gold
+                    else None
+                )
+                context.transitions.append(
+                    {
+                        "ticket_id": quarter_records[0].id,
+                        "global_position": global_position + 1,
+                        "observation": reliability.observations,
+                        "from": SystemState.DS.value,
+                        "to": SystemState.SC.value,
+                        "fea": reliability.fea,
+                        "recent_model_gold_accuracy": recent_accuracy,
+                        "recent_model_gold_window_size": len(
+                            context.recent_model_gold
+                        ),
+                        "fea_minus_gold_accuracy": None,
+                        "trigger": "quarterly_ceo_review",
+                    }
+                )
             for quarter_position, record in enumerate(quarter_records, start=1):
                 global_position += 1
                 ds_quarter_review = is_ds_quarter_review_ticket(
@@ -505,7 +532,7 @@ class ExperimentRunner:
                         else None
                     ),
                     "trigger": (
-                        "quarterly_ceo_recalibration"
+                        "quarterly_ceo_review_completion"
                         if ds_quarter_review
                         and quarter_position
                         == condition.ds_quarterly_ceo_tickets
@@ -551,13 +578,7 @@ class ExperimentRunner:
         final_is_correct = human.is_correct
         correctness_source = "dataset_profile_label"
         final_origin = "human"
-        component = (
-            "unassisted_human"
-            if not condition.system_enabled
-            else "quarterly_ceo_recalibration"
-            if ds_quarter_review
-            else "assisted"
-        )
+        component = "unassisted_human" if not condition.system_enabled else "assisted"
 
         if condition.system_enabled:
             retrieved = retrieve(
@@ -570,7 +591,7 @@ class ExperimentRunner:
             model_decision = self.client.decide(record.question, retrieved)
             abstained = bool(model_decision["abstain"])
 
-            if state_before in (SystemState.SO, SystemState.SC) or ds_quarter_review:
+            if state_before in (SystemState.SO, SystemState.SC):
                 if not abstained:
                     judgment = self.client.judge(
                         model_decision["answer"], human.answer
@@ -635,12 +656,13 @@ class ExperimentRunner:
                     ds_quarter_review
                     and quarter_position == condition.ds_quarterly_ceo_tickets
                 ):
-                    self._complete_ds_quarter_review(
+                    self._transition_after_observation(
                         record,
                         condition,
                         reliability,
                         context,
                         global_position,
+                        trigger="quarterly_ceo_review_completion",
                     )
                 elif not ds_quarter_review and not is_ceo_bootstrap_ticket(
                     record, condition
@@ -722,6 +744,7 @@ class ExperimentRunner:
         reliability: Reliability,
         context: RunContext,
         global_position: int,
+        trigger: str = "reliability_threshold",
     ) -> None:
         previous = context.state
         if previous == SystemState.SO:
@@ -761,42 +784,7 @@ class ExperimentRunner:
                         and context.state == SystemState.DS
                         else None
                     ),
-                    "trigger": "reliability_threshold",
-                }
-            )
-
-    @staticmethod
-    def _complete_ds_quarter_review(
-        record: TicketRecord,
-        condition: ExperimentCondition,
-        reliability: Reliability,
-        context: RunContext,
-        global_position: int,
-    ) -> None:
-        previous = context.state
-        if reliability.fea < condition.beta:
-            context.state = SystemState.SO
-        elif reliability.fea <= condition.gamma:
-            context.state = SystemState.SC
-
-        if context.state != previous:
-            recent_accuracy = (
-                sum(context.recent_model_gold) / len(context.recent_model_gold)
-                if context.recent_model_gold
-                else None
-            )
-            context.transitions.append(
-                {
-                    "ticket_id": record.id,
-                    "global_position": global_position,
-                    "observation": reliability.observations,
-                    "from": previous.value,
-                    "to": context.state.value,
-                    "fea": reliability.fea,
-                    "recent_model_gold_accuracy": recent_accuracy,
-                    "recent_model_gold_window_size": len(context.recent_model_gold),
-                    "fea_minus_gold_accuracy": None,
-                    "trigger": "quarterly_ceo_recalibration",
+                    "trigger": trigger,
                 }
             )
 

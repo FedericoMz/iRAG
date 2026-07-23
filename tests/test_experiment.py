@@ -389,7 +389,7 @@ def test_ceo_bootstrap_routes_q1_to_ceo_and_locks_silent_observer():
     assert tickets[2]["state_after"] == "skeptical_contestator"
 
 
-def test_ds_quarter_starts_with_ceo_recalibration_and_retains_ds():
+def test_ds_quarter_returns_to_sc_for_ceo_review_then_reenters_ds():
     condition = ExperimentCondition(
         name="quarterly-ds-review",
         assignment_strategy=AssignmentStrategy.INFORMED,
@@ -431,9 +431,10 @@ def test_ds_quarter_starts_with_ceo_recalibration_and_retains_ds():
     assert [ticket["assigned_profile"] for ticket in q2_tickets[:2]] == ["ceo", "ceo"]
     assert all(ticket["ds_quarter_review"] for ticket in q2_tickets[:2])
     assert all(
-        ticket["metric_component"] == "quarterly_ceo_recalibration"
+        ticket["state_before"] == "skeptical_contestator"
         for ticket in q2_tickets[:2]
     )
+    assert all(ticket["metric_component"] == "assisted" for ticket in q2_tickets[:2])
     assert all(ticket["final_origin"] == "human" for ticket in q2_tickets[:2])
     assert q2_tickets[1]["state_after"] == "deferring_surrogate"
     assert q2_tickets[2]["assigned_profile"] == "intern"
@@ -442,7 +443,7 @@ def test_ds_quarter_starts_with_ceo_recalibration_and_retains_ds():
     assert q2_tickets[2]["final_origin"] == "model"
 
 
-def test_ds_quarter_recalibration_falls_back_and_resumes_deterministically():
+def test_ds_quarter_ceo_review_falls_back_and_resumes_deterministically():
     class SequencedClient(FakeClient):
         def __init__(self, decisions):
             self.decisions = iter(decisions)
@@ -458,7 +459,7 @@ def test_ds_quarter_recalibration_falls_back_and_resumes_deterministically():
     condition = ExperimentCondition(
         name="quarterly-ds-fallback",
         assignment_strategy=AssignmentStrategy.INFORMED,
-        acceptance_regime=AcceptanceRegime.ALWAYS,
+        acceptance_regime=AcceptanceRegime.GOLD_SIMILARITY,
         repetitions=1,
         alpha=0.7,
         beta=0.55,
@@ -509,7 +510,7 @@ def test_ds_quarter_recalibration_falls_back_and_resumes_deterministically():
     ]
     assert q2_tickets[1]["fea_after"] == 0.5
     assert q2_tickets[1]["state_after"] == "silent_observer"
-    assert full["transitions"][-1]["trigger"] == "quarterly_ceo_recalibration"
+    assert full["transitions"][-1]["trigger"] == "quarterly_ceo_review_completion"
 
     resumed = ExperimentRunner(
         FakeDataset(),
