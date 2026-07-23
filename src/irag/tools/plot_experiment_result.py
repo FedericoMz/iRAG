@@ -82,7 +82,8 @@ def plot_result(
     condition_number: int,
     repetition_number: int,
 ) -> None:
-    if result_path.name.endswith(".partial.jsonl"):
+    is_partial = result_path.name.endswith(".partial.jsonl")
+    if is_partial:
         tickets = [
             json.loads(line)
             for line in result_path.read_text(encoding="utf-8").splitlines()
@@ -194,13 +195,46 @@ def plot_result(
             bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.75},
         )
 
+    for ticket in tickets:
+        if ticket["state_before"] == ticket["state_after"]:
+            continue
+        position = ticket["global_position"]
+        state_labels = {
+            "silent_observer": "SO",
+            "skeptical_contestator": "SC",
+            "deferring_surrogate": "DS",
+        }
+        label = (
+            f"{state_labels[ticket['state_before']]}→"
+            f"{state_labels[ticket['state_after']]}"
+        )
+        fea_axis.axvline(
+            position,
+            color="#111827",
+            linestyle="-.",
+            linewidth=1.2,
+            alpha=0.75,
+        )
+        fea_axis.text(
+            position + 3,
+            0.045,
+            label,
+            transform=fea_axis.get_xaxis_transform(),
+            rotation=90,
+            ha="left",
+            va="bottom",
+            fontsize=9,
+            color="#111827",
+        )
+
     fea_axis.set_xlim(1, len(tickets))
     fea_axis.set_ylim(0, 1)
     fea_axis.set_xlabel("Ticket processing order")
     fea_axis.set_ylabel("Rate")
     fea_axis.grid(axis="both", color="#d1d5db", linewidth=0.7, alpha=0.55)
     fea_axis.set_title(
-        f"Early Run Diagnostics — {configuration['name']} — "
+        f"{'Live' if is_partial else 'Final'} Run Diagnostics — "
+        f"{configuration['name']} — "
         f"Repetition {repetition_number} — {len(tickets)} tickets",
         pad=18,
     )

@@ -156,8 +156,9 @@ class ExperimentCondition(StrictModel):
     seed: int = 20260717
     alpha: float = Field(default=0.7, ge=0, le=1)
     beta: float = Field(default=0.55, ge=0, le=1)
-    gamma: float = Field(default=0.75, ge=0, le=1)
+    gamma: float = Field(default=0.8, ge=0, le=1)
     minimum_observations: int = Field(default=30, ge=1)
+    ds_quarterly_ceo_tickets: int = Field(default=100, ge=0, le=10000)
     top_k: int = Field(default=5, ge=1, le=100)
     semantic_threshold: float = Field(default=0.7, ge=0, le=1)
     decay: float = Field(default=0.99861, gt=0, le=1, alias="lambda")

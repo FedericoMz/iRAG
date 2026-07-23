@@ -389,6 +389,143 @@ def test_ceo_bootstrap_routes_q1_to_ceo_and_locks_silent_observer():
     assert tickets[2]["state_after"] == "skeptical_contestator"
 
 
+def test_ds_quarter_starts_with_ceo_recalibration_and_retains_ds():
+    condition = ExperimentCondition(
+        name="quarterly-ds-review",
+        assignment_strategy=AssignmentStrategy.INFORMED,
+        acceptance_regime=AcceptanceRegime.ALWAYS,
+        repetitions=1,
+        alpha=0.7,
+        beta=0.55,
+        gamma=0.8,
+        minimum_observations=1,
+        ds_quarterly_ceo_tickets=2,
+    )
+    request = ExperimentRequest(
+        name="quarterly DS review",
+        quarters=[
+            QuarterBatch(
+                quarter=Quarter.Q1,
+                records=[
+                    make_ticket(1, "normal", "billing"),
+                    make_ticket(2, "normal", "billing"),
+                ],
+            ),
+            QuarterBatch(
+                quarter=Quarter.Q2,
+                records=[
+                    make_ticket(1, "easy", "reporting", quarter="Q2"),
+                    make_ticket(2, "easy", "reporting", quarter="Q2"),
+                    make_ticket(3, "easy", "reporting", quarter="Q2"),
+                ],
+            ),
+        ],
+        conditions=[condition],
+    )
+
+    result = ExperimentRunner(FakeDataset(), FakeClient()).run("review-id", request)
+    tickets = result["conditions"][0]["repetitions"][0]["tickets"]
+    q2_tickets = tickets[2:]
+
+    assert tickets[1]["state_after"] == "deferring_surrogate"
+    assert [ticket["assigned_profile"] for ticket in q2_tickets[:2]] == ["ceo", "ceo"]
+    assert all(ticket["ds_quarter_review"] for ticket in q2_tickets[:2])
+    assert all(
+        ticket["metric_component"] == "quarterly_ceo_recalibration"
+        for ticket in q2_tickets[:2]
+    )
+    assert all(ticket["final_origin"] == "human" for ticket in q2_tickets[:2])
+    assert q2_tickets[1]["state_after"] == "deferring_surrogate"
+    assert q2_tickets[2]["assigned_profile"] == "intern"
+    assert not q2_tickets[2]["ds_quarter_review"]
+    assert q2_tickets[2]["state_before"] == "deferring_surrogate"
+    assert q2_tickets[2]["final_origin"] == "model"
+
+
+def test_ds_quarter_recalibration_falls_back_and_resumes_deterministically():
+    class SequencedClient(FakeClient):
+        def __init__(self, decisions):
+            self.decisions = iter(decisions)
+
+        def decide(self, question, retrieved):
+            return {
+                "answer": next(self.decisions),
+                "abstain": False,
+                "evidence_ids": [],
+                "reason": "test",
+            }
+
+    condition = ExperimentCondition(
+        name="quarterly-ds-fallback",
+        assignment_strategy=AssignmentStrategy.INFORMED,
+        acceptance_regime=AcceptanceRegime.ALWAYS,
+        repetitions=1,
+        alpha=0.7,
+        beta=0.55,
+        gamma=0.8,
+        minimum_observations=1,
+        ds_quarterly_ceo_tickets=2,
+        **{"lambda": 1.0},
+    )
+    request = ExperimentRequest(
+        name="quarterly DS fallback",
+        quarters=[
+            QuarterBatch(
+                quarter=Quarter.Q1,
+                records=[
+                    make_ticket(1, "normal", "billing"),
+                    make_ticket(2, "normal", "billing"),
+                ],
+            ),
+            QuarterBatch(
+                quarter=Quarter.Q2,
+                records=[
+                    make_ticket(1, "easy", "reporting", quarter="Q2"),
+                    make_ticket(2, "easy", "reporting", quarter="Q2"),
+                    make_ticket(3, "easy", "reporting", quarter="Q2"),
+                ],
+            ),
+        ],
+        conditions=[condition],
+    )
+    runner = ExperimentRunner(
+        FakeDataset(),
+        SequencedClient(["correct", "correct", "wrong", "wrong", "correct"]),
+    )
+    full = runner.run_repetition(
+        "fallback-id",
+        request,
+        condition,
+        0,
+        condition.seed,
+    )
+    q2_tickets = full["tickets"][2:]
+
+    assert all(ticket["assigned_profile"] == "ceo" for ticket in q2_tickets[:2])
+    assert all(ticket["final_answer_is_correct"] for ticket in q2_tickets[:2])
+    assert [ticket["reliability_observation"] for ticket in q2_tickets[:2]] == [
+        0,
+        0,
+    ]
+    assert q2_tickets[1]["fea_after"] == 0.5
+    assert q2_tickets[1]["state_after"] == "silent_observer"
+    assert full["transitions"][-1]["trigger"] == "quarterly_ceo_recalibration"
+
+    resumed = ExperimentRunner(
+        FakeDataset(),
+        SequencedClient(["correct"]),
+    ).run_repetition(
+        "fallback-id",
+        request,
+        condition,
+        0,
+        condition.seed,
+        resume_tickets=full["tickets"][:4],
+    )
+
+    assert resumed == full
+
+
 def test_parallel_runner_executes_repetitions_concurrently():
     records = [make_ticket(number) for number in range(1, 4)]
     condition = ExperimentCondition(
@@ -486,7 +623,8 @@ def test_paper_suite_expands_declared_grid():
     )
     assert request.conditions[-1].decay == 1.0
     assert request.conditions[0].alpha == 0.7
-    assert request.conditions[0].gamma == 0.75
+    assert request.conditions[0].gamma == 0.8
+    assert request.conditions[0].ds_quarterly_ceo_tickets == 100
     assert any(
         condition.assignment_strategy
         == AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED

@@ -196,7 +196,8 @@ def test_parallel_request_supports_ceo_bootstrapped_informed_mixture():
         == AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED
     )
     assert condition.alpha == 0.7
-    assert condition.gamma == 0.75
+    assert condition.gamma == 0.8
+    assert condition.ds_quarterly_ceo_tickets == 100
     assert condition.acceptance_regime == AcceptanceRegime.GOLD_SIMILARITY
 
 
