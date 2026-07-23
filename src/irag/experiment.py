@@ -202,11 +202,11 @@ class ExperimentRunner:
                 "beta": 0.55,
                 "gamma": 0.8,
                 "minimum_observations": 30,
-                "ds_quarterly_ceo_tickets": 100,
+                "quarterly_ceo_tickets": 100,
                 "lambda": 0.99861,
                 "autonomous_review": (
-                    "A quarter beginning in DS returns to SC and routes its "
-                    "first 100 tickets to the CEO"
+                    "Every quarter routes its first 100 tickets to the CEO; "
+                    "a quarter beginning in DS first returns to SC"
                 ),
                 "manual_ds_authorisation": "not exercised by the simulated profiles",
             },
@@ -272,7 +272,7 @@ class ExperimentRunner:
             quarter_started_in_ds = context.state == SystemState.DS
             if (
                 quarter_started_in_ds
-                and condition.ds_quarterly_ceo_tickets > 0
+                and condition.quarterly_ceo_tickets > 0
                 and quarter_records
             ):
                 context.state = SystemState.SC
@@ -299,14 +299,13 @@ class ExperimentRunner:
                 )
             for quarter_position, record in enumerate(quarter_records, start=1):
                 global_position += 1
-                ds_quarter_review = is_ds_quarter_review_ticket(
-                    quarter_started_in_ds,
+                quarterly_ceo_review = is_quarterly_ceo_review_ticket(
                     quarter_position,
                     condition,
                 )
                 assigned_profile = (
                     Profile.CEO
-                    if ds_quarter_review
+                    if quarterly_ceo_review
                     else assign_profile(record, condition, rng)
                 )
                 human = human_answer(
@@ -326,7 +325,7 @@ class ExperimentRunner:
                         rng=rng,
                         global_position=global_position,
                         quarter_position=quarter_position,
-                        ds_quarter_review=ds_quarter_review,
+                        quarterly_ceo_review=quarterly_ceo_review,
                     )
                     summary.observe(saved)
                     continue
@@ -340,7 +339,7 @@ class ExperimentRunner:
                     rng=rng,
                     global_position=global_position,
                     quarter_position=quarter_position,
-                    ds_quarter_review=ds_quarter_review,
+                    quarterly_ceo_review=quarterly_ceo_review,
                 )
                 summary.observe(output)
                 model_decision = output["model_decision"]
@@ -358,7 +357,7 @@ class ExperimentRunner:
                     quarter_tickets=quarter_total,
                     ticket_id=record.id,
                     assigned_profile=output["assigned_profile"],
-                    ds_quarter_review=output["ds_quarter_review"],
+                    quarterly_ceo_review=output["quarterly_ceo_review"],
                     state_before=output["state_before"],
                     state_after=output["state_after"],
                     retrieved_records=len(output["retrieved"]),
@@ -424,7 +423,7 @@ class ExperimentRunner:
         rng: random.Random,
         global_position: int,
         quarter_position: int,
-        ds_quarter_review: bool,
+        quarterly_ceo_review: bool,
     ) -> None:
         """Replay checkpointed state without repeating any model calls."""
         expected = {
@@ -471,7 +470,10 @@ class ExperimentRunner:
         model_decision = saved.get("model_decision")
         gold_judgment = saved_gold_judgment
         if (
-            (state_before in (SystemState.SO, SystemState.SC) or ds_quarter_review)
+            (
+                state_before in (SystemState.SO, SystemState.SC)
+                or quarterly_ceo_review
+            )
             and model_decision is not None
             and not bool(model_decision["abstain"])
             and gold_judgment is not None
@@ -533,9 +535,9 @@ class ExperimentRunner:
                     ),
                     "trigger": (
                         "quarterly_ceo_review_completion"
-                        if ds_quarter_review
+                        if quarterly_ceo_review
                         and quarter_position
-                        == condition.ds_quarterly_ceo_tickets
+                        == condition.quarterly_ceo_tickets
                         else "reliability_threshold"
                     ),
                 }
@@ -562,7 +564,7 @@ class ExperimentRunner:
         rng: random.Random,
         global_position: int,
         quarter_position: int,
-        ds_quarter_review: bool = False,
+        quarterly_ceo_review: bool = False,
     ) -> dict:
         state_before = context.state
         fea_before = reliability.fea
@@ -653,18 +655,19 @@ class ExperimentRunner:
                     )
 
                 if (
-                    ds_quarter_review
-                    and quarter_position == condition.ds_quarterly_ceo_tickets
+                    quarterly_ceo_review
+                    and quarter_position == condition.quarterly_ceo_tickets
                 ):
-                    self._transition_after_observation(
-                        record,
-                        condition,
-                        reliability,
-                        context,
-                        global_position,
-                        trigger="quarterly_ceo_review_completion",
-                    )
-                elif not ds_quarter_review and not is_ceo_bootstrap_ticket(
+                    if not is_ceo_bootstrap_ticket(record, condition):
+                        self._transition_after_observation(
+                            record,
+                            condition,
+                            reliability,
+                            context,
+                            global_position,
+                            trigger="quarterly_ceo_review_completion",
+                        )
+                elif not quarterly_ceo_review and not is_ceo_bootstrap_ticket(
                     record, condition
                 ):
                     self._transition_after_observation(
@@ -710,7 +713,7 @@ class ExperimentRunner:
             "quarter_position": quarter_position,
             "global_position": global_position,
             "assigned_profile": assigned_profile.value,
-            "ds_quarter_review": ds_quarter_review,
+            "quarterly_ceo_review": quarterly_ceo_review,
             "human_answer": human.answer,
             "human_answer_is_correct": human.is_correct,
             "state_before": state_before.value,
@@ -821,15 +824,13 @@ def is_ceo_bootstrap_ticket(
     )
 
 
-def is_ds_quarter_review_ticket(
-    quarter_started_in_ds: bool,
+def is_quarterly_ceo_review_ticket(
     quarter_position: int,
     condition: ExperimentCondition,
 ) -> bool:
     return (
         condition.system_enabled
-        and quarter_started_in_ds
-        and quarter_position <= condition.ds_quarterly_ceo_tickets
+        and quarter_position <= condition.quarterly_ceo_tickets
     )
 
 

@@ -152,6 +152,7 @@ def test_runner_reaches_contestation_then_autonomy():
         beta=0.1,
         gamma=0.9,
         minimum_observations=1,
+        quarterly_ceo_tickets=0,
     )
     request = ExperimentRequest(
         name="test",
@@ -186,6 +187,7 @@ def test_never_accept_regime_cannot_enter_autonomous_state():
         beta=0.1,
         gamma=0.9,
         minimum_observations=1,
+        quarterly_ceo_tickets=0,
     )
     request = ExperimentRequest(
         name="test",
@@ -248,6 +250,7 @@ def test_ceo_gold_judgment_reuses_human_comparison_when_suggestion_is_accepted()
         beta=0.1,
         gamma=1.0,
         minimum_observations=1,
+        quarterly_ceo_tickets=0,
     )
     request = ExperimentRequest(
         name="test",
@@ -283,6 +286,7 @@ def test_gold_similarity_accepts_gold_correct_disagreement():
         beta=0.1,
         gamma=1.0,
         minimum_observations=1,
+        quarterly_ceo_tickets=0,
     )
     request = ExperimentRequest(
         name="gold acceptance",
@@ -357,6 +361,7 @@ def test_ceo_bootstrap_routes_q1_to_ceo_and_locks_silent_observer():
         acceptance_regime=AcceptanceRegime.NEVER,
         repetitions=1,
         minimum_observations=1,
+        quarterly_ceo_tickets=1,
     )
     request = ExperimentRequest(
         name="ceo bootstrap",
@@ -384,7 +389,11 @@ def test_ceo_bootstrap_routes_q1_to_ceo_and_locks_silent_observer():
 
     assert [ticket["assigned_profile"] for ticket in tickets[:2]] == ["ceo", "ceo"]
     assert all(ticket["state_after"] == "silent_observer" for ticket in tickets[:2])
-    assert all(ticket["assigned_profile"] == "intern" for ticket in tickets[2:])
+    assert [ticket["assigned_profile"] for ticket in tickets[2:]] == [
+        "ceo",
+        "intern",
+    ]
+    assert tickets[2]["quarterly_ceo_review"]
     assert tickets[2]["state_before"] == "silent_observer"
     assert tickets[2]["state_after"] == "skeptical_contestator"
 
@@ -399,7 +408,7 @@ def test_ds_quarter_returns_to_sc_for_ceo_review_then_reenters_ds():
         beta=0.55,
         gamma=0.8,
         minimum_observations=1,
-        ds_quarterly_ceo_tickets=2,
+        quarterly_ceo_tickets=2,
     )
     request = ExperimentRequest(
         name="quarterly DS review",
@@ -409,6 +418,7 @@ def test_ds_quarter_returns_to_sc_for_ceo_review_then_reenters_ds():
                 records=[
                     make_ticket(1, "normal", "billing"),
                     make_ticket(2, "normal", "billing"),
+                    make_ticket(3, "normal", "billing"),
                 ],
             ),
             QuarterBatch(
@@ -425,11 +435,11 @@ def test_ds_quarter_returns_to_sc_for_ceo_review_then_reenters_ds():
 
     result = ExperimentRunner(FakeDataset(), FakeClient()).run("review-id", request)
     tickets = result["conditions"][0]["repetitions"][0]["tickets"]
-    q2_tickets = tickets[2:]
+    q2_tickets = tickets[3:]
 
-    assert tickets[1]["state_after"] == "deferring_surrogate"
+    assert tickets[2]["state_after"] == "deferring_surrogate"
     assert [ticket["assigned_profile"] for ticket in q2_tickets[:2]] == ["ceo", "ceo"]
-    assert all(ticket["ds_quarter_review"] for ticket in q2_tickets[:2])
+    assert all(ticket["quarterly_ceo_review"] for ticket in q2_tickets[:2])
     assert all(
         ticket["state_before"] == "skeptical_contestator"
         for ticket in q2_tickets[:2]
@@ -438,7 +448,7 @@ def test_ds_quarter_returns_to_sc_for_ceo_review_then_reenters_ds():
     assert all(ticket["final_origin"] == "human" for ticket in q2_tickets[:2])
     assert q2_tickets[1]["state_after"] == "deferring_surrogate"
     assert q2_tickets[2]["assigned_profile"] == "intern"
-    assert not q2_tickets[2]["ds_quarter_review"]
+    assert not q2_tickets[2]["quarterly_ceo_review"]
     assert q2_tickets[2]["state_before"] == "deferring_surrogate"
     assert q2_tickets[2]["final_origin"] == "model"
 
@@ -462,10 +472,10 @@ def test_ds_quarter_ceo_review_falls_back_and_resumes_deterministically():
         acceptance_regime=AcceptanceRegime.GOLD_SIMILARITY,
         repetitions=1,
         alpha=0.7,
-        beta=0.55,
+        beta=0.65,
         gamma=0.8,
         minimum_observations=1,
-        ds_quarterly_ceo_tickets=2,
+        quarterly_ceo_tickets=2,
         **{"lambda": 1.0},
     )
     request = ExperimentRequest(
@@ -476,6 +486,7 @@ def test_ds_quarter_ceo_review_falls_back_and_resumes_deterministically():
                 records=[
                     make_ticket(1, "normal", "billing"),
                     make_ticket(2, "normal", "billing"),
+                    make_ticket(3, "normal", "billing"),
                 ],
             ),
             QuarterBatch(
@@ -491,7 +502,9 @@ def test_ds_quarter_ceo_review_falls_back_and_resumes_deterministically():
     )
     runner = ExperimentRunner(
         FakeDataset(),
-        SequencedClient(["correct", "correct", "wrong", "wrong", "correct"]),
+        SequencedClient(
+            ["correct", "correct", "correct", "wrong", "wrong", "correct"]
+        ),
     )
     full = runner.run_repetition(
         "fallback-id",
@@ -500,7 +513,7 @@ def test_ds_quarter_ceo_review_falls_back_and_resumes_deterministically():
         0,
         condition.seed,
     )
-    q2_tickets = full["tickets"][2:]
+    q2_tickets = full["tickets"][3:]
 
     assert all(ticket["assigned_profile"] == "ceo" for ticket in q2_tickets[:2])
     assert all(ticket["final_answer_is_correct"] for ticket in q2_tickets[:2])
@@ -508,7 +521,7 @@ def test_ds_quarter_ceo_review_falls_back_and_resumes_deterministically():
         0,
         0,
     ]
-    assert q2_tickets[1]["fea_after"] == 0.5
+    assert q2_tickets[1]["fea_after"] == 0.6
     assert q2_tickets[1]["state_after"] == "silent_observer"
     assert full["transitions"][-1]["trigger"] == "quarterly_ceo_review_completion"
 
@@ -521,10 +534,24 @@ def test_ds_quarter_ceo_review_falls_back_and_resumes_deterministically():
         condition,
         0,
         condition.seed,
-        resume_tickets=full["tickets"][:4],
+        resume_tickets=full["tickets"][:5],
     )
 
     assert resumed == full
+
+
+def test_legacy_ds_quarterly_ceo_field_is_accepted_for_resume():
+    condition = ExperimentCondition.model_validate(
+        {
+            "name": "legacy-checkpoint",
+            "assignment_strategy": "informed_mixture",
+            "ds_quarterly_ceo_tickets": 100,
+        }
+    )
+
+    assert condition.quarterly_ceo_tickets == 100
+    assert "quarterly_ceo_tickets" in condition.model_dump()
+    assert "ds_quarterly_ceo_tickets" not in condition.model_dump()
 
 
 def test_parallel_runner_executes_repetitions_concurrently():
@@ -625,7 +652,7 @@ def test_paper_suite_expands_declared_grid():
     assert request.conditions[-1].decay == 1.0
     assert request.conditions[0].alpha == 0.7
     assert request.conditions[0].gamma == 0.8
-    assert request.conditions[0].ds_quarterly_ceo_tickets == 100
+    assert request.conditions[0].quarterly_ceo_tickets == 100
     assert any(
         condition.assignment_strategy
         == AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED
