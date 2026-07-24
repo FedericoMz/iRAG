@@ -1,6 +1,6 @@
 {
   "format_version": 1,
-  "generated_at_utc": "2026-07-17T19:06:33.896768+00:00",
+  "generated_at_utc": "2026-07-24T15:00:08.733416+00:00",
   "model": "qwen3-embedding:4b",
   "ollama_model_digest": "df5bd2e3c74cd8d069d21dc038f1b359fcdc9458fce1c99bd43c9eb1518ff907",
   "embedded_field": "question",
@@ -34,6 +34,12 @@
       "sha256": "1d21d1bc466640d5b0407efb55368c3a72b394e1f3d2f2a4b74ec990ba51ae03",
       "source": "Q4_qa.json",
       "source_sha256": "67172b366aec49b940fb455402d8e0158cdc7ff82f4641dd8fb7c6d8411a1f43"
+    },
+    "Extra.npz": {
+      "records": 50,
+      "sha256": "12721ea6751339c34129f39743b7e81b99d1b88e3be8173c3097e1cc5d50a82d",
+      "source": "Extra_qa.json",
+      "source_sha256": "e5be9889ef03d8df9313e0b21baa674f4cdb4254f08e576ef43d951e71b19bcf"
     }
   }
 }

@@ -14,7 +14,6 @@ from irag.models import (
     Category,
     ExperimentCondition,
     ExperimentRequest,
-    PaperSuiteRequest,
     Profile,
     ProfileAnswer,
     Quarter,
@@ -205,8 +204,12 @@ class ExperimentRunner:
                 "quarterly_ceo_tickets": 100,
                 "lambda": 0.99861,
                 "autonomous_review": (
-                    "Every quarter routes its first 100 tickets to the CEO; "
+                    "Every nominal quarter routes its first 100 tickets to the CEO; "
                     "a quarter beginning in DS first returns to SC"
+                ),
+                "post_q4_abstention_challenge": (
+                    "50 semantically isolated Extra tickets inherit the Q4 state; "
+                    "the expected model action is abstention"
                 ),
                 "manual_ds_authorisation": "not exercised by the simulated profiles",
             },
@@ -271,7 +274,8 @@ class ExperimentRunner:
             quarter_total = len(quarter_records)
             quarter_started_in_ds = context.state == SystemState.DS
             if (
-                quarter_started_in_ds
+                batch.quarter != Quarter.EXTRA
+                and quarter_started_in_ds
                 and condition.quarterly_ceo_tickets > 0
                 and quarter_records
             ):
@@ -300,6 +304,7 @@ class ExperimentRunner:
             for quarter_position, record in enumerate(quarter_records, start=1):
                 global_position += 1
                 quarterly_ceo_review = is_quarterly_ceo_review_ticket(
+                    record,
                     quarter_position,
                     condition,
                 )
@@ -368,6 +373,7 @@ class ExperimentRunner:
                         if model_decision["abstain"]
                         else "answer"
                     ),
+                    model_action_is_correct=output["model_action_is_correct"],
                     suggestion_accepted=output["suggestion_accepted"],
                     final_origin=output["final_origin"],
                     final_answer_is_correct=output["final_answer_is_correct"],
@@ -581,6 +587,7 @@ class ExperimentRunner:
         correctness_source = "dataset_profile_label"
         final_origin = "human"
         component = "unassisted_human" if not condition.system_enabled else "assisted"
+        model_action_is_correct = None
 
         if condition.system_enabled:
             retrieved = retrieve(
@@ -592,6 +599,8 @@ class ExperimentRunner:
             )
             model_decision = self.client.decide(record.question, retrieved)
             abstained = bool(model_decision["abstain"])
+            if record.requires_model_abstention:
+                model_action_is_correct = abstained
 
             if state_before in (SystemState.SO, SystemState.SC):
                 if not abstained:
@@ -654,29 +663,30 @@ class ExperimentRunner:
                         }
                     )
 
-                if (
-                    quarterly_ceo_review
-                    and quarter_position == condition.quarterly_ceo_tickets
-                ):
-                    if not is_ceo_bootstrap_ticket(record, condition):
+                if record.quarter != Quarter.EXTRA:
+                    if (
+                        quarterly_ceo_review
+                        and quarter_position == condition.quarterly_ceo_tickets
+                    ):
+                        if not is_ceo_bootstrap_ticket(record, condition):
+                            self._transition_after_observation(
+                                record,
+                                condition,
+                                reliability,
+                                context,
+                                global_position,
+                                trigger="quarterly_ceo_review_completion",
+                            )
+                    elif not quarterly_ceo_review and not is_ceo_bootstrap_ticket(
+                        record, condition
+                    ):
                         self._transition_after_observation(
                             record,
                             condition,
                             reliability,
                             context,
                             global_position,
-                            trigger="quarterly_ceo_review_completion",
                         )
-                elif not quarterly_ceo_review and not is_ceo_bootstrap_ticket(
-                    record, condition
-                ):
-                    self._transition_after_observation(
-                        record,
-                        condition,
-                        reliability,
-                        context,
-                        global_position,
-                    )
             else:
                 component = "autonomous_model"
                 if abstained:
@@ -738,6 +748,11 @@ class ExperimentRunner:
             "final_decision_error": not final_is_correct,
             "is_drift": record.is_changed_answer_near_duplicate,
             "near_duplicate_of": record.near_duplicate_of,
+            "requires_model_abstention": record.requires_model_abstention,
+            "expected_model_action": (
+                "abstain" if record.requires_model_abstention else None
+            ),
+            "model_action_is_correct": model_action_is_correct,
         }
 
     @staticmethod
@@ -825,11 +840,13 @@ def is_ceo_bootstrap_ticket(
 
 
 def is_quarterly_ceo_review_ticket(
+    record: TicketRecord,
     quarter_position: int,
     condition: ExperimentCondition,
 ) -> bool:
     return (
         condition.system_enabled
+        and record.quarter != Quarter.EXTRA
         and quarter_position <= condition.quarterly_ceo_tickets
     )
 
@@ -886,10 +903,18 @@ class TicketSummary:
                 "drift",
                 "profile_drift",
                 "metric_component_drift",
+                "abstention_challenge",
             )
         }
 
     def observe(self, ticket: dict) -> None:
+        if ticket.get("requires_model_abstention"):
+            if ticket.get("model_action_is_correct") is not None:
+                counter = self.groups["abstention_challenge"]["Extra"]
+                counter[0] += 1
+                counter[1] += int(not bool(ticket["model_action_is_correct"]))
+            return
+
         error = int(bool(ticket["final_decision_error"]))
         self.count += 1
         self.errors += error
@@ -1003,64 +1028,3 @@ def aggregate_repetitions(repetitions: list[dict]) -> dict:
 def mean_optional(values) -> float | None:
     present = [value for value in values if value is not None]
     return sum(present) / len(present) if present else None
-
-
-def build_paper_request(request: PaperSuiteRequest) -> ExperimentRequest:
-    conditions = []
-    assignments = [
-        ("single-ceo", AssignmentStrategy.SINGLE, Profile.CEO),
-        ("single-domain-expert", AssignmentStrategy.SINGLE, Profile.DOMAIN_EXPERT),
-        ("single-intern", AssignmentStrategy.SINGLE, Profile.INTERN),
-        ("informed-mixture", AssignmentStrategy.INFORMED, None),
-        (
-            "ceo-bootstrapped-informed-mixture",
-            AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED,
-            None,
-        ),
-    ]
-    regimes = list(AcceptanceRegime)
-    for assignment_name, strategy, profile in assignments:
-        for regime in regimes:
-            conditions.append(
-                ExperimentCondition(
-                    name=f"{assignment_name}__{regime.value}",
-                    assignment_strategy=strategy,
-                    single_profile=profile,
-                    acceptance_regime=regime,
-                    domain_expert_category=request.domain_expert_category,
-                    repetitions=request.repetitions,
-                    seed=request.seed,
-                )
-            )
-    if request.include_baselines:
-        for profile in Profile:
-            conditions.append(
-                ExperimentCondition(
-                    name=f"baseline__{profile.value}",
-                    assignment_strategy=AssignmentStrategy.SINGLE,
-                    single_profile=profile,
-                    acceptance_regime=AcceptanceRegime.NEVER,
-                    domain_expert_category=request.domain_expert_category,
-                    repetitions=request.repetitions,
-                    seed=request.seed,
-                    system_enabled=False,
-                )
-            )
-    if request.include_decay_ablation:
-        conditions.append(
-            ExperimentCondition(
-                name="ablation__informed-mixture__stochastic_50__no-decay",
-                assignment_strategy=AssignmentStrategy.INFORMED,
-                acceptance_regime=AcceptanceRegime.STOCHASTIC,
-                domain_expert_category=request.domain_expert_category,
-                repetitions=request.repetitions,
-                seed=request.seed,
-                **{"lambda": 1.0},
-            )
-        )
-    return ExperimentRequest(
-        name=request.name,
-        quarters=request.quarters,
-        conditions=conditions,
-        models=request.models,
-    )

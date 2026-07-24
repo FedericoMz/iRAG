@@ -16,6 +16,17 @@ class Quarter(str, Enum):
     Q2 = "Q2"
     Q3 = "Q3"
     Q4 = "Q4"
+    EXTRA = "Extra"
+
+    @property
+    def order(self) -> int:
+        return {
+            Quarter.Q1: 1,
+            Quarter.Q2: 2,
+            Quarter.Q3: 3,
+            Quarter.Q4: 4,
+            Quarter.EXTRA: 5,
+        }[self]
 
 
 class Difficulty(str, Enum):
@@ -120,6 +131,7 @@ class TicketRecord(StrictModel):
     drift: dict[str, Any] | None
     generation: dict[str, Any]
     evaluation: dict[str, Any]
+    requires_model_abstention: bool = False
 
 
 class QuarterBatch(StrictModel):
@@ -193,20 +205,20 @@ class ExperimentCondition(StrictModel):
             not self.system_enabled
             and self.assignment_strategy != AssignmentStrategy.SINGLE
         ):
-            raise ValueError("Paper baselines must use a single profile")
+            raise ValueError("Human-only baselines must use a single profile")
         return self
 
 
 class ExperimentRequest(StrictModel):
     name: str = Field(min_length=1, max_length=200)
-    quarters: list[QuarterBatch] = Field(min_length=1, max_length=4)
+    quarters: list[QuarterBatch] = Field(min_length=1, max_length=5)
     conditions: list[ExperimentCondition] = Field(min_length=1)
     models: ModelSettings = Field(default_factory=ModelSettings)
 
     @model_validator(mode="after")
     def validate_suite(self) -> ExperimentRequest:
         quarter_values = [batch.quarter for batch in self.quarters]
-        expected = sorted(quarter_values, key=lambda value: int(value.value[1]))
+        expected = sorted(quarter_values, key=lambda value: value.order)
         if quarter_values != expected:
             raise ValueError("Quarter batches must be supplied chronologically")
         if len(quarter_values) != len(set(quarter_values)):
@@ -220,31 +232,10 @@ class ExperimentRequest(StrictModel):
         return self
 
 
-class PaperSuiteRequest(StrictModel):
-    name: str = "SalesX paper experiment suite"
-    quarters: list[QuarterBatch] = Field(min_length=1, max_length=4)
-    repetitions: int = Field(default=10, ge=1, le=100)
-    seed: int = 20260717
-    domain_expert_category: Category = Category.BILLING
-    models: ModelSettings = Field(default_factory=ModelSettings)
-    include_baselines: bool = True
-    include_decay_ablation: bool = True
-
-
 class BundledExperimentRequest(StrictModel):
     name: str = "SalesX bundled experiment"
     conditions: list[ExperimentCondition] = Field(min_length=1)
     models: ModelSettings = Field(default_factory=ModelSettings)
-
-
-class BundledPaperSuiteRequest(StrictModel):
-    name: str = "SalesX bundled paper experiment suite"
-    repetitions: int = Field(default=10, ge=1, le=100)
-    seed: int = 20260717
-    domain_expert_category: Category = Category.BILLING
-    models: ModelSettings = Field(default_factory=ModelSettings)
-    include_baselines: bool = True
-    include_decay_ablation: bool = True
 
 
 class ParallelRunRequest(StrictModel):
@@ -268,6 +259,13 @@ class ParallelRunRequest(StrictModel):
     )
     seed: int = 20260717
     domain_expert_category: Category = Category.BILLING
+    include_extra: bool = Field(
+        default=False,
+        description=(
+            "Process the optional 50-ticket post-Q4 abstention challenge. "
+            "When false, the run ends after Q4."
+        ),
+    )
     provider: ModelProvider | None = Field(
         default=None,
         description="Model provider; leave empty to use config.env.",

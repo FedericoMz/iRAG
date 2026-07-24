@@ -29,6 +29,15 @@ def test_health_endpoint():
     assert response.json()["status"] == "ok"
 
 
+def test_bundled_dataset_exposes_post_q4_abstention_split():
+    batch = api.dataset.load_quarter(Quarter.EXTRA)
+
+    assert batch.quarter == Quarter.EXTRA
+    assert len(batch.records) == 50
+    assert all(record.requires_model_abstention for record in batch.records)
+    assert api.dataset.vector(batch.records[0].id).shape == (2560,)
+
+
 def test_experiment_endpoint_accepts_complete_ticket_metadata(monkeypatch):
     monkeypatch.setattr(api, "run_experiment", lambda *_: None)
     record = api.dataset.load_quarter(Quarter.Q1).records[0]
@@ -137,7 +146,7 @@ def test_parallel_run_endpoint_uses_dropdown_values_and_parameter_folder(
     output_directory = status_response.json()["output_directory"]
     assert (
         "expert-informed_mixture__acceptance-randomize"
-        "__repetitions-2__decay-0.99__job-"
+        "__repetitions-2__decay-0.99__extra-false__job-"
     ) in output_directory
     assert submitted[0].models.provider.value == "openrouter"
     assert submitted[0].models.generation_model == "vendor/decision-model"
@@ -179,6 +188,14 @@ def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
     assert "auxiliary_model" in parameters
     assert "bedrock_region" in parameters
     assert parameters["checkpoint_interval"]["schema"]["default"] == 50
+    assert parameters["include_extra"]["schema"]["default"] is False
+
+
+def test_openapi_does_not_expose_obsolete_paper_suite_endpoints():
+    paths = api.app.openapi()["paths"]
+
+    assert "/v1/experiments/paper-suite" not in paths
+    assert "/v1/experiments/paper-suite/bundled" not in paths
 
 
 def test_parallel_request_supports_ceo_bootstrapped_informed_mixture():
@@ -199,6 +216,58 @@ def test_parallel_request_supports_ceo_bootstrapped_informed_mixture():
     assert condition.gamma == 0.8
     assert condition.quarterly_ceo_tickets == 100
     assert condition.acceptance_regime == AcceptanceRegime.GOLD_SIMILARITY
+    assert [batch.quarter for batch in built.quarters] == [
+        Quarter.Q1,
+        Quarter.Q2,
+        Quarter.Q3,
+        Quarter.Q4,
+    ]
+
+
+def test_parallel_request_includes_extra_only_when_requested():
+    request = ParallelRunRequest(
+        expert="informed_mixture",
+        acceptance="gold_similarity",
+        repetitions=1,
+        include_extra=True,
+    )
+
+    built = api.build_parallel_request(request)
+
+    assert [batch.quarter for batch in built.quarters] == [
+        Quarter.Q1,
+        Quarter.Q2,
+        Quarter.Q3,
+        Quarter.Q4,
+        Quarter.EXTRA,
+    ]
+
+
+def test_resume_reconstructs_extra_scope_from_saved_records():
+    condition = api.build_parallel_request(
+        ParallelRunRequest(
+            expert="informed_mixture",
+            acceptance="gold_similarity",
+            repetitions=1,
+        )
+    ).conditions[0]
+    metadata = {
+        "name": "resume scope",
+        "configuration": condition.model_dump(mode="json", by_alias=True),
+        "models": {
+            "provider": "bedrock",
+            "generation": {"name": "generation"},
+            "auxiliary": {"name": "auxiliary"},
+        },
+        "records": {"SX-Q4-BIL-001": {"quarter": "Q4"}},
+    }
+
+    nominal = api.build_resume_request(metadata)
+    metadata["records"]["SX-EXTRA-001"] = {"quarter": "Extra"}
+    with_extra = api.build_resume_request(metadata)
+
+    assert nominal.quarters[-1].quarter == Quarter.Q4
+    assert with_extra.quarters[-1].quarter == Quarter.EXTRA
 
 
 def test_parallel_background_job_persists_each_repetition(monkeypatch, tmp_path):

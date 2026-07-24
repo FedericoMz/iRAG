@@ -10,12 +10,11 @@ from irag import __version__
 from irag.client import BedrockClient, BaseModelClient, OllamaClient, OpenRouterClient
 from irag.config import settings
 from irag.dataset import SalesXDataset
-from irag.experiment import ExperimentRunner, build_paper_request
+from irag.experiment import ExperimentRunner
 from irag.models import (
     AcceptanceRegime,
     AssignmentStrategy,
     BundledExperimentRequest,
-    BundledPaperSuiteRequest,
     ExperimentCondition,
     ExperimentCreated,
     ExperimentRequest,
@@ -25,7 +24,6 @@ from irag.models import (
     ModelSettings,
     ModelProvider,
     ParallelRunRequest,
-    PaperSuiteRequest,
     Profile,
     Quarter,
     QuarterBatch,
@@ -39,7 +37,8 @@ app = FastAPI(
     title="SalesX Incremental RAG Experiments",
     description=(
         "Experiment-specific API for the incremental deliberative RAG evaluation. "
-        "It is intentionally bound to the SalesX quarterly corpus and its precomputed embeddings."
+        "It is intentionally bound to the SalesX quarterly corpus, post-Q4 "
+        "abstention challenge, and their precomputed embeddings."
     ),
     version=__version__,
 )
@@ -91,6 +90,7 @@ def create_parallel_run(
             f"__acceptance-{request.acceptance.value}"
             f"__repetitions-{request.repetitions}"
             f"__decay-{request.decay:.8g}"
+            f"__extra-{str(request.include_extra).lower()}"
         ),
     )
     background_tasks.add_task(
@@ -174,40 +174,6 @@ def create_bundled_experiment(
         models=request.models,
     )
     return enqueue(experiment_request, background_tasks)
-
-
-@app.post(
-    "/v1/experiments/paper-suite",
-    response_model=ExperimentCreated,
-    status_code=status.HTTP_202_ACCEPTED,
-)
-def create_paper_suite(
-    request: PaperSuiteRequest,
-    background_tasks: BackgroundTasks,
-) -> ExperimentCreated:
-    return enqueue(build_paper_request(request), background_tasks)
-
-
-@app.post(
-    "/v1/experiments/paper-suite/bundled",
-    response_model=ExperimentCreated,
-    status_code=status.HTTP_202_ACCEPTED,
-)
-def create_bundled_paper_suite(
-    request: BundledPaperSuiteRequest,
-    background_tasks: BackgroundTasks,
-) -> ExperimentCreated:
-    paper_request = PaperSuiteRequest(
-        name=request.name,
-        quarters=dataset.load_all_quarters(),
-        repetitions=request.repetitions,
-        seed=request.seed,
-        domain_expert_category=request.domain_expert_category,
-        models=request.models,
-        include_baselines=request.include_baselines,
-        include_decay_ablation=request.include_decay_ablation,
-    )
-    return enqueue(build_paper_request(paper_request), background_tasks)
 
 
 @app.get("/v1/experiments/{experiment_id}", response_model=ExperimentStatus)
@@ -328,7 +294,7 @@ def build_parallel_request(request: ParallelRunRequest) -> ExperimentRequest:
     )
     return ExperimentRequest(
         name=f"{request.expert.value} / {request.acceptance.value}",
-        quarters=dataset.load_all_quarters(),
+        quarters=dataset.load_all_quarters(include_extra=request.include_extra),
         conditions=[condition],
         models={
             "provider": request.provider,
@@ -346,9 +312,13 @@ def build_resume_request(metadata: dict) -> ExperimentRequest:
     models = metadata["models"]
     generation = models["generation"]
     auxiliary = models["auxiliary"]
+    include_extra = any(
+        record.get("quarter") == Quarter.EXTRA.value
+        for record in metadata.get("records", {}).values()
+    )
     return ExperimentRequest(
         name=metadata["name"],
-        quarters=dataset.load_all_quarters(),
+        quarters=dataset.load_all_quarters(include_extra=include_extra),
         conditions=[ExperimentCondition.model_validate(metadata["configuration"])],
         models=ModelSettings(
             provider=models["provider"],

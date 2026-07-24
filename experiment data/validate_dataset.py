@@ -7,6 +7,8 @@ from collections import Counter
 from difflib import SequenceMatcher
 from pathlib import Path
 
+import numpy as np
+
 from salesx_knowledge import ARTICLES, CHANGE_DIMENSIONS, DRIFT_KEYS, RULE_CHANGES
 
 ROOT = Path(__file__).resolve().parent
@@ -90,7 +92,78 @@ def main():
         print(f"{quarter}: docs={len(documentation.splitlines())} lines, 100 articles, 500 unique tickets, drift={len(drift)}")
 
     assert len(seen) == 2000
-    print("OK: all 2,000 records satisfy product, profile, grounding, style, and nuanced-drift invariants")
+
+    extra = json.loads((ROOT/"Extra_qa.json").read_text(encoding="utf-8"))
+    extra_documentation = (ROOT/"Extra.md").read_text(encoding="utf-8")
+    assert len(extra) == 50
+    assert len({r["id"] for r in extra}) == 50
+    assert len({r["question"] for r in extra}) == 50
+    assert not ({r["question"] for r in extra} & {r["question"] for r in seen.values()})
+    assert {r["shuffled_order"] for r in extra} == set(range(1, 51))
+    assert Counter(r["category"] for r in extra) == Counter({c: 10 for c in CATEGORIES})
+    assert Counter(r["difficulty"] for r in extra) == Counter({"hard": 50})
+    for record in extra:
+        assert record["quarter"] == "Extra"
+        assert record["policy_key"].startswith("extra.abstention_")
+        assert record["requires_model_abstention"]
+        assert record["evaluation"]["expected_model_action"] == "abstain"
+        assert record["similar_question_ids"] == []
+        assert record["near_duplicate_of"] is None
+        assert record["drift"] is None
+        assert record["documentation_anchor"] == "Extra.md#abstention-challenge"
+        assert '<a id="abstention-challenge"></a>' in extra_documentation
+        assert all(
+            answer["is_correct"]
+            and answer["answer"] == record["gold_answer"]
+            for answer in record["profile_answers"].values()
+        )
+
+    embedding_dir = ROOT/"embeddings"/"qwen3-embedding-4b"
+    nominal_vectors = []
+    nominal_ids = []
+    for quarter in QUARTERS:
+        with np.load(embedding_dir/f"{quarter}.npz", allow_pickle=False) as archive:
+            nominal_ids.extend(str(value) for value in archive["ids"].tolist())
+            nominal_vectors.append(archive["embeddings"].astype(np.float32))
+    with np.load(embedding_dir/"Extra.npz", allow_pickle=False) as archive:
+        extra_ids = [str(value) for value in archive["ids"].tolist()]
+        extra_vectors = archive["embeddings"].astype(np.float32)
+
+    nominal_matrix = np.concatenate(nominal_vectors, axis=0)
+    cross_similarity = extra_vectors @ nominal_matrix.T
+    cross_index = np.unravel_index(
+        int(np.argmax(cross_similarity)),
+        cross_similarity.shape,
+    )
+    max_cross = float(cross_similarity[cross_index])
+
+    pairwise_similarity = extra_vectors @ extra_vectors.T
+    np.fill_diagonal(pairwise_similarity, -np.inf)
+    pair_index = np.unravel_index(
+        int(np.argmax(pairwise_similarity)),
+        pairwise_similarity.shape,
+    )
+    max_pairwise = float(pairwise_similarity[pair_index])
+
+    threshold = 0.7
+    assert max_cross < threshold, (
+        f"Extra ticket {extra_ids[cross_index[0]]} is too similar to "
+        f"{nominal_ids[cross_index[1]]}: {max_cross:.4f}"
+    )
+    assert max_pairwise < threshold, (
+        f"Extra tickets {extra_ids[pair_index[0]]} and "
+        f"{extra_ids[pair_index[1]]} are too similar: {max_pairwise:.4f}"
+    )
+
+    print(
+        "Extra: 50 unique abstention tickets, "
+        f"max nominal similarity={max_cross:.4f}, "
+        f"max internal similarity={max_pairwise:.4f}"
+    )
+    print(
+        "OK: 2,000 nominal records and 50 post-Q4 abstention records satisfy "
+        "all benchmark invariants"
+    )
 
 if __name__ == "__main__":
     main()

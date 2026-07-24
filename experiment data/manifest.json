@@ -1,6 +1,6 @@
 {
   "dataset": "SalesX Quarterly Support QA",
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
   "generator_seed": 20260717,
   "knowledge_articles": 100,
   "questions_per_article": 5,
@@ -133,7 +133,15 @@
   "notes": [
     "Q1 is the baseline and has no possible prior-quarter drift subset.",
     "Q2-Q4 each change ten articles and contain exactly 50 changed-answer near-duplicates.",
+    "The post-Q4 Extra split contains 50 mutually isolated questions whose expected model action is abstention.",
     "Drift changes policy or workflow semantics rather than only scalar limits.",
     "Generated files are deterministic outputs of generate_dataset.py."
-  ]
+  ],
+  "extra": {
+    "documentation": "Extra.md",
+    "questions": "Extra_qa.json",
+    "record_count": 50,
+    "expected_model_action": "abstain",
+    "sha256": "e5be9889ef03d8df9313e0b21baa674f4cdb4254f08e576ef43d951e71b19bcf"
+  }
 }

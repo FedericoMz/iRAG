@@ -33,10 +33,25 @@ def parse_args() -> argparse.Namespace:
 
 def cumulative_error_rate(tickets: list[dict]) -> list[float]:
     errors = 0
+    observations = 0
     rates = []
-    for position, ticket in enumerate(tickets, start=1):
-        errors += int(ticket["final_decision_error"])
-        rates.append(errors / position)
+    for ticket in tickets:
+        if not ticket.get("requires_model_abstention"):
+            observations += 1
+            errors += int(ticket["final_decision_error"])
+        rates.append(errors / observations if observations else 0.0)
+    return rates
+
+
+def cumulative_human_baseline_error_rate(tickets: list[dict]) -> list[float]:
+    errors = 0
+    observations = 0
+    rates = []
+    for ticket in tickets:
+        if not ticket.get("requires_model_abstention"):
+            observations += 1
+            errors += int(not ticket["human_answer_is_correct"])
+        rates.append(errors / observations if observations else 0.0)
     return rates
 
 
@@ -48,6 +63,9 @@ def cumulative_observation_rate(
     observations = 0
     rates = []
     for ticket in tickets:
+        if ticket.get("requires_model_abstention"):
+            rates.append(positives / observations if observations else None)
+            continue
         judgment = ticket.get("gold_judgment") if field == "gold" else None
         value = (
             judgment.get("gold_reference_covered")
@@ -60,6 +78,21 @@ def cumulative_observation_rate(
             observations += 1
             positives += int(bool(value))
         rates.append(positives / observations if observations else None)
+    return rates
+
+
+def cumulative_abstention_success_rate(
+    tickets: list[dict],
+) -> list[float | None]:
+    successes = 0
+    observations = 0
+    rates = []
+    for ticket in tickets:
+        correct = ticket.get("model_action_is_correct")
+        if ticket.get("requires_model_abstention") and correct is not None:
+            observations += 1
+            successes += int(bool(correct))
+        rates.append(successes / observations if observations else None)
     return rates
 
 
@@ -116,8 +149,10 @@ def plot_result(
     positions = [ticket["global_position"] for ticket in tickets]
     fea = [ticket["fea_after"] for ticket in tickets]
     error_rate = cumulative_error_rate(tickets)
+    baseline_error_rate = cumulative_human_baseline_error_rate(tickets)
     gold_coverage = cumulative_observation_rate(tickets, "gold")
     human_coverage = cumulative_observation_rate(tickets, "human")
+    abstention_success = cumulative_abstention_success_rate(tickets)
     ranges = quarter_ranges(tickets)
 
     figure, fea_axis = plt.subplots(figsize=(14, 7))
@@ -148,6 +183,22 @@ def plot_result(
         color="#dc2626",
         linewidth=1.8,
         label="Cumulative final-decision error rate",
+    )[0]
+    baseline_error_line = fea_axis.plot(
+        positions,
+        baseline_error_rate,
+        color="#6b7280",
+        linewidth=1.8,
+        linestyle="--",
+        label="Cumulative human-only baseline error rate",
+    )[0]
+    abstention_line = fea_axis.plot(
+        positions,
+        abstention_success,
+        color="#9333ea",
+        linewidth=2,
+        linestyle=":",
+        label="Cumulative Extra abstention rate",
     )[0]
 
     thresholds = [
@@ -239,14 +290,23 @@ def plot_result(
         pad=18,
     )
     fea_axis.legend(
-        [fea_line, gold_line, human_line, error_line],
+        [
+            fea_line,
+            gold_line,
+            human_line,
+            error_line,
+            baseline_error_line,
+            abstention_line,
+        ],
         [
             fea_line.get_label(),
             gold_line.get_label(),
             human_line.get_label(),
             error_line.get_label(),
+            baseline_error_line.get_label(),
+            abstention_line.get_label(),
         ],
-        loc="lower right",
+        loc="lower left",
         frameon=True,
     )
     figure.tight_layout()

@@ -19,6 +19,59 @@ SEED = 20260717
 RELEASE_NAMES = {"Q1":"Foundation", "Q2":"Trust", "Q3":"Control", "Q4":"Assurance"}
 DIFFICULTY_BY_VARIANT = ("easy", "easy", "normal", "normal", "hard")
 
+EXTRA_QUESTIONS = (
+    ("agricultural irrigation", "Can SalesX calculate soil-moisture targets and directly actuate irrigation valves for a commercial orchard?"),
+    ("genomic sequence alignment", "Our laboratory needs to align raw genome reads and call novel variants. Which SalesX workflow performs that analysis?"),
+    ("aircraft maintenance certification", "Does SalesX issue airworthiness sign-offs after tracking the inspection history of a passenger aircraft?"),
+    ("radiocarbon calibration", "Can SalesX calibrate a radiocarbon measurement against archaeological dating curves and estimate a specimen's age interval?"),
+    ("recipe allergen analysis", "Can a restaurant use SalesX to derive allergen declarations from ingredient quantities in a new recipe?"),
+    ("autonomous drone geofencing", "Where do we configure flight corridors and collision-avoidance geofences for an autonomous delivery-drone fleet in SalesX?"),
+    ("finite-element simulation", "Which SalesX module converts a CAD assembly into a finite-element mesh and solves structural stress under load?"),
+    ("clinical dosage calculation", "A clinician wants SalesX to recommend a medication dose from a patient's weight and renal function. How is that configured?"),
+    ("hotel keycard encoding", "Can SalesX encode a physical hotel keycard with room access and a checkout expiry time?"),
+    ("cryptocurrency custody", "What procedure does SalesX use to generate and custody private keys for an institutional cryptocurrency wallet?"),
+    ("warehouse robot navigation", "How should we upload a warehouse map so SalesX can plan collision-free routes for picking robots?"),
+    ("weather-radar interpretation", "Does SalesX ingest Doppler radar volumes and classify storm-cell rotation for meteorological forecasting?"),
+    ("ship ballast control", "Where does a vessel operator set ballast-tank transfer sequences and stability limits inside SalesX?"),
+    ("braille embossing layout", "Which SalesX tool paginates contracted braille and prepares interpoint embossing instructions for a tactile book?"),
+    ("online exam proctoring", "How does SalesX detect prohibited materials and identity substitution during a remotely proctored university examination?"),
+    ("music royalty allocation", "Which SalesX process splits streaming royalties among composers, performers, publishers, and collecting societies?"),
+    ("3D-printer toolpath slicing", "Can SalesX slice a stereolithography model into printer layers and generate support structures automatically?"),
+    ("vehicle emissions diagnostics", "Where can a mechanic decode live OBD emissions data and command a diesel particulate-filter regeneration in SalesX?"),
+    ("legal discovery review", "Does SalesX perform litigation e-discovery by deduplicating custodial mailboxes and assigning privilege-review batches?"),
+    ("electricity smart-meter settlement", "How does SalesX validate interval readings and settle electricity consumption from residential smart meters?"),
+    ("food cold-chain monitoring", "Can SalesX evaluate refrigerated-container temperature probes and release or quarantine a food shipment?"),
+    ("telescope observation scheduling", "Which SalesX feature schedules telescope targets according to celestial visibility, seeing, and lunar illumination?"),
+    ("actuarial reserve calculation", "Can an insurer calculate claim-development triangles and statutory loss reserves directly in SalesX?"),
+    ("railway signalling", "How do we define block occupancy and interlocking rules so SalesX can authorize a train movement?"),
+    ("controlled-substance dispensing", "Does SalesX verify prescriptions against controlled-substance registers before a pharmacy dispenses medication?"),
+    ("satellite orbital manoeuvres", "Where does SalesX propagate an orbit and calculate the thruster burn required for a satellite station-keeping manoeuvre?"),
+    ("mining blast design", "Can SalesX determine borehole spacing, explosive charge weights, and safe exclusion zones for an open-pit blast?"),
+    ("athlete biometric coaching", "How does SalesX combine lactate, heart-rate variability, and training load to prescribe an athlete's recovery session?"),
+    ("translation-memory alignment", "Can translators import bilingual corpora into SalesX and align sentence pairs into a terminology-aware translation memory?"),
+    ("video-game anti-cheat", "Which SalesX service analyzes player telemetry to identify aim automation or unauthorized game-client modifications?"),
+    ("laboratory reagent preparation", "Does SalesX calculate reagent dilutions and print preparation labels for a molecular-biology protocol?"),
+    ("election ballot tabulation", "How does SalesX validate ranked-choice ballots and calculate elimination rounds for a public election?"),
+    ("building fire-alarm programming", "Where can a technician configure detector zones and evacuation cause-and-effect logic for a fire-alarm panel in SalesX?"),
+    ("traffic-signal optimization", "Can SalesX optimize traffic-light phases from induction-loop counts and pedestrian crossing demand?"),
+    ("textile dye formulation", "Which SalesX tool derives a dye recipe from a target spectrophotometer reading and fabric composition?"),
+    ("aquaculture feeding control", "Does SalesX calculate feed rates from fish biomass, water temperature, and dissolved oxygen in an aquaculture pen?"),
+    ("mortgage underwriting", "Can SalesX calculate a regulated mortgage affordability decision from verified income, debts, and property valuation?"),
+    ("museum climate conservation", "How should a conservator configure humidity and light-exposure limits for fragile artworks in SalesX?"),
+    ("airline crew rostering", "Does SalesX build flight-crew rosters while enforcing aviation duty-time and mandatory-rest regulations?"),
+    ("radiation dosimetry", "Where does a nuclear facility import personal dosimeter readings and calculate a worker's cumulative radiation exposure?"),
+    ("cinema colour grading", "Can SalesX apply a scene-referred colour transform and generate a theatrical digital-cinema mastering package?"),
+    ("veterinary vaccination schedule", "How does SalesX calculate species-specific vaccine intervals and withdrawal periods for livestock?"),
+    ("chess tournament pairing", "Can SalesX construct Swiss-system chess pairings while respecting score groups, colour history, and prior opponents?"),
+    ("pipe-organ tuning", "A pipe-organ builder needs beat-frequency measurements converted into temperament offsets for each rank. Can SalesX produce the tuning schedule?"),
+    ("restaurant tip distribution", "Can SalesX allocate a restaurant's pooled tips according to hours, roles, and local wage regulations?"),
+    ("public-transit fare capping", "How does SalesX calculate daily fare caps across buses, metro journeys, and contactless payment tokens?"),
+    ("emergency dispatch prioritization", "Does SalesX triage emergency calls and recommend which ambulance unit should be dispatched to an incident?"),
+    ("carbon-credit verification", "Where does SalesX quantify forest carbon additionality and issue verified carbon credits to a project registry?"),
+    ("patent claim analysis", "Can SalesX compare a proposed patent claim against prior art and produce a legal novelty opinion?"),
+    ("quantum-circuit compilation", "Which SalesX component maps a quantum circuit onto physical qubits while minimizing gate and readout errors?"),
+)
+
 CATEGORY_GUIDANCE = {
 "billing": {
 "scope":"Subscriptions, entitlements, seats, usage, invoicing, payments, tax, credits, refunds, amendments, renewal, cancellation, and end-of-service handling.",
@@ -197,6 +250,61 @@ def generate_records(qi):
         record["shuffled_order"] = position
     return records
 
+
+def generate_extra_records():
+    records = []
+    for index, (topic, question) in enumerate(EXTRA_QUESTIONS, start=1):
+        category = CATEGORIES[(index - 1) % len(CATEGORIES)]
+        gold = (
+            f"The available SalesX knowledge contains no authoritative information "
+            f"about {topic}. The model must abstain rather than infer a policy or "
+            f"procedure."
+        )
+        profile_answer = {
+            "answer": gold,
+            "is_correct": True,
+            "behavior": "unsupported_scope_escalation",
+        }
+        records.append(
+            {
+                "id": f"SX-EXTRA-{index:03d}",
+                "quarter": "Extra",
+                "sequence_in_quarter": index,
+                "difficulty": "hard",
+                "category": category,
+                "policy_key": f"extra.abstention_{index:03d}",
+                "article_title": f"Abstention challenge: {topic}",
+                "question": question,
+                "gold_answer": gold,
+                "profile_answers": {
+                    "ceo": dict(profile_answer),
+                    "domain_expert_out_of_domain": dict(profile_answer),
+                    "intern": dict(profile_answer),
+                },
+                "documentation_anchor": "Extra.md#abstention-challenge",
+                "is_changed_answer_near_duplicate": False,
+                "near_duplicate_of": None,
+                "similar_question_ids": [],
+                "drift": None,
+                "generation": {
+                    "seed": SEED,
+                    "knowledge_status": "intentionally_absent",
+                    "answer_format": "required_abstention",
+                },
+                "evaluation": {
+                    "gold_source": "abstention_challenge_design",
+                    "expected_model_action": "abstain",
+                    "semantic_isolation_threshold": 0.7,
+                },
+                "requires_model_abstention": True,
+            }
+        )
+    rng = random.Random(SEED + len(QUARTERS))
+    rng.shuffle(records)
+    for position, record in enumerate(records, 1):
+        record["shuffled_order"] = position
+    return records
+
 def main():
     all_records = {}
     for qi, quarter in enumerate(QUARTERS):
@@ -204,13 +312,35 @@ def main():
         rows = generate_records(qi)
         all_records[quarter] = rows
         (ROOT/f"{quarter}_qa.json").write_text(json.dumps(rows, indent=2, ensure_ascii=False)+"\n", encoding="utf-8")
-    manifest = {"dataset":"SalesX Quarterly Support QA", "schema_version":"2.0.0", "generator_seed":SEED,
+    extra_rows = generate_extra_records()
+    (ROOT/"Extra.md").write_text(
+        "# SalesX Post-Q4 Abstention Challenge\n\n"
+        "<a id=\"abstention-challenge\"></a>\n"
+        "These tickets intentionally concern mutually distinct subjects that are "
+        "not covered by the SalesX quarterly knowledge base. The expected model "
+        "action is abstention. This protocol document does not supply answers to "
+        "the individual questions.\n",
+        encoding="utf-8",
+    )
+    (ROOT/"Extra_qa.json").write_text(
+        json.dumps(extra_rows, indent=2, ensure_ascii=False)+"\n",
+        encoding="utf-8",
+    )
+    manifest = {"dataset":"SalesX Quarterly Support QA", "schema_version":"2.1.0", "generator_seed":SEED,
         "knowledge_articles":sum(len(v) for v in ARTICLES.values()), "questions_per_article":5,
         "categories":list(CATEGORIES), "quarters":{},
-        "notes":["Q1 is the baseline and has no possible prior-quarter drift subset.", "Q2-Q4 each change ten articles and contain exactly 50 changed-answer near-duplicates.", "Drift changes policy or workflow semantics rather than only scalar limits.", "Generated files are deterministic outputs of generate_dataset.py."]}
+        "notes":["Q1 is the baseline and has no possible prior-quarter drift subset.", "Q2-Q4 each change ten articles and contain exactly 50 changed-answer near-duplicates.", "The post-Q4 Extra split contains 50 mutually isolated questions whose expected model action is abstention.", "Drift changes policy or workflow semantics rather than only scalar limits.", "Generated files are deterministic outputs of generate_dataset.py."]}
     for quarter, rows in all_records.items():
         raw = (ROOT/f"{quarter}_qa.json").read_bytes()
         manifest["quarters"][quarter] = {"documentation":f"{quarter}.md", "questions":f"{quarter}_qa.json", "record_count":len(rows), "article_count":len({r['policy_key'] for r in rows}), "category_counts":dict(Counter(r['category'] for r in rows)), "difficulty_counts":dict(Counter(r['difficulty'] for r in rows)), "drift_count":sum(r['is_changed_answer_near_duplicate'] for r in rows), "changed_articles":sorted({r['policy_key'] for r in rows if r['is_changed_answer_near_duplicate']}), "sha256":hashlib.sha256(raw).hexdigest()}
+    extra_raw = (ROOT/"Extra_qa.json").read_bytes()
+    manifest["extra"] = {
+        "documentation": "Extra.md",
+        "questions": "Extra_qa.json",
+        "record_count": len(extra_rows),
+        "expected_model_action": "abstain",
+        "sha256": hashlib.sha256(extra_raw).hexdigest(),
+    }
     (ROOT/"manifest.json").write_text(json.dumps(manifest, indent=2)+"\n", encoding="utf-8")
 
 if __name__ == "__main__":

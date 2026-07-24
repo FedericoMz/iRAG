@@ -5,13 +5,13 @@
   "type": "object",
   "required": ["id", "quarter", "sequence_in_quarter", "shuffled_order", "difficulty", "category", "policy_key", "article_title", "question", "gold_answer", "profile_answers", "documentation_anchor", "is_changed_answer_near_duplicate", "near_duplicate_of", "similar_question_ids", "drift", "generation", "evaluation"],
   "properties": {
-    "id": {"type":"string", "pattern":"^SX-Q[1-4]-[A-Z]{3}-[0-9]{3}$"},
-    "quarter": {"enum":["Q1","Q2","Q3","Q4"]},
+    "id": {"type":"string", "pattern":"^(SX-Q[1-4]-[A-Z]{3}-[0-9]{3}|SX-EXTRA-[0-9]{3})$"},
+    "quarter": {"enum":["Q1","Q2","Q3","Q4","Extra"]},
     "sequence_in_quarter": {"type":"integer", "minimum":1, "maximum":500},
     "shuffled_order": {"type":"integer", "minimum":1, "maximum":500},
     "difficulty": {"enum":["easy","normal","hard"]},
     "category": {"enum":["billing","integrations","permissions","reporting","onboarding"]},
-    "policy_key": {"type":"string", "pattern":"^(billing|integrations|permissions|reporting|onboarding)\\.[a-z_]+$"},
+    "policy_key": {"type":"string", "pattern":"^((billing|integrations|permissions|reporting|onboarding)\\.[a-z_]+|extra\\.abstention_[0-9]{3})$"},
     "article_title": {"type":"string", "minLength":3},
     "question": {"type":"string", "minLength":30},
     "gold_answer": {"type":"string", "minLength":30},
@@ -23,13 +23,14 @@
         "intern":{"$ref":"#/$defs/profileAnswer"}
       }, "additionalProperties":false
     },
-    "documentation_anchor": {"type":"string", "pattern":"^Q[1-4]\\.md#"},
+    "documentation_anchor": {"type":"string", "pattern":"^(Q[1-4]|Extra)\\.md#"},
     "is_changed_answer_near_duplicate": {"type":"boolean"},
     "near_duplicate_of": {"type":["string","null"]},
-    "similar_question_ids": {"type":"array", "minItems":4, "uniqueItems":true, "items":{"type":"string"}},
+    "similar_question_ids": {"type":"array", "uniqueItems":true, "items":{"type":"string"}},
     "drift": {"type":["object","null"]},
     "generation": {"type":"object"},
-    "evaluation": {"type":"object"}
+    "evaluation": {"type":"object"},
+    "requires_model_abstention": {"type":"boolean"}
   },
   "$defs": {
     "profileAnswer": {

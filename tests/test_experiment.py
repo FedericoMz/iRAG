@@ -8,7 +8,6 @@ from irag.experiment import (
     ExperimentRunner,
     accepts_suggestion,
     assign_profile,
-    build_paper_request,
 )
 from irag.models import (
     AcceptanceRegime,
@@ -16,7 +15,6 @@ from irag.models import (
     Category,
     ExperimentCondition,
     ExperimentRequest,
-    PaperSuiteRequest,
     Profile,
     Quarter,
     QuarterBatch,
@@ -29,6 +27,8 @@ def make_ticket(
     difficulty: str = "easy",
     category: str = "billing",
     quarter: str = "Q1",
+    question: str | None = None,
+    requires_model_abstention: bool = False,
 ):
     return TicketRecord.model_validate(
         {
@@ -40,7 +40,7 @@ def make_ticket(
             "category": category,
             "policy_key": f"{category}.policy",
             "article_title": "Policy",
-            "question": f"Question {number}?",
+            "question": question or f"Question {number}?",
             "gold_answer": "correct",
             "profile_answers": {
                 "ceo": {"answer": "correct", "is_correct": True},
@@ -57,6 +57,7 @@ def make_ticket(
             "drift": None,
             "generation": {},
             "evaluation": {},
+            "requires_model_abstention": requires_model_abstention,
         }
     )
 
@@ -139,6 +140,18 @@ class CEOAcceptanceClient(FakeClient):
         return super().judge_gold(answer, gold_answer)
 
 
+class ExtraAbstentionClient(FakeClient):
+    def decide(self, question, retrieved):
+        if "unsupported orbital geology" in question:
+            return {
+                "answer": "",
+                "abstain": True,
+                "evidence_ids": [],
+                "reason": "No supporting record exists.",
+            }
+        return super().decide(question, retrieved)
+
+
 def test_runner_reaches_contestation_then_autonomy():
     records = [make_ticket(number) for number in range(1, 4)]
     condition = ExperimentCondition(
@@ -173,6 +186,58 @@ def test_runner_reaches_contestation_then_autonomy():
     assert (
         "metric_component_drift.assisted.stable" in result["conditions"][0]["aggregate"]
     )
+
+
+def test_extra_split_preserves_ds_and_measures_required_abstention():
+    nominal = [make_ticket(1), make_ticket(2)]
+    extra = make_ticket(
+        3,
+        quarter="Extra",
+        question="Can SalesX solve this unsupported orbital geology problem?",
+        requires_model_abstention=True,
+    )
+    condition = ExperimentCondition(
+        name="extra-abstention",
+        assignment_strategy=AssignmentStrategy.SINGLE,
+        single_profile=Profile.CEO,
+        acceptance_regime=AcceptanceRegime.ALWAYS,
+        repetitions=1,
+        seed=7,
+        alpha=0.5,
+        beta=0.1,
+        gamma=0.9,
+        minimum_observations=1,
+        quarterly_ceo_tickets=1,
+    )
+    request = ExperimentRequest(
+        name="test",
+        quarters=[
+            QuarterBatch(quarter=Quarter.Q1, records=nominal),
+            QuarterBatch(quarter=Quarter.EXTRA, records=[extra]),
+        ],
+        conditions=[condition],
+    )
+
+    result = ExperimentRunner(FakeDataset(), ExtraAbstentionClient()).run(
+        "test-id",
+        request,
+    )
+    repetition = result["conditions"][0]["repetitions"][0]
+    ticket = repetition["tickets"][-1]
+
+    assert ticket["quarter"] == "Extra"
+    assert ticket["state_before"] == "deferring_surrogate"
+    assert ticket["state_after"] == "deferring_surrogate"
+    assert not ticket["quarterly_ceo_review"]
+    assert ticket["expected_model_action"] == "abstain"
+    assert ticket["model_action_is_correct"]
+    assert ticket["final_origin"] == "human_on_abstention"
+    assert repetition["summary"]["abstention_challenge"]["Extra"] == {
+        "tickets": 1,
+        "errors": 0,
+        "error_rate": 0.0,
+    }
+    assert repetition["summary"]["overall"]["tickets"] == 2
 
 
 def test_never_accept_regime_cannot_enter_autonomous_state():
@@ -634,27 +699,3 @@ def test_repetition_resume_replays_state_without_repeating_model_calls():
     assert resumed == full
     assert full_client.decide_calls == len(records)
     assert resumed_client.decide_calls == len(records) - len(checkpoint)
-
-
-def test_paper_suite_expands_declared_grid():
-    paper = PaperSuiteRequest(
-        quarters=[QuarterBatch(quarter=Quarter.Q1, records=[make_ticket(1)])],
-        repetitions=2,
-    )
-    request = build_paper_request(paper)
-
-    assert len(request.conditions) == 24
-    assert all(condition.repetitions == 2 for condition in request.conditions)
-    assert all(
-        condition.assignment_strategy != AssignmentStrategy.RANDOM
-        for condition in request.conditions
-    )
-    assert request.conditions[-1].decay == 1.0
-    assert request.conditions[0].alpha == 0.7
-    assert request.conditions[0].gamma == 0.8
-    assert request.conditions[0].quarterly_ceo_tickets == 100
-    assert any(
-        condition.assignment_strategy
-        == AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED
-        for condition in request.conditions
-    )

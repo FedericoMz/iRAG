@@ -29,9 +29,10 @@ def sample_quarter(
     seed: int,
 ) -> QuarterBatch:
     records = dataset.load_quarter(quarter).records
-    rng = random.Random(seed + int(quarter.value[1:]))
-    if quarter == Quarter.Q1:
-        selected = rng.sample(records, tickets)
+    rng = random.Random(seed + quarter.order)
+    sample_size = min(tickets, len(records))
+    if quarter in (Quarter.Q1, Quarter.EXTRA):
+        selected = rng.sample(records, sample_size)
     else:
         drift = [
             record for record in records if record.is_changed_answer_near_duplicate
@@ -39,9 +40,9 @@ def sample_quarter(
         stable = [
             record for record in records if not record.is_changed_answer_near_duplicate
         ]
-        drift_count = round(tickets * 0.1)
+        drift_count = round(sample_size * 0.1)
         selected = rng.sample(drift, drift_count) + rng.sample(
-            stable, tickets - drift_count
+            stable, sample_size - drift_count
         )
     return QuarterBatch(quarter=quarter, records=selected)
 

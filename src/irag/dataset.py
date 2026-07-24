@@ -17,8 +17,13 @@ class SalesXDataset:
         self._vectors: dict[str, np.ndarray] | None = None
         self._checksums_verified = False
 
-    def load_all_quarters(self) -> list[QuarterBatch]:
-        return [self.load_quarter(Quarter(f"Q{number}")) for number in range(1, 5)]
+    def load_all_quarters(self, include_extra: bool = True) -> list[QuarterBatch]:
+        periods = [
+            period
+            for period in Quarter
+            if include_extra or period != Quarter.EXTRA
+        ]
+        return [self.load_quarter(period) for period in periods]
 
     def load_quarter(self, quarter: Quarter) -> QuarterBatch:
         path = self.data_dir / f"{quarter.value}_qa.json"
@@ -83,8 +88,8 @@ class SalesXDataset:
 
     def _load_vectors(self) -> dict[str, np.ndarray]:
         vectors: dict[str, np.ndarray] = {}
-        for number in range(1, 5):
-            path = self.embedding_dir / f"Q{number}.npz"
+        for period in Quarter:
+            path = self.embedding_dir / f"{period.value}.npz"
             with np.load(path, allow_pickle=False) as archive:
                 ids = archive["ids"]
                 embeddings = archive["embeddings"].astype(np.float32, copy=False)
