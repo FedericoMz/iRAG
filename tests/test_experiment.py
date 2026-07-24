@@ -4,12 +4,7 @@ import threading
 
 import numpy as np
 
-from irag.experiment import (
-    ExperimentRunner,
-    accepts_suggestion,
-    assign_profile,
-)
-from irag.models import (
+from irag.core.models import (
     AcceptanceRegime,
     AssignmentStrategy,
     Category,
@@ -19,6 +14,11 @@ from irag.models import (
     Quarter,
     QuarterBatch,
     TicketRecord,
+)
+from irag.engine.experiment import (
+    ExperimentRunner,
+    accepts_suggestion,
+    assign_profile,
 )
 
 

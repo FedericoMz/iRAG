@@ -7,8 +7,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Callable, Protocol
 
-from irag.dataset import SalesXDataset
-from irag.models import (
+from irag.core.models import (
     AcceptanceRegime,
     AssignmentStrategy,
     Category,
@@ -20,7 +19,8 @@ from irag.models import (
     SystemState,
     TicketRecord,
 )
-from irag.retrieval import KBRecord, retrieve
+from irag.data.dataset import SalesXDataset
+from irag.engine.retrieval import KBRecord, retrieve
 from irag.tools.logger import log_event
 
 

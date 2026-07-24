@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
-from irag.models import ExperimentRequest, ExperimentStatus, JobStatus
+from irag.core.models import ExperimentRequest, ExperimentStatus, JobStatus
 
 
 class ExperimentStore:

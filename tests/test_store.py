@@ -1,4 +1,4 @@
-from irag.models import (
+from irag.core.models import (
     AcceptanceRegime,
     AssignmentStrategy,
     ExperimentCondition,
@@ -7,7 +7,7 @@ from irag.models import (
     Quarter,
     QuarterBatch,
 )
-from irag.store import ExperimentStore
+from irag.data.store import ExperimentStore
 
 from .test_experiment import make_ticket
 

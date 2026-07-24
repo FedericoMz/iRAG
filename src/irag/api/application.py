@@ -8,10 +8,8 @@ from fastapi.responses import FileResponse
 
 from irag import __version__
 from irag.client import BedrockClient, BaseModelClient, OllamaClient, OpenRouterClient
-from irag.config import settings
-from irag.dataset import SalesXDataset
-from irag.experiment import ExperimentRunner
-from irag.models import (
+from irag.core.config import settings
+from irag.core.models import (
     AcceptanceRegime,
     AssignmentStrategy,
     BundledExperimentRequest,
@@ -29,7 +27,9 @@ from irag.models import (
     QuarterBatch,
     RunAcceptance,
 )
-from irag.store import ExperimentStore
+from irag.data.dataset import SalesXDataset
+from irag.data.store import ExperimentStore
+from irag.engine.experiment import ExperimentRunner
 from irag.tools.logger import logger
 
 

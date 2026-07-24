@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 
-from irag.models import Quarter, QuarterBatch, TicketRecord
+from irag.core.models import Quarter, QuarterBatch, TicketRecord
 
 
 class SalesXDataset:

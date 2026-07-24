@@ -4,9 +4,9 @@ from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 
-import irag.api as api
+import irag.api.application as api
 from irag.client import OpenRouterClient
-from irag.models import (
+from irag.core.models import (
     AcceptanceRegime,
     AssignmentStrategy,
     ExperimentCondition,
@@ -18,7 +18,7 @@ from irag.models import (
     Quarter,
     QuarterBatch,
 )
-from irag.store import ExperimentStore
+from irag.data.store import ExperimentStore
 from tests.test_experiment import FakeClient, FakeDataset, make_ticket
 
 

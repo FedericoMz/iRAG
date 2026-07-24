@@ -6,10 +6,8 @@ import random
 import sys
 
 from irag.client import OllamaClient
-from irag.config import settings
-from irag.dataset import SalesXDataset
-from irag.experiment import ExperimentRunner
-from irag.models import (
+from irag.core.config import settings
+from irag.core.models import (
     AcceptanceRegime,
     AssignmentStrategy,
     ExperimentCondition,
@@ -19,7 +17,9 @@ from irag.models import (
     Quarter,
     QuarterBatch,
 )
-from irag.store import ExperimentStore
+from irag.data.dataset import SalesXDataset
+from irag.data.store import ExperimentStore
+from irag.engine.experiment import ExperimentRunner
 
 
 def sample_quarter(

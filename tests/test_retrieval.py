@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from irag.retrieval import KBRecord, retrieve
+from irag.engine.retrieval import KBRecord, retrieve
 
 
 def test_retrieval_applies_semantic_gate_before_temporal_decay():

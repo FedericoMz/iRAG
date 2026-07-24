@@ -1,4 +1,4 @@
-from irag.api import app
+from irag.api.application import app
 from irag.tools.logger import logger
 
 

@@ -1,3 +1,5 @@
+"""Similarity retrieval over the incremental knowledge base."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
