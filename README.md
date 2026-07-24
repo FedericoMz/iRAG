@@ -71,6 +71,25 @@ make plot RESULT=outputs/<experiment-folder>/result.json
 
 The chart infers quarter boundaries from ticket metadata and draws a vertical divider between quarters. Use `--condition`, `--repetition`, or `--output` with `python -m irag.tools.plot_experiment_result` for non-default selections.
 
+For a completed parallel job, average all repetitions and export detailed
+abstention and drift statistics using only its job ID:
+
+```sh
+make analyze JOB=<job-id>
+```
+
+The command discovers the matching folder under `outputs/`, verifies that every
+configured `run-NNN.json` file is present, and writes:
+
+- `average-results.png`, containing pointwise mean trajectories with
+  one-population-standard-deviation bands.
+- `abstention-drift-stats.json`, containing pooled totals, per-repetition means
+  and standard deviations, overall and per-quarter abstention rates, and the
+  corresponding breakdown restricted to drift tickets.
+
+Use `python -m irag.tools.analyze_experiment <job-id> --output-dir <directory>`
+when the experiment outputs are stored outside the configured output directory.
+
 ## Start locally
 
 For Ollama, the configured local generation and auxiliary models must be installed before starting the application. For OpenRouter and Bedrock, choose models that support structured outputs.

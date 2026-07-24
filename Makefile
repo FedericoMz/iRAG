@@ -4,7 +4,7 @@ export PYTHONPATH := $(CURDIR)/src
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install run test lint validate smoke sample plot docker-build up down logs
+.PHONY: help install run test lint validate smoke sample plot analyze docker-build up down logs
 
 help:
 	@echo "Available commands:"
@@ -16,6 +16,7 @@ help:
 	@echo "  make smoke         Run the live Ollama smoke test"
 	@echo "  make sample        Run a 20-ticket-per-quarter experiment with configured Ollama models"
 	@echo "  make plot RESULT=outputs/<folder>/<result>.json  Plot FEA and cumulative error rate"
+	@echo "  make analyze JOB=<job-id>  Plot repetition averages and export abstention/drift statistics"
 	@echo "  make docker-build  Build the Docker image"
 	@echo "  make up            Build and start the app with Docker Compose"
 	@echo "  make down          Stop the Docker Compose services"
@@ -47,6 +48,10 @@ sample:
 plot:
 	@test -n "$(RESULT)" || (echo "Usage: make plot RESULT=outputs/<folder>/<result>.json"; exit 2)
 	$(PYTHON) -m irag.tools.plot_experiment_result "$(RESULT)"
+
+analyze:
+	@test -n "$(JOB)" || (echo "Usage: make analyze JOB=<job-id>"; exit 2)
+	$(PYTHON) -m irag.tools.analyze_experiment "$(JOB)"
 
 docker-build:
 	docker compose build
