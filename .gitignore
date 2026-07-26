@@ -363,6 +363,7 @@ htmlcov/
 config.env
 outputs/
 logs/
+.claude/
 *.log
 .DS_Store
 

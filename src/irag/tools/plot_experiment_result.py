@@ -152,61 +152,51 @@ def plot_result(
     baseline_error_rate = cumulative_human_baseline_error_rate(tickets)
     gold_coverage = cumulative_observation_rate(tickets, "gold")
     human_coverage = cumulative_observation_rate(tickets, "human")
-    abstention_success = cumulative_abstention_success_rate(tickets)
     ranges = quarter_ranges(tickets)
 
     figure, fea_axis = plt.subplots(figsize=(14, 7))
-    fea_line = fea_axis.plot(
+    fea_axis.plot(
         positions,
         fea,
         color="#2563eb",
         linewidth=2.2,
         label="FEA",
-    )[0]
-    gold_line = fea_axis.plot(
+    )
+    fea_axis.plot(
         positions,
         gold_coverage,
         color="#16a34a",
         linewidth=2.2,
         label="Cumulative LLM gold coverage",
-    )[0]
-    human_line = fea_axis.plot(
+    )
+    fea_axis.plot(
         positions,
         human_coverage,
         color="#0891b2",
         linewidth=1.8,
         label="Cumulative human-reference coverage",
-    )[0]
-    error_line = fea_axis.plot(
+    )
+    fea_axis.plot(
         positions,
         error_rate,
         color="#dc2626",
         linewidth=1.8,
         label="Cumulative final-decision error rate",
-    )[0]
-    baseline_error_line = fea_axis.plot(
+    )
+    fea_axis.plot(
         positions,
         baseline_error_rate,
         color="#6b7280",
         linewidth=1.8,
         linestyle="--",
         label="Cumulative human-only baseline error rate",
-    )[0]
-    abstention_line = fea_axis.plot(
-        positions,
-        abstention_success,
-        color="#9333ea",
-        linewidth=2,
-        linestyle=":",
-        label="Cumulative Extra abstention rate",
-    )[0]
-
+    )
     thresholds = [
-        ("alpha", "#15803d"),
-        ("beta", "#f59e0b"),
-        ("gamma", "#7c3aed"),
+        ("alpha", "α", "#15803d"),
+        ("beta", "β", "#f59e0b"),
+        ("gamma", "γ", "#7c3aed"),
     ]
-    for name, color in thresholds:
+    for name, symbol, color in thresholds:
         value = configuration[name]
         fea_axis.axhline(
             value,
@@ -218,7 +208,7 @@ def plot_result(
         fea_axis.text(
             0.995,
             value + 0.006,
-            f"{name}={value:.2f}",
+            f"{symbol}={value:.2f}",
             transform=fea_axis.get_yaxis_transform(),
             ha="right",
             va="bottom",
@@ -288,26 +278,6 @@ def plot_result(
         f"{configuration['name']} — "
         f"Repetition {repetition_number} — {len(tickets)} tickets",
         pad=18,
-    )
-    fea_axis.legend(
-        [
-            fea_line,
-            gold_line,
-            human_line,
-            error_line,
-            baseline_error_line,
-            abstention_line,
-        ],
-        [
-            fea_line.get_label(),
-            gold_line.get_label(),
-            human_line.get_label(),
-            error_line.get_label(),
-            baseline_error_line.get_label(),
-            abstention_line.get_label(),
-        ],
-        loc="lower left",
-        frameon=True,
     )
     figure.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)

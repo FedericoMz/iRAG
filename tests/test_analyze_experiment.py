@@ -142,3 +142,4 @@ def test_analyze_job_plots_average_and_writes_abstention_drift_stats(tmp_path):
     )
     assert trajectories["FEA"]["mean"][0] == 0.5
     assert trajectories["FEA"]["standard_deviation"][0] == pytest.approx(0.1)
+    assert all("Extra abstention" not in label for label in trajectories)

@@ -180,6 +180,15 @@ class ExperimentStore:
                 tickets.append(ticket)
         return tickets
 
+    def read_run(self, experiment_id: str, repetition: int) -> dict:
+        source = self.run_path(experiment_id, repetition)
+        if not source.is_file():
+            raise ValueError(f"Finalized repetition {repetition} is missing")
+        result = json.loads(source.read_text(encoding="utf-8"))
+        if not isinstance(result, dict):
+            raise ValueError(f"Finalized repetition {repetition} is invalid")
+        return result
+
     def write_run(self, experiment_id: str, repetition: int, result: dict) -> Path:
         destination = self.run_path(experiment_id, repetition)
         self._write_json(destination, result)

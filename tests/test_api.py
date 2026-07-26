@@ -322,7 +322,7 @@ def test_resume_endpoint_recovers_job_after_process_restart(monkeypatch, tmp_pat
                 assignment_strategy=AssignmentStrategy.SINGLE,
                 single_profile=Profile.CEO,
                 acceptance_regime=AcceptanceRegime.NEVER,
-                repetitions=1,
+                repetitions=2,
             )
         ],
     )
@@ -339,6 +339,16 @@ def test_resume_endpoint_recovers_job_after_process_restart(monkeypatch, tmp_pat
         old_job.experiment_id,
         1,
         [{"global_position": 1}],
+    )
+    old_store.write_run(
+        old_job.experiment_id,
+        2,
+        {
+            "repetition": 2,
+            "seed": 20260718,
+            "summary": {"overall": {"tickets": 1, "errors": 0, "error_rate": 0}},
+            "transitions": [],
+        },
     )
 
     restarted_store = ExperimentStore(tmp_path)
@@ -360,6 +370,16 @@ def test_resume_endpoint_recovers_job_after_process_restart(monkeypatch, tmp_pat
     assert response.json()["status"] == "queued"
     assert submitted[0][0] == old_job.experiment_id
     assert submitted[0][3] == {1: [{"global_position": 1}]}
+    assert submitted[0][4] == {
+        2: {
+            "seed": 20260718,
+            "output_file": "run-002.json",
+            "summary": {
+                "overall": {"tickets": 1, "errors": 0, "error_rate": 0}
+            },
+            "transitions": [],
+        }
+    }
     recovered = restarted_store.get(old_job.experiment_id)
     assert recovered is not None
     assert recovered.output_directory == old_job.output_directory

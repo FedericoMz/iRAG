@@ -1,7 +1,42 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Any
+
+
+_MODEL_CALL_CONTEXT: ContextVar[dict[str, Any] | None] = ContextVar(
+    "irag_model_call_context",
+    default=None,
+)
+
+
+@contextmanager
+def model_call_context(**values: Any):
+    """Attach run/ticket/stage fields to provider logs in the current thread."""
+    context = dict(_MODEL_CALL_CONTEXT.get() or {})
+    context.update({key: value for key, value in values.items() if value is not None})
+    token = _MODEL_CALL_CONTEXT.set(context)
+    try:
+        yield
+    finally:
+        _MODEL_CALL_CONTEXT.reset(token)
+
+
+def model_call_log_suffix() -> str:
+    context = _MODEL_CALL_CONTEXT.get() or {}
+    fields = (
+        "experiment_id",
+        "repetition",
+        "ticket_id",
+        "global_position",
+        "stage",
+    )
+    rendered = " ".join(
+        f"{field}={context[field]}" for field in fields if field in context
+    )
+    return f" [{rendered}]" if rendered else ""
 
 
 ANSWER_SCHEMA = {
@@ -68,14 +103,15 @@ class BaseModelClient(ABC):
             f"CURRENT TICKET:\n{question}\n\n"
             f"RETRIEVED RECORDS:\n{self._format_context(retrieved)}"
         )
-        result, elapsed = self._chat(
-            self.generation_model,
-            system,
-            user,
-            ANSWER_SCHEMA,
-            schema_name="salesx_decision",
-            max_tokens=500,
-        )
+        with model_call_context(stage="decide"):
+            result, elapsed = self._chat(
+                self.generation_model,
+                system,
+                user,
+                ANSWER_SCHEMA,
+                schema_name="salesx_decision",
+                max_tokens=500,
+            )
         result["latency_seconds"] = elapsed
         result["model"] = self.generation_model
         result["provider"] = self.provider
@@ -98,14 +134,15 @@ class BaseModelClient(ABC):
             "as the reference; do not use outside knowledge to judge its correctness."
         )
         user = f"MODEL ANSWER:\n{answer}\n\nHUMAN REFERENCE:\n{human_answer}"
-        result, elapsed = self._chat(
-            self.auxiliary_model,
-            system,
-            user,
-            JUDGMENT_SCHEMA,
-            schema_name="salesx_human_reference_coverage",
-            max_tokens=300,
-        )
+        with model_call_context(stage="judge_human"):
+            result, elapsed = self._chat(
+                self.auxiliary_model,
+                system,
+                user,
+                JUDGMENT_SCHEMA,
+                schema_name="salesx_human_reference_coverage",
+                max_tokens=300,
+            )
         result["latency_seconds"] = elapsed
         result["model"] = self.auxiliary_model
         result["provider"] = self.provider
@@ -124,14 +161,15 @@ class BaseModelClient(ABC):
             "procedure, or exception that materially changes the decision."
         )
         user = f"CANDIDATE ANSWER:\n{answer}\n\nGOLD REFERENCE:\n{gold_answer}"
-        result, elapsed = self._chat(
-            self.auxiliary_model,
-            system,
-            user,
-            GOLD_JUDGMENT_SCHEMA,
-            schema_name="salesx_gold_reference_coverage",
-            max_tokens=250,
-        )
+        with model_call_context(stage="judge_gold"):
+            result, elapsed = self._chat(
+                self.auxiliary_model,
+                system,
+                user,
+                GOLD_JUDGMENT_SCHEMA,
+                schema_name="salesx_gold_reference_coverage",
+                max_tokens=250,
+            )
         result["latency_seconds"] = elapsed
         result["model"] = self.auxiliary_model
         result["provider"] = self.provider

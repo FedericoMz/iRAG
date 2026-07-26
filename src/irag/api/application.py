@@ -126,24 +126,40 @@ def resume_parallel_run(
             else store.read_saved_metadata(experiment_id)
         )
         request = build_resume_request(metadata)
-        if len(request.conditions) != 1 or request.conditions[0].repetitions != 1:
-            raise ValueError(
-                "Resume currently supports parallel runs with one repetition"
-            )
+        if len(request.conditions) != 1:
+            raise ValueError("Resume requires exactly one experiment condition")
         if job is None:
             started_at = datetime.fromisoformat(metadata["started_at"])
             job = store.recover(experiment_id, request, started_at)
-        if store.run_path(experiment_id, 1).exists():
-            raise ValueError("The saved repetition is already finalized")
-        tickets = store.read_partial_tickets(experiment_id, 1)
         total_tickets = sum(len(batch.records) for batch in request.quarters)
-        if len(tickets) > total_tickets:
-            raise ValueError("Checkpoint contains more tickets than the experiment")
-        for position, ticket in enumerate(tickets, start=1):
-            if ticket.get("global_position") != position:
+        resume_tickets = {}
+        saved_repetitions = {}
+        for repetition in range(1, request.conditions[0].repetitions + 1):
+            if store.run_path(experiment_id, repetition).exists():
+                saved = store.read_run(experiment_id, repetition)
+                if saved.get("repetition") != repetition:
+                    raise ValueError(
+                        f"Finalized repetition {repetition} has the wrong index"
+                    )
+                saved_repetitions[repetition] = {
+                    "seed": saved["seed"],
+                    "output_file": f"run-{repetition:03d}.json",
+                    "summary": saved["summary"],
+                    "transitions": saved["transitions"],
+                }
+                continue
+            tickets = store.read_partial_tickets(experiment_id, repetition)
+            if len(tickets) > total_tickets:
                 raise ValueError(
-                    f"Checkpoint is not contiguous at saved ticket {position}"
+                    f"Checkpoint {repetition} contains more tickets than the experiment"
                 )
+            for position, ticket in enumerate(tickets, start=1):
+                if ticket.get("global_position") != position:
+                    raise ValueError(
+                        f"Checkpoint {repetition} is not contiguous at saved "
+                        f"ticket {position}"
+                    )
+            resume_tickets[repetition] = tickets
     except (KeyError, TypeError, ValueError) as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
@@ -153,7 +169,8 @@ def resume_parallel_run(
         experiment_id,
         request,
         checkpoint_interval,
-        {1: tickets},
+        resume_tickets,
+        saved_repetitions,
     )
     return created_response(job)
 
@@ -355,6 +372,7 @@ def run_parallel_experiment(
     request: ExperimentRequest,
     checkpoint_interval: int = 50,
     resume_tickets: dict[int, list[dict]] | None = None,
+    saved_repetitions: dict[int, dict] | None = None,
 ) -> None:
     logger.info(f"Starting parallel experiment {experiment_id}: {request.name}")
     store.start(experiment_id)
@@ -370,6 +388,7 @@ def run_parallel_experiment(
                     str(repetition): len(tickets)
                     for repetition, tickets in resume_tickets.items()
                 },
+                "finalized_repetitions": sorted(saved_repetitions or {}),
             }
             result["started_at"] = existing.get("started_at", result["started_at"])
             result["resume_events"] = [
@@ -417,6 +436,7 @@ def run_parallel_experiment(
             ticket_batch_size=checkpoint_interval,
             on_repetition=write_repetition,
             resume_tickets=resume_tickets,
+            saved_repetitions=saved_repetitions,
         )
         summary = {
             key: value
@@ -482,7 +502,12 @@ def make_model_client(request: ExperimentRequest) -> BaseModelClient:
         retries=retries,
         throttle_retries=settings.bedrock_throttle_retries,
         throttle_max_delay=settings.bedrock_throttle_max_delay,
+        service_retries=settings.bedrock_service_retries,
+        service_max_delay=settings.bedrock_service_max_delay,
+        connection_retries=settings.bedrock_connection_retries,
+        connection_max_delay=settings.bedrock_connection_max_delay,
         response_retries=settings.bedrock_response_retries,
         response_max_delay=settings.bedrock_response_max_delay,
         decision_response_retries=settings.bedrock_decision_response_retries,
+        max_concurrency=settings.bedrock_max_concurrency,
     )

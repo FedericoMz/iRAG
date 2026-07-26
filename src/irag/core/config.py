@@ -60,6 +60,18 @@ class Settings:
     bedrock_throttle_max_delay: float = float(
         os.getenv("BEDROCK_THROTTLE_MAX_DELAY", "60")
     )
+    bedrock_service_retries: int = int(
+        os.getenv("BEDROCK_SERVICE_RETRIES", "100")
+    )
+    bedrock_service_max_delay: float = float(
+        os.getenv("BEDROCK_SERVICE_MAX_DELAY", "60")
+    )
+    bedrock_connection_retries: int = int(
+        os.getenv("BEDROCK_CONNECTION_RETRIES", "100")
+    )
+    bedrock_connection_max_delay: float = float(
+        os.getenv("BEDROCK_CONNECTION_MAX_DELAY", "60")
+    )
     bedrock_response_retries: int = int(
         os.getenv("BEDROCK_RESPONSE_RETRIES", "10")
     )
@@ -68,6 +80,9 @@ class Settings:
     )
     bedrock_decision_response_retries: int = int(
         os.getenv("BEDROCK_DECISION_RESPONSE_RETRIES", "3")
+    )
+    bedrock_max_concurrency: int = int(
+        os.getenv("BEDROCK_MAX_CONCURRENCY", "3")
     )
 
 

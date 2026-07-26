@@ -44,14 +44,19 @@ BEDROCK_PROFILE="" # optional alternative: local shared AWS profile
 BEDROCK_RETRIES="10" # adaptive SDK attempts for throttling-heavy batch runs
 BEDROCK_THROTTLE_RETRIES="100" # application retries after SDK throttling is exhausted
 BEDROCK_THROTTLE_MAX_DELAY="60" # maximum backoff between application retries
+BEDROCK_SERVICE_RETRIES="100" # retries for transient 503/internal service errors
+BEDROCK_SERVICE_MAX_DELAY="60" # maximum backoff for transient service errors
+BEDROCK_CONNECTION_RETRIES="100" # retries for endpoint/DNS/connection failures
+BEDROCK_CONNECTION_MAX_DELAY="60" # maximum connection-error backoff
 BEDROCK_RESPONSE_RETRIES="10" # retries for empty or malformed structured responses
 BEDROCK_RESPONSE_MAX_DELAY="10" # maximum backoff between response retries
 BEDROCK_DECISION_RESPONSE_RETRIES="3" # decision retries before safe abstention
+BEDROCK_MAX_CONCURRENCY="3" # maximum simultaneous Bedrock Runtime calls
 BEDROCK_GENERATION_MODEL="eu.amazon.nova-2-lite-v1:0"
 BEDROCK_AUXILIARY_MODEL="eu.amazon.nova-2-lite-v1:0"
 ```
 
-The Bedrock adapter uses JSON-schema structured output through `Converse`: Nova models return the schema through a forced tool call, while models supporting native structured output use `outputConfig`. If different model IDs are selected, both must support one of these mechanisms in the configured region. Boto3 reads `AWS_BEARER_TOKEN_BEDROCK` automatically. Compose passes it from `config.env` into the container. As alternatives, Boto3 can use its normal environment, shared-file, container-role, or instance-role credential sources; a host `BEDROCK_PROFILE` works inside Docker only if its shared AWS configuration is also mounted in the container. Bedrock uses adaptive SDK retries because a complete experiment makes thousands of calls to one runtime resource; `BEDROCK_RETRIES` controls total SDK attempts per request. If the SDK's retry quota is depleted, throttling receives an additional jittered application backoff controlled by `BEDROCK_THROTTLE_RETRIES` and `BEDROCK_THROTTLE_MAX_DELAY`. Empty, malformed-tool, invalid-JSON, and missing-field structured responses are retried separately using `BEDROCK_RESPONSE_RETRIES` and `BEDROCK_RESPONSE_MAX_DELAY`. Generation decisions use the smaller `BEDROCK_DECISION_RESPONSE_RETRIES` budget and then fail safely as abstentions, leaving the human answer final and recording the fallback in `api_response`; auxiliary judgments remain strict because fabricating an evaluation would corrupt the metrics. These settings do not change retry behaviour for Ollama or OpenRouter.
+The Bedrock adapter uses JSON-schema structured output through `Converse`: Nova models return the schema through a forced tool call, while models supporting native structured output use `outputConfig`. If different model IDs are selected, both must support one of these mechanisms in the configured region. Boto3 reads `AWS_BEARER_TOKEN_BEDROCK` automatically. Compose passes it from `config.env` into the container. As alternatives, Boto3 can use its normal environment, shared-file, container-role, or instance-role credential sources; a host `BEDROCK_PROFILE` works inside Docker only if its shared AWS configuration is also mounted in the container. Bedrock uses adaptive SDK retries because a complete experiment makes thousands of calls to one runtime resource; `BEDROCK_RETRIES` controls total SDK attempts per request. If the SDK's retry quota is depleted, throttling receives an additional jittered application backoff controlled by `BEDROCK_THROTTLE_RETRIES` and `BEDROCK_THROTTLE_MAX_DELAY`. Transient 503/internal service errors receive their own backoff through `BEDROCK_SERVICE_RETRIES` and `BEDROCK_SERVICE_MAX_DELAY`, while DNS, endpoint-connect, connection-closed, and timeout failures use `BEDROCK_CONNECTION_RETRIES` and `BEDROCK_CONNECTION_MAX_DELAY`. `BEDROCK_MAX_CONCURRENCY` caps simultaneous Runtime calls across parallel repetitions to avoid connection storms. Retry messages include experiment, repetition, ticket, global position, and decision/judgment stage. Empty, malformed-tool, invalid-JSON, and missing-field structured responses are retried separately using `BEDROCK_RESPONSE_RETRIES` and `BEDROCK_RESPONSE_MAX_DELAY`. Generation decisions use the smaller `BEDROCK_DECISION_RESPONSE_RETRIES` budget and then fail safely as abstentions, leaving the human answer final and recording the fallback in `api_response`; auxiliary judgments remain strict because fabricating an evaluation would corrupt the metrics. These settings do not change retry behaviour for Ollama or OpenRouter.
 
 The question embeddings are always read from the checked-in compressed `.npz` files under `experiment data/embeddings/qwen3-embedding-4b`. Neither provider is called for embeddings, and no runtime embedding generation is implemented.
 
@@ -69,7 +74,14 @@ Plot FEA and cumulative final-decision error rate from any result with:
 make plot RESULT=outputs/<experiment-folder>/result.json
 ```
 
-The chart infers quarter boundaries from ticket metadata and draws a vertical divider between quarters. Use `--condition`, `--repetition`, or `--output` with `python -m irag.tools.plot_experiment_result` for non-default selections.
+The chart infers quarter boundaries from ticket metadata and draws a vertical divider between quarters. Plot images omit their legend so that a single horizontal legend can be reused across paper figures:
+
+```sh
+make legend
+make legend OUTPUT=outputs/paper-legend.png
+```
+
+Use `--condition`, `--repetition`, or `--output` with `python -m irag.tools.plot_experiment_result` for non-default selections.
 
 For a completed parallel job, average all repetitions and export detailed
 abstention and drift statistics using only its job ID:
@@ -130,7 +142,7 @@ curl -X POST \
   'http://localhost:8000/v1/runs?expert=informed_mixture&acceptance=randomize&repetitions=10&decay=0.99861&include_extra=true'
 ```
 
-The RUN API processes Q1–Q4 by default. Set `include_extra=true`—or enable **Include extra** in the API documentation form—to append the separate 50-ticket post-Q4 abstention challenge. Every repetition has an independent seeded shuffle within each selected batch and fresh RAG state. Repetitions are submitted concurrently; the configured model service ultimately controls how many requests execute simultaneously. Provider, generation model, auxiliary model, Ollama URL, Bedrock region, timeout, and retries can be selected for the job. Any empty model field falls back to `config.env`; OpenRouter and AWS credentials are always environment-only.
+The RUN API processes Q1–Q4 by default. Set `include_extra=true`—or enable **Include extra** in the API documentation form—to append the separate 50-ticket post-Q4 abstention challenge. Every repetition has an independent seeded shuffle within each selected batch and fresh RAG state. Repetitions are submitted concurrently; for Bedrock, `BEDROCK_MAX_CONCURRENCY` limits simultaneous Runtime calls independently of the repetition count. Provider, generation model, auxiliary model, Ollama URL, Bedrock region, timeout, and retries can be selected for the job. Any empty model field falls back to `config.env`; OpenRouter and AWS credentials are always environment-only.
 
 Its `202` response contains a job ID and status URL. The status response includes `output_directory`. A directory such as the following is created immediately:
 
@@ -146,14 +158,20 @@ outputs/
 
 Each `run-NNN.json` contains that repetition's shuffled ticket trace, FEA trajectory, transitions, and summary. During execution, trace batches are appended to `run-NNN.partial.jsonl`, so a complete 2,050-ticket trace is never retained in RAM. On successful repetition completion, that partial file is streamed into `run-NNN.json` and removed. A failed repetition retains its partial file for diagnosis. The live retrieval KB and current batch remain in RAM because they are required by the algorithm. `metadata.json` stores the shared ticket/model/dataset metadata once. `result.json` contains the job-level aggregate and an index of run files. Completed run files are retained even if another parallel repetition fails.
 
-A failed one-repetition parallel run can be resumed from its last durable ticket batch, including after the API has restarted:
+A failed parallel run can be resumed from each repetition's last durable ticket
+batch, including after the API has restarted:
 
 ```sh
 curl -X POST \
   'http://localhost:8000/v1/runs/<job-id>/resume'
 ```
 
-Resume reconstructs the seeded shuffle, stochastic profile/acceptance choices, FEA, state transitions, recent-gold window, and retrieval KB from the checkpoint. It validates the replay before making another model call and appends only new tickets to the existing partial file. Tickets processed after the last flushed batch must be processed again; lowering `checkpoint_interval` reduces that exposure. Resume currently applies to runs submitted with `repetitions=1`.
+Resume reconstructs each seeded shuffle, stochastic profile/acceptance choices,
+FEA, state transitions, recent-gold window, and retrieval KB from its checkpoint.
+It validates every replay before making another model call, reuses repetitions
+that were already finalized, and appends only new tickets to unfinished partial
+files. Tickets processed after the last flushed batch must be processed again;
+lowering `checkpoint_interval` reduces that exposure.
 
 Use these endpoints to inspect or download the outputs:
 
@@ -162,7 +180,7 @@ Use these endpoints to inspect or download the outputs:
 - `GET /v1/experiments/{job-id}/runs` — currently available run files.
 - `GET /v1/experiments/{job-id}/runs/{repetition}` — one detailed run file.
 - `GET /v1/experiments/{job-id}/result` — aggregate result after completion.
-- `POST /v1/runs/{job-id}/resume` — continue a failed one-repetition run from its checkpoint.
+- `POST /v1/runs/{job-id}/resume` — continue every unfinished repetition of a failed run from its checkpoint.
 
 ### Other experiment APIs
 

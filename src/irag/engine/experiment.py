@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Callable, Protocol
 
+from irag.client.base import model_call_context
 from irag.core.models import (
     AcceptanceRegime,
     AssignmentStrategy,
@@ -116,6 +117,7 @@ class ExperimentRunner:
         ticket_batch_size: int = 50,
         on_repetition: Callable[[dict], str] | None = None,
         resume_tickets: dict[int, list[dict]] | None = None,
+        saved_repetitions: dict[int, dict] | None = None,
     ) -> dict:
         if len(request.conditions) != 1:
             raise ValueError("Parallel execution requires exactly one condition")
@@ -126,6 +128,23 @@ class ExperimentRunner:
         condition = request.conditions[0]
         completed_runs = []
         aggregate_inputs = []
+        for repetition, saved in sorted((saved_repetitions or {}).items()):
+            completed_runs.append(
+                {
+                    "repetition": repetition,
+                    "seed": saved["seed"],
+                    "output_file": saved["output_file"],
+                    "summary": saved["summary"],
+                }
+            )
+            aggregate_inputs.append(
+                {
+                    "summary": saved["summary"],
+                    "transitions": saved["transitions"],
+                }
+            )
+        if progress is not None and completed_runs:
+            progress(condition.name, len(completed_runs))
 
         def execute_repetition(repetition: int) -> tuple[dict, dict]:
             run_result = self.run_repetition(
@@ -153,20 +172,26 @@ class ExperimentRunner:
             }
             return completed_run, aggregate_input
 
-        with ThreadPoolExecutor(
-            max_workers=condition.repetitions,
-            thread_name_prefix=f"experiment-{experiment_id[:8]}",
-        ) as executor:
-            futures = [
-                executor.submit(execute_repetition, repetition)
-                for repetition in range(condition.repetitions)
-            ]
-            for future in as_completed(futures):
-                completed_run, aggregate_input = future.result()
-                completed_runs.append(completed_run)
-                aggregate_inputs.append(aggregate_input)
-                if progress is not None:
-                    progress(condition.name, len(completed_runs))
+        pending_repetitions = [
+            repetition
+            for repetition in range(condition.repetitions)
+            if repetition + 1 not in (saved_repetitions or {})
+        ]
+        if pending_repetitions:
+            with ThreadPoolExecutor(
+                max_workers=len(pending_repetitions),
+                thread_name_prefix=f"experiment-{experiment_id[:8]}",
+            ) as executor:
+                futures = [
+                    executor.submit(execute_repetition, repetition)
+                    for repetition in pending_repetitions
+                ]
+                for future in as_completed(futures):
+                    completed_run, aggregate_input = future.result()
+                    completed_runs.append(completed_run)
+                    aggregate_inputs.append(aggregate_input)
+                    if progress is not None:
+                        progress(condition.name, len(completed_runs))
 
         completed_runs.sort(key=lambda item: item["repetition"])
         result["conditions"].append(
@@ -334,18 +359,24 @@ class ExperimentRunner:
                     )
                     summary.observe(saved)
                     continue
-                output = self._process_ticket(
-                    record=record,
-                    human=human,
-                    assigned_profile=assigned_profile,
-                    condition=condition,
-                    reliability=reliability,
-                    context=context,
-                    rng=rng,
+                with model_call_context(
+                    experiment_id=experiment_id,
+                    repetition=repetition + 1,
+                    ticket_id=record.id,
                     global_position=global_position,
-                    quarter_position=quarter_position,
-                    quarterly_ceo_review=quarterly_ceo_review,
-                )
+                ):
+                    output = self._process_ticket(
+                        record=record,
+                        human=human,
+                        assigned_profile=assigned_profile,
+                        condition=condition,
+                        reliability=reliability,
+                        context=context,
+                        rng=rng,
+                        global_position=global_position,
+                        quarter_position=quarter_position,
+                        quarterly_ceo_review=quarterly_ceo_review,
+                    )
                 summary.observe(output)
                 model_decision = output["model_decision"]
                 log_event(

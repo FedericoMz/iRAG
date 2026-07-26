@@ -23,12 +23,12 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 from irag.core.config import settings  # noqa: E402
 from irag.tools.plot_experiment_result import (  # noqa: E402
-    cumulative_abstention_success_rate,
     cumulative_error_rate,
     cumulative_human_baseline_error_rate,
     cumulative_observation_rate,
     quarter_ranges,
 )
+from irag.tools.plot_styles import TRAJECTORY_STYLES  # noqa: E402
 
 
 JOB_ID_PATTERN = re.compile(r"[0-9a-f]{32}")
@@ -167,9 +167,6 @@ def averaged_trajectories(runs: list[dict]) -> dict[str, dict[str, list[float]]]
         "Cumulative human-only baseline error rate": (
             cumulative_human_baseline_error_rate
         ),
-        "Cumulative Extra abstention success rate": (
-            cumulative_abstention_success_rate
-        ),
     }
     trajectories = {}
     for label, calculate in calculators.items():
@@ -192,18 +189,17 @@ def plot_average_results(
     tickets = runs[0]["tickets"]
     positions = [ticket["global_position"] for ticket in tickets]
     trajectories = averaged_trajectories(runs)
-    styles = {
-        "FEA": ("#2563eb", "-", 2.3),
-        "Cumulative LLM gold coverage": ("#16a34a", "-", 2.1),
-        "Cumulative human-reference coverage": ("#0891b2", "-", 1.8),
-        "Cumulative final-decision error rate": ("#dc2626", "-", 1.8),
-        "Cumulative human-only baseline error rate": ("#6b7280", "--", 1.8),
-        "Cumulative Extra abstention success rate": ("#9333ea", ":", 2.0),
+    endpoint_offsets = {
+        "FEA": 0,
+        "Cumulative LLM gold coverage": 12,
+        "Cumulative human-reference coverage": -10,
+        "Cumulative final-decision error rate": -2,
+        "Cumulative human-only baseline error rate": 2,
     }
 
     figure, axis = plt.subplots(figsize=(14, 7))
     for label, values in trajectories.items():
-        color, linestyle, width = styles[label]
+        color, linestyle, width = TRAJECTORY_STYLES[label]
         mean = values["mean"]
         deviation = values["standard_deviation"]
         axis.plot(
@@ -232,17 +228,17 @@ def plot_average_results(
         ]
         axis.fill_between(positions, lower, upper, color=color, alpha=0.10)
 
-    for name, color in (
-        ("alpha", "#15803d"),
-        ("beta", "#f59e0b"),
-        ("gamma", "#7c3aed"),
+    for name, symbol, color in (
+        ("alpha", "α", "#15803d"),
+        ("beta", "β", "#f59e0b"),
+        ("gamma", "γ", "#7c3aed"),
     ):
         value = configuration[name]
         axis.axhline(value, color=color, linestyle="--", linewidth=1, alpha=0.7)
         axis.text(
-            0.995,
+            0.94,
             value + 0.006,
-            f"{name}={value:.2f}",
+            f"{symbol}={value:.2f}",
             transform=axis.get_yaxis_transform(),
             ha="right",
             va="bottom",
@@ -275,13 +271,40 @@ def plot_average_results(
     axis.set_xlabel("Ticket processing order")
     axis.set_ylabel("Mean rate across repetitions")
     axis.grid(axis="both", color="#d1d5db", linewidth=0.7, alpha=0.55)
-    axis.set_title(
-        f"Average Run Diagnostics — {configuration['name']} — "
-        f"{len(runs)} repetitions\nJob {job_id}",
-        pad=18,
+    assignment_title = {
+        "ceo_bootstrapped_informed_mixture": "Informed Mixture",
+        "informed_mixture": "Informed Mixture",
+    }.get(
+        configuration.get("assignment_strategy"),
+        str(configuration.get("assignment_strategy", "Experiment")).replace(
+            "_", " "
+        ).title(),
     )
-    axis.legend(loc="lower left", frameon=True)
-    figure.tight_layout()
+    decay_title = "Decay" if float(configuration.get("lambda", 1.0)) < 1 else "No Decay"
+    axis.set_title(f"{assignment_title} - {decay_title}", pad=18)
+    for label, values in trajectories.items():
+        final_mean = next(
+            (
+                value
+                for value in reversed(values["mean"])
+                if not math.isnan(value)
+            ),
+            float("nan"),
+        )
+        axis.annotate(
+            f"{final_mean:.3f}",
+            xy=(positions[-1], final_mean),
+            xytext=(8, endpoint_offsets[label]),
+            textcoords="offset points",
+            ha="left",
+            va="center",
+            fontsize=10,
+            color=TRAJECTORY_STYLES[label][0],
+            fontweight="bold",
+            clip_on=False,
+        )
+
+    figure.subplots_adjust(left=0.07, right=0.94, bottom=0.10, top=0.90)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(output_path, dpi=180, bbox_inches="tight")
     plt.close(figure)

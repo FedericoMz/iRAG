@@ -1,9 +1,13 @@
+import logging
 import json
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, EndpointConnectionError
 
 from irag.client import BedrockClient, OllamaClient, OpenRouterClient
+from irag.client.base import model_call_context
 
 
 class FakeBedrockRuntime:
@@ -89,6 +93,92 @@ class ThrottlingBedrockRuntime(FakeBedrockRuntime):
                 "Converse",
             )
         return super().converse(**request)
+
+
+class ServiceUnavailableBedrockRuntime(FakeBedrockRuntime):
+    def __init__(self, failures):
+        super().__init__()
+        self.failures = failures
+        self.calls = 0
+
+    def converse(self, **request):
+        self.calls += 1
+        if self.calls <= self.failures:
+            raise ClientError(
+                {
+                    "Error": {
+                        "Code": "ServiceUnavailableException",
+                        "Message": "Too many connections, please wait before trying again.",
+                    }
+                },
+                "Converse",
+            )
+        return super().converse(**request)
+
+
+class ModelErrorBedrockRuntime(FakeBedrockRuntime):
+    def __init__(self, failures):
+        super().__init__()
+        self.failures = failures
+        self.calls = 0
+
+    def converse(self, **request):
+        self.calls += 1
+        if self.calls <= self.failures:
+            raise ClientError(
+                {
+                    "Error": {
+                        "Code": "ModelErrorException",
+                        "Message": (
+                            "Model produced invalid sequence as part of ToolUse."
+                        ),
+                    },
+                    "ResponseMetadata": {
+                        "RequestId": f"model-error-{self.calls}",
+                    },
+                },
+                "Converse",
+            )
+        return super().converse(**request)
+
+
+class DisconnectedBedrockRuntime(FakeBedrockRuntime):
+    def __init__(self, failures):
+        super().__init__()
+        self.failures = failures
+        self.calls = 0
+
+    def converse(self, **request):
+        self.calls += 1
+        if self.calls <= self.failures:
+            raise EndpointConnectionError(
+                endpoint_url="https://bedrock-runtime.test"
+            )
+        return super().converse(**request)
+
+
+class ConcurrencyTrackingBedrockRuntime(FakeBedrockRuntime):
+    def __init__(self, expected_concurrency):
+        super().__init__()
+        self.expected_concurrency = expected_concurrency
+        self.active = 0
+        self.max_active = 0
+        self.lock = threading.Lock()
+        self.ready = threading.Event()
+        self.release = threading.Event()
+
+    def converse(self, **request):
+        with self.lock:
+            self.active += 1
+            self.max_active = max(self.max_active, self.active)
+            if self.active >= self.expected_concurrency:
+                self.ready.set()
+        try:
+            assert self.release.wait(timeout=5)
+            return super().converse(**request)
+        finally:
+            with self.lock:
+                self.active -= 1
 
 
 class MalformedBedrockRuntime(FakeBedrockRuntime):
@@ -375,6 +465,96 @@ def test_bedrock_continues_after_sdk_throttling_is_exhausted(monkeypatch):
     assert sleeps == [0, 0]
 
 
+def test_bedrock_retries_service_unavailable_with_ticket_context(
+    monkeypatch,
+    caplog,
+):
+    runtime = ServiceUnavailableBedrockRuntime(failures=2)
+    session = FakeBedrockSession()
+    session.runtime = runtime
+    sleeps = []
+    monkeypatch.setattr("irag.client.bedrock.time.sleep", sleeps.append)
+    client = BedrockClient(
+        region="eu-north-1",
+        generation_model="eu.amazon.nova-2-lite-v1:0",
+        auxiliary_model="eu.amazon.nova-2-lite-v1:0",
+        timeout=30,
+        retries=2,
+        service_retries=2,
+        service_max_delay=0,
+        session=session,
+    )
+
+    with (
+        caplog.at_level(logging.WARNING, logger="irag.client.bedrock"),
+        model_call_context(
+            experiment_id="job-id",
+            repetition=10,
+            ticket_id="SX-Q2-INT-065",
+            global_position=919,
+        ),
+    ):
+        result = client.decide("question", [])
+
+    assert result["answer"] == "answer"
+    assert runtime.calls == 3
+    assert sleeps == [0, 0]
+    assert "ServiceUnavailableException" in caplog.text
+    assert "experiment_id=job-id" in caplog.text
+    assert "repetition=10" in caplog.text
+    assert "ticket_id=SX-Q2-INT-065" in caplog.text
+    assert "global_position=919" in caplog.text
+    assert "stage=decide" in caplog.text
+
+
+def test_bedrock_caps_concurrent_runtime_calls():
+    runtime = ConcurrencyTrackingBedrockRuntime(expected_concurrency=2)
+    session = FakeBedrockSession()
+    session.runtime = runtime
+    client = BedrockClient(
+        region="eu-north-1",
+        generation_model="eu.amazon.nova-2-lite-v1:0",
+        auxiliary_model="eu.amazon.nova-2-lite-v1:0",
+        timeout=30,
+        retries=2,
+        max_concurrency=2,
+        session=session,
+    )
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(client.decide, f"question-{index}", []) for index in range(4)]
+        assert runtime.ready.wait(timeout=5)
+        runtime.release.set()
+        results = [future.result(timeout=5) for future in futures]
+
+    assert [result["answer"] for result in results] == ["answer"] * 4
+    assert runtime.max_active == 2
+
+
+def test_bedrock_retries_transient_endpoint_connection_failures(monkeypatch):
+    runtime = DisconnectedBedrockRuntime(failures=2)
+    session = FakeBedrockSession()
+    session.runtime = runtime
+    sleeps = []
+    monkeypatch.setattr("irag.client.bedrock.time.sleep", sleeps.append)
+    client = BedrockClient(
+        region="eu-north-1",
+        generation_model="eu.amazon.nova-2-lite-v1:0",
+        auxiliary_model="eu.amazon.nova-2-lite-v1:0",
+        timeout=30,
+        retries=2,
+        connection_retries=2,
+        connection_max_delay=0,
+        session=session,
+    )
+
+    result = client.decide("question", [])
+
+    assert result["answer"] == "answer"
+    assert runtime.calls == 3
+    assert sleeps == [0, 0]
+
+
 def test_bedrock_retries_malformed_tool_response(monkeypatch):
     runtime = MalformedBedrockRuntime(failures=1)
     session = FakeBedrockSession()
@@ -395,6 +575,62 @@ def test_bedrock_retries_malformed_tool_response(monkeypatch):
     result = client.decide("question", [])
 
     assert result["answer"] == "answer"
+    assert runtime.calls == 2
+    assert sleeps == [0]
+
+
+def test_bedrock_retries_model_error_from_invalid_tool_use(monkeypatch, caplog):
+    runtime = ModelErrorBedrockRuntime(failures=1)
+    session = FakeBedrockSession()
+    session.runtime = runtime
+    sleeps = []
+    monkeypatch.setattr("irag.client.bedrock.time.sleep", sleeps.append)
+    client = BedrockClient(
+        region="eu-north-1",
+        generation_model="eu.amazon.nova-2-lite-v1:0",
+        auxiliary_model="eu.amazon.nova-2-lite-v1:0",
+        timeout=30,
+        retries=2,
+        response_max_delay=0,
+        decision_response_retries=1,
+        session=session,
+    )
+
+    with caplog.at_level(logging.WARNING, logger="irag.client.bedrock"):
+        result = client.decide("question", [])
+
+    assert result["answer"] == "answer"
+    assert runtime.calls == 2
+    assert sleeps == [0]
+    assert "errorCode=ModelErrorException" in caplog.text
+
+
+def test_bedrock_uses_fail_safe_after_repeated_model_errors(monkeypatch):
+    runtime = ModelErrorBedrockRuntime(failures=100)
+    session = FakeBedrockSession()
+    session.runtime = runtime
+    sleeps = []
+    monkeypatch.setattr("irag.client.bedrock.time.sleep", sleeps.append)
+    client = BedrockClient(
+        region="eu-north-1",
+        generation_model="eu.amazon.nova-2-lite-v1:0",
+        auxiliary_model="eu.amazon.nova-2-lite-v1:0",
+        timeout=30,
+        retries=2,
+        response_max_delay=0,
+        decision_response_retries=1,
+        session=session,
+    )
+
+    result = client.decide("question", [])
+
+    assert result["abstain"] is True
+    assert result["answer"] == ""
+    assert result["api_response"]["fallback"] == (
+        "invalid_structured_decision_as_abstention"
+    )
+    assert result["api_response"]["stop_reason"] == "model_error"
+    assert result["api_response"]["response_attempts"] == 2
     assert runtime.calls == 2
     assert sleeps == [0]
 
@@ -465,6 +701,12 @@ def test_bedrock_client_accepts_bearer_token(monkeypatch):
     assert client.model_metadata["eu.vendor/generation"]["region"] == "eu-west-1"
     assert client.model_metadata["eu.vendor/generation"]["retry_mode"] == "adaptive"
     assert client.model_metadata["eu.vendor/generation"]["max_attempts"] == 2
+    assert (
+        client.model_metadata["eu.vendor/generation"]["connection_retries"]
+        == 100
+    )
+    assert client.model_metadata["eu.vendor/generation"]["service_retries"] == 100
+    assert client.model_metadata["eu.vendor/generation"]["max_concurrency"] == 3
 
 
 def test_bedrock_client_requires_credentials_or_bearer_token(monkeypatch):

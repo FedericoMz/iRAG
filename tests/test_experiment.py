@@ -651,6 +651,55 @@ def test_parallel_runner_executes_repetitions_concurrently():
     assert len(client.thread_names) == 2
 
 
+def test_parallel_runner_reuses_finalized_repetitions():
+    records = [make_ticket(number) for number in range(1, 4)]
+    condition = ExperimentCondition(
+        name="parallel-resume-test",
+        assignment_strategy=AssignmentStrategy.SINGLE,
+        single_profile=Profile.CEO,
+        acceptance_regime=AcceptanceRegime.NEVER,
+        repetitions=2,
+        seed=11,
+    )
+    request = ExperimentRequest(
+        name="parallel resume test",
+        quarters=[QuarterBatch(quarter=Quarter.Q1, records=records)],
+        conditions=[condition],
+    )
+    runner = ExperimentRunner(FakeDataset(), FakeClient())
+    finalized = runner.run_repetition(
+        "parallel-id",
+        request,
+        condition,
+        0,
+        condition.seed,
+    )
+    written = []
+
+    result = runner.run_parallel(
+        "parallel-id",
+        request,
+        on_repetition=lambda repetition: written.append(repetition["repetition"])
+        or f"run-{repetition['repetition']:03d}.json",
+        saved_repetitions={
+            1: {
+                "seed": finalized["seed"],
+                "output_file": "run-001.json",
+                "summary": finalized["summary"],
+                "transitions": finalized["transitions"],
+            }
+        },
+    )
+
+    runs = result["conditions"][0]["runs"]
+    assert [run["repetition"] for run in runs] == [1, 2]
+    assert [run["output_file"] for run in runs] == [
+        "run-001.json",
+        "run-002.json",
+    ]
+    assert written == [2]
+
+
 def test_repetition_resume_replays_state_without_repeating_model_calls():
     class CountingClient(FakeClient):
         def __init__(self):
