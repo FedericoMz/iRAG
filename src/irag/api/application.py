@@ -13,6 +13,7 @@ from irag.core.models import (
     AcceptanceRegime,
     AssignmentStrategy,
     BundledExperimentRequest,
+    DatasetVariant,
     ExperimentCondition,
     ExperimentCreated,
     ExperimentRequest,
@@ -43,8 +44,23 @@ app = FastAPI(
     version=__version__,
 )
 
-dataset = SalesXDataset(settings.data_dir, settings.embedding_model)
+dataset_root = (
+    settings.data_dir.parent
+    if settings.data_dir.name in {variant.value for variant in DatasetVariant}
+    else settings.data_dir
+)
+datasets = {
+    variant: SalesXDataset(
+        dataset_root / variant.value,
+        settings.embedding_model,
+    )
+    for variant in DatasetVariant
+}
 store = ExperimentStore(settings.output_dir)
+
+
+def dataset_for(variant: DatasetVariant) -> SalesXDataset:
+    return datasets[variant]
 
 
 @app.get("/health")
@@ -53,9 +69,14 @@ def health() -> dict:
 
 
 @app.get("/v1/dataset/quarters/{quarter}", response_model=QuarterBatch)
-def get_quarter(quarter: Quarter) -> QuarterBatch:
+def get_quarter(
+    quarter: Quarter,
+    dataset_variant: Annotated[DatasetVariant, Query(alias="dataset")] = (
+        DatasetVariant.DRIFT_10
+    ),
+) -> QuarterBatch:
     try:
-        return dataset.load_quarter(quarter)
+        return dataset_for(dataset_variant).load_quarter(quarter)
     except ValueError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -83,21 +104,35 @@ def create_parallel_run(
     request: Annotated[ParallelRunRequest, Query()],
 ) -> ExperimentCreated:
     experiment_request = build_parallel_request(request)
+    try:
+        reused_q1 = (
+            reusable_q1_tickets(request.reuse_q1_from, experiment_request)
+            if request.reuse_q1_from
+            else None
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     job = store.create(
         experiment_request,
         folder_label=(
-            f"expert-{request.expert.value}"
+            f"dataset-{request.dataset.value}"
+            f"__expert-{request.expert.value}"
             f"__acceptance-{request.acceptance.value}"
             f"__repetitions-{request.repetitions}"
             f"__decay-{request.decay:.8g}"
             f"__extra-{str(request.include_extra).lower()}"
         ),
     )
+    for repetition, tickets in (reused_q1 or {}).items():
+        store.append_run_tickets(job.experiment_id, repetition, tickets)
     background_tasks.add_task(
         run_parallel_experiment,
         job.experiment_id,
         experiment_request,
         request.checkpoint_interval,
+        reused_q1,
+        None,
+        request.reuse_q1_from,
     )
     return created_response(job)
 
@@ -186,7 +221,8 @@ def create_bundled_experiment(
 ) -> ExperimentCreated:
     experiment_request = ExperimentRequest(
         name=request.name,
-        quarters=dataset.load_all_quarters(),
+        dataset=request.dataset,
+        quarters=dataset_for(request.dataset).load_all_quarters(),
         conditions=request.conditions,
         models=request.models,
     )
@@ -310,8 +346,14 @@ def build_parallel_request(request: ParallelRunRequest) -> ExperimentRequest:
         decay=request.decay,
     )
     return ExperimentRequest(
-        name=f"{request.expert.value} / {request.acceptance.value}",
-        quarters=dataset.load_all_quarters(include_extra=request.include_extra),
+        name=(
+            f"{request.expert.value} / {request.acceptance.value} / "
+            f"{request.dataset.value}"
+        ),
+        dataset=request.dataset,
+        quarters=dataset_for(request.dataset).load_all_quarters(
+            include_extra=request.include_extra
+        ),
         conditions=[condition],
         models={
             "provider": request.provider,
@@ -325,6 +367,168 @@ def build_parallel_request(request: ParallelRunRequest) -> ExperimentRequest:
     )
 
 
+def reusable_q1_tickets(
+    source_experiment_id: str,
+    request: ExperimentRequest,
+) -> dict[int, list[dict]]:
+    """Load a compatible, completed CEO bootstrap as a resumable prefix."""
+    condition = request.conditions[0]
+    if (
+        condition.assignment_strategy
+        != AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED
+    ):
+        raise ValueError(
+            "Q1 reuse requires the CEO-bootstrapped informed-mixture assignment"
+        )
+
+    source_job = store.get(source_experiment_id)
+    if source_job is not None:
+        if source_job.status != JobStatus.COMPLETED:
+            raise ValueError("The Q1 reuse source experiment is not complete")
+        metadata = store.read_metadata(source_experiment_id)
+        read_run = lambda repetition: store.read_run(  # noqa: E731
+            source_experiment_id, repetition
+        )
+    else:
+        source_directory = store.saved_directory(source_experiment_id)
+        if not (source_directory / "result.json").is_file():
+            raise ValueError("The Q1 reuse source experiment is not complete")
+        metadata = store.read_saved_metadata(source_experiment_id)
+        read_run = lambda repetition: store.read_saved_run(  # noqa: E731
+            source_experiment_id, repetition
+        )
+
+    source_condition = ExperimentCondition.model_validate(
+        metadata["configuration"]
+    )
+    if (
+        source_condition.assignment_strategy
+        != AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED
+    ):
+        raise ValueError("The Q1 reuse source does not have a full CEO bootstrap")
+    if source_condition.repetitions < condition.repetitions:
+        raise ValueError(
+            "The Q1 reuse source has fewer repetitions than the requested run"
+        )
+
+    source_configuration = source_condition.model_dump(
+        mode="json", by_alias=True
+    )
+    target_configuration = condition.model_dump(mode="json", by_alias=True)
+    for configuration in (source_configuration, target_configuration):
+        configuration.pop("name", None)
+        configuration.pop("repetitions", None)
+    if source_configuration != target_configuration:
+        raise ValueError(
+            "The Q1 reuse source has an incompatible experiment configuration"
+        )
+
+    source_models = metadata["models"]
+    target_models = effective_model_identity(request.models)
+    source_identity = {
+        "provider": source_models["provider"],
+        "generation": source_models["generation"]["name"],
+        "auxiliary": source_models["auxiliary"]["name"],
+        "region": (
+            source_models["generation"].get("region")
+            or source_models["auxiliary"].get("region")
+        ),
+    }
+    if source_identity != target_models:
+        raise ValueError(
+            "The Q1 reuse source uses different model settings"
+        )
+
+    source_q1 = {
+        record_id: record
+        for record_id, record in metadata.get("records", {}).items()
+        if record.get("quarter") == Quarter.Q1.value
+    }
+    target_q1 = {
+        record.id: record.model_dump(mode="json")
+        for record in request.quarters[0].records
+        if record.quarter == Quarter.Q1
+    }
+    comparison_fields = {
+        "id",
+        "quarter",
+        "difficulty",
+        "category",
+        "policy_key",
+        "question",
+        "gold_answer",
+        "profile_answers",
+        "is_changed_answer_near_duplicate",
+        "near_duplicate_of",
+        "drift",
+    }
+    normalized_source = {
+        record_id: {
+            field: record.get(field)
+            for field in comparison_fields
+        }
+        for record_id, record in source_q1.items()
+    }
+    normalized_target = {
+        record_id: {
+            field: record.get(field)
+            for field in comparison_fields
+        }
+        for record_id, record in target_q1.items()
+    }
+    if len(target_q1) != 500 or normalized_source != normalized_target:
+        raise ValueError(
+            "The Q1 reuse source does not contain the shared canonical Q1"
+        )
+
+    reusable = {}
+    for repetition in range(1, condition.repetitions + 1):
+        run = read_run(repetition)
+        expected_seed = condition.seed + repetition - 1
+        if run.get("seed") != expected_seed:
+            raise ValueError(
+                f"Q1 reuse repetition {repetition} has an incompatible seed"
+            )
+        tickets = run.get("tickets", [])[:500]
+        if len(tickets) != 500 or any(
+            ticket.get("quarter") != Quarter.Q1.value
+            or ticket.get("global_position") != position
+            for position, ticket in enumerate(tickets, start=1)
+        ):
+            raise ValueError(
+                f"Q1 reuse repetition {repetition} is not a complete Q1 prefix"
+            )
+        reusable[repetition] = tickets
+    return reusable
+
+
+def effective_model_identity(models: ModelSettings) -> dict:
+    try:
+        provider = models.provider or ModelProvider(settings.model_provider.lower())
+    except ValueError as exc:
+        raise ValueError(
+            "MODEL_PROVIDER must be 'ollama', 'openrouter', or 'bedrock'"
+        ) from exc
+    if provider == ModelProvider.OLLAMA:
+        generation = models.generation_model or settings.ollama_generation_model
+        auxiliary = models.auxiliary_model or settings.ollama_auxiliary_model
+        region = None
+    elif provider == ModelProvider.OPENROUTER:
+        generation = models.generation_model or settings.openrouter_generation_model
+        auxiliary = models.auxiliary_model or settings.openrouter_auxiliary_model
+        region = None
+    else:
+        generation = models.generation_model or settings.bedrock_generation_model
+        auxiliary = models.auxiliary_model or settings.bedrock_auxiliary_model
+        region = models.bedrock_region or settings.bedrock_region
+    return {
+        "provider": provider.value,
+        "generation": generation,
+        "auxiliary": auxiliary,
+        "region": region,
+    }
+
+
 def build_resume_request(metadata: dict) -> ExperimentRequest:
     models = metadata["models"]
     generation = models["generation"]
@@ -333,9 +537,18 @@ def build_resume_request(metadata: dict) -> ExperimentRequest:
         record.get("quarter") == Quarter.EXTRA.value
         for record in metadata.get("records", {}).values()
     )
+    dataset_variant = DatasetVariant(
+        metadata.get(
+            "dataset_variant",
+            metadata.get("dataset_manifest", {}).get("variant", "drift_10"),
+        )
+    )
     return ExperimentRequest(
         name=metadata["name"],
-        quarters=dataset.load_all_quarters(include_extra=include_extra),
+        dataset=dataset_variant,
+        quarters=dataset_for(dataset_variant).load_all_quarters(
+            include_extra=include_extra
+        ),
         conditions=[ExperimentCondition.model_validate(metadata["configuration"])],
         models=ModelSettings(
             provider=models["provider"],
@@ -352,7 +565,7 @@ def run_experiment(experiment_id: str, request: ExperimentRequest) -> None:
     store.start(experiment_id)
     try:
         client = make_model_client(request)
-        runner = ExperimentRunner(dataset, client)
+        runner = ExperimentRunner(dataset_for(request.dataset), client)
         result = runner.run(
             experiment_id,
             request,
@@ -373,6 +586,7 @@ def run_parallel_experiment(
     checkpoint_interval: int = 50,
     resume_tickets: dict[int, list[dict]] | None = None,
     saved_repetitions: dict[int, dict] | None = None,
+    reused_q1_from: str | None = None,
 ) -> None:
     logger.info(f"Starting parallel experiment {experiment_id}: {request.name}")
     store.start(experiment_id)
@@ -380,7 +594,7 @@ def run_parallel_experiment(
     configuration = condition.model_dump(mode="json", by_alias=True)
 
     def write_metadata(result: dict) -> None:
-        if resume_tickets is not None:
+        if resume_tickets is not None and reused_q1_from is None:
             existing = store.read_metadata(experiment_id)
             resume_event = {
                 "resumed_at": result["started_at"],
@@ -404,6 +618,11 @@ def run_parallel_experiment(
             if key not in {"conditions", "completed_at"}
         }
         metadata["configuration"] = configuration
+        if reused_q1_from is not None:
+            metadata["q1_reuse"] = {
+                "source_experiment_id": reused_q1_from,
+                "tickets_per_repetition": 500,
+            }
         store.write_metadata(experiment_id, metadata)
 
     def write_repetition(run_result: dict) -> str:
@@ -424,7 +643,7 @@ def run_parallel_experiment(
 
     try:
         client = make_model_client(request)
-        runner = ExperimentRunner(dataset, client)
+        runner = ExperimentRunner(dataset_for(request.dataset), client)
         result = runner.run_parallel(
             experiment_id,
             request,

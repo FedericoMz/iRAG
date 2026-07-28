@@ -218,6 +218,7 @@ class ExperimentRunner:
         return {
             "experiment_id": experiment_id,
             "name": request.name,
+            "dataset_variant": request.dataset.value,
             "started_at": datetime.now(UTC).isoformat(),
             "paper_defaults": {
                 "semantic_threshold": 0.7,

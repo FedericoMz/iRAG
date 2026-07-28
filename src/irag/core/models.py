@@ -84,6 +84,11 @@ class ModelProvider(str, Enum):
     BEDROCK = "bedrock"
 
 
+class DatasetVariant(str, Enum):
+    DRIFT_10 = "drift_10"
+    DRIFT_40 = "drift_40"
+
+
 class ExpertSelection(str, Enum):
     CEO = "ceo"
     DOMAIN_EXPERT = "domain_expert"
@@ -213,6 +218,7 @@ class ExperimentCondition(StrictModel):
 
 class ExperimentRequest(StrictModel):
     name: str = Field(min_length=1, max_length=200)
+    dataset: DatasetVariant = DatasetVariant.DRIFT_10
     quarters: list[QuarterBatch] = Field(min_length=1, max_length=5)
     conditions: list[ExperimentCondition] = Field(min_length=1)
     models: ModelSettings = Field(default_factory=ModelSettings)
@@ -236,11 +242,16 @@ class ExperimentRequest(StrictModel):
 
 class BundledExperimentRequest(StrictModel):
     name: str = "SalesX bundled experiment"
+    dataset: DatasetVariant = DatasetVariant.DRIFT_10
     conditions: list[ExperimentCondition] = Field(min_length=1)
     models: ModelSettings = Field(default_factory=ModelSettings)
 
 
 class ParallelRunRequest(StrictModel):
+    dataset: DatasetVariant = Field(
+        default=DatasetVariant.DRIFT_10,
+        description="SalesX concept-drift dataset variant.",
+    )
     expert: ExpertSelection = Field(
         description="Expert profile or profile-mixture strategy."
     )
@@ -305,6 +316,14 @@ class ParallelRunRequest(StrictModel):
         ge=1,
         le=500,
         description="Ticket traces written to disk per checkpoint batch.",
+    )
+    reuse_q1_from: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{32}$",
+        description=(
+            "Optional completed run ID whose compatible 500-ticket CEO Q1 "
+            "bootstrap should be reused instead of calling the models again."
+        ),
     )
 
 

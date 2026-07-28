@@ -9,6 +9,7 @@ from irag.client import OpenRouterClient
 from irag.core.models import (
     AcceptanceRegime,
     AssignmentStrategy,
+    DatasetVariant,
     ExperimentCondition,
     ExperimentRequest,
     JobStatus,
@@ -30,17 +31,20 @@ def test_health_endpoint():
 
 
 def test_bundled_dataset_exposes_post_q4_abstention_split():
-    batch = api.dataset.load_quarter(Quarter.EXTRA)
+    dataset = api.dataset_for(DatasetVariant.DRIFT_10)
+    batch = dataset.load_quarter(Quarter.EXTRA)
 
     assert batch.quarter == Quarter.EXTRA
     assert len(batch.records) == 50
     assert all(record.requires_model_abstention for record in batch.records)
-    assert api.dataset.vector(batch.records[0].id).shape == (2560,)
+    assert dataset.vector(batch.records[0].id).shape == (2560,)
 
 
 def test_experiment_endpoint_accepts_complete_ticket_metadata(monkeypatch):
     monkeypatch.setattr(api, "run_experiment", lambda *_: None)
-    record = api.dataset.load_quarter(Quarter.Q1).records[0]
+    record = api.dataset_for(DatasetVariant.DRIFT_10).load_quarter(
+        Quarter.Q1
+    ).records[0]
     payload = {
         "name": "contract test",
         "models": {"provider": "ollama"},
@@ -128,6 +132,7 @@ def test_parallel_run_endpoint_uses_dropdown_values_and_parameter_folder(
     response = TestClient(api.app).post(
         "/v1/runs",
         params={
+            "dataset": "drift_40",
             "expert": "informed_mixture",
             "acceptance": "randomize",
             "repetitions": 2,
@@ -145,7 +150,7 @@ def test_parallel_run_endpoint_uses_dropdown_values_and_parameter_folder(
     status_response = TestClient(api.app).get(f"/v1/experiments/{experiment_id}")
     output_directory = status_response.json()["output_directory"]
     assert (
-        "expert-informed_mixture__acceptance-randomize"
+        "dataset-drift_40__expert-informed_mixture__acceptance-randomize"
         "__repetitions-2__decay-0.99__extra-false__job-"
     ) in output_directory
     assert submitted[0].models.provider.value == "openrouter"
@@ -153,6 +158,11 @@ def test_parallel_run_endpoint_uses_dropdown_values_and_parameter_folder(
     assert submitted[0].models.auxiliary_model == "vendor/judge-model"
     assert submitted[0].models.timeout == 120
     assert submitted[0].models.retries == 2
+    assert submitted[0].dataset == DatasetVariant.DRIFT_40
+    assert sum(
+        record.is_changed_answer_near_duplicate
+        for record in submitted[0].quarters[1].records
+    ) == 200
 
 
 def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
@@ -177,6 +187,7 @@ def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
         "openrouter",
         "bedrock",
     ]
+    assert schemas["DatasetVariant"]["enum"] == ["drift_10", "drift_40"]
     parameters = {
         parameter["name"]: parameter
         for parameter in api.app.openapi()["paths"]["/v1/runs"]["post"]["parameters"]
@@ -189,6 +200,10 @@ def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
     assert "bedrock_region" in parameters
     assert parameters["checkpoint_interval"]["schema"]["default"] == 50
     assert parameters["include_extra"]["schema"]["default"] is False
+    assert parameters["dataset"]["schema"]["$ref"].endswith(
+        "/DatasetVariant"
+    )
+    assert "reuse_q1_from" in parameters
 
 
 def test_openapi_does_not_expose_obsolete_paper_suite_endpoints():
@@ -243,6 +258,30 @@ def test_parallel_request_includes_extra_only_when_requested():
     ]
 
 
+def test_dataset_quarter_endpoint_selects_the_requested_variant():
+    client = TestClient(api.app)
+
+    nominal = client.get(
+        "/v1/dataset/quarters/Q2",
+        params={"dataset": "drift_10"},
+    )
+    high_drift = client.get(
+        "/v1/dataset/quarters/Q2",
+        params={"dataset": "drift_40"},
+    )
+
+    assert nominal.status_code == 200
+    assert high_drift.status_code == 200
+    assert sum(
+        record["is_changed_answer_near_duplicate"]
+        for record in nominal.json()["records"]
+    ) == 50
+    assert sum(
+        record["is_changed_answer_near_duplicate"]
+        for record in high_drift.json()["records"]
+    ) == 200
+
+
 def test_resume_reconstructs_extra_scope_from_saved_records():
     condition = api.build_parallel_request(
         ParallelRunRequest(
@@ -270,10 +309,123 @@ def test_resume_reconstructs_extra_scope_from_saved_records():
     assert with_extra.quarters[-1].quarter == Quarter.EXTRA
 
 
+def test_resume_reconstructs_the_original_dataset_variant():
+    condition = api.build_parallel_request(
+        ParallelRunRequest(
+            dataset="drift_40",
+            expert="informed_mixture",
+            acceptance="gold_similarity",
+            repetitions=1,
+        )
+    ).conditions[0]
+    metadata = {
+        "name": "resume high drift",
+        "dataset_variant": "drift_40",
+        "configuration": condition.model_dump(mode="json", by_alias=True),
+        "models": {
+            "provider": "bedrock",
+            "generation": {"name": "generation"},
+            "auxiliary": {"name": "auxiliary"},
+        },
+        "records": {"SX-Q4-BIL-001": {"quarter": "Q4"}},
+    }
+
+    resumed = api.build_resume_request(metadata)
+
+    assert resumed.dataset == DatasetVariant.DRIFT_40
+    assert sum(
+        record.is_changed_answer_near_duplicate
+        for record in resumed.quarters[1].records
+    ) == 200
+
+
+def test_parallel_run_can_reuse_a_compatible_completed_q1(
+    monkeypatch, tmp_path
+):
+    experiment_store = ExperimentStore(tmp_path)
+    monkeypatch.setattr(api, "store", experiment_store)
+    submitted = []
+    monkeypatch.setattr(
+        api,
+        "run_parallel_experiment",
+        lambda *arguments: submitted.append(arguments),
+    )
+    source_request = api.build_parallel_request(
+        ParallelRunRequest(
+            dataset="drift_10",
+            expert="ceo_bootstrapped_informed_mixture",
+            acceptance="gold_similarity",
+            repetitions=1,
+            decay=0.99861,
+        )
+    )
+    source = experiment_store.create(source_request, "source")
+    experiment_store.start(source.experiment_id)
+    identity = api.effective_model_identity(source_request.models)
+    q1_records = {
+        record.id: record.model_dump(mode="json")
+        for record in source_request.quarters[0].records
+    }
+    experiment_store.write_metadata(
+        source.experiment_id,
+        {
+            "name": source_request.name,
+            "configuration": source_request.conditions[0].model_dump(
+                mode="json", by_alias=True
+            ),
+            "models": {
+                "provider": identity["provider"],
+                "generation": {
+                    "name": identity["generation"],
+                    "region": identity["region"],
+                },
+                "auxiliary": {
+                    "name": identity["auxiliary"],
+                    "region": identity["region"],
+                },
+            },
+            "records": q1_records,
+        },
+    )
+    experiment_store.write_run(
+        source.experiment_id,
+        1,
+        {
+            "seed": 20260717,
+            "tickets": [
+                {
+                    "quarter": "Q1",
+                    "global_position": position,
+                }
+                for position in range(1, 501)
+            ],
+        },
+    )
+    experiment_store.complete(source.experiment_id, {"status": "complete"})
+
+    response = TestClient(api.app).post(
+        "/v1/runs",
+        params={
+            "dataset": "drift_40",
+            "expert": "ceo_bootstrapped_informed_mixture",
+            "acceptance": "gold_similarity",
+            "repetitions": 1,
+            "decay": 0.99861,
+            "reuse_q1_from": source.experiment_id,
+        },
+    )
+
+    assert response.status_code == 202
+    new_id = response.json()["experiment_id"]
+    assert len(experiment_store.read_partial_tickets(new_id, 1)) == 500
+    assert submitted[0][3][1][0]["quarter"] == "Q1"
+    assert submitted[0][5] == source.experiment_id
+
+
 def test_parallel_background_job_persists_each_repetition(monkeypatch, tmp_path):
     experiment_store = ExperimentStore(tmp_path)
     monkeypatch.setattr(api, "store", experiment_store)
-    monkeypatch.setattr(api, "dataset", FakeDataset())
+    monkeypatch.setattr(api, "dataset_for", lambda _: FakeDataset())
     monkeypatch.setattr(api, "make_model_client", lambda _: FakeClient())
     request = ExperimentRequest(
         name="parallel persistence",

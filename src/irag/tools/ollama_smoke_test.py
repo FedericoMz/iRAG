@@ -25,7 +25,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[3]
-DATA_DIR = ROOT / "experiment data"
+DATA_DIR = ROOT / "experiment data" / "drift_10"
 DEFAULT_MODEL = "qwen3.5:9b"
 DEFAULT_AUXILIARY_MODEL = "qwen3.5:4b"
 DEFAULT_EMBEDDING_MODEL = "qwen3-embedding:4b"

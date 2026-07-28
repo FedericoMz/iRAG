@@ -14,6 +14,12 @@ Each quarter has 500 unique customer tickets: five natural variants grounded in 
 
 Q1 is the baseline and cannot have prior-quarter drift. In each of Q2–Q4, the five variants for each of ten changed articles produce exactly 50 changed-answer near-duplicates (10%). Each has `near_duplicate_of`, the old and current rules and answers, a stable documentation anchor, an explicit stale-answer trap, and `change_dimensions` labels such as `precedence_model`, `identity_model`, `approval_workflow`, or `data_handling`. The Intern systematically returns the immediately preceding answer for these records.
 
+The generated quarterly variants live in `drift_10/` and `drift_40/`. The
+high-drift counterpart keeps the same 500 record IDs and exact question text
+in every quarter, but changes eight articles per category in Q2–Q4, producing
+200 changed-answer near-duplicates (40%) per post-baseline quarter. Q1 is
+stored once in `shared/` and referenced by both manifests.
+
 After Q4, a separate `Extra` split contains 50 abstention-challenge tickets. They ask about mutually distinct subjects not covered by the 2,000-ticket nominal corpus or by one another. Their expected model action is abstention. The split is not part of Q4, does not trigger a quarterly CEO review or state transition, and therefore tests whether a model already operating in DS can defer genuinely unsupported questions. The embedding audit requires every Extra-to-nominal and Extra-to-Extra cosine similarity to remain below the benchmark's semantic retrieval threshold of 0.7.
 
 Every record has three simulated profile answers:
@@ -24,15 +30,21 @@ Every record has three simulated profile answers:
 
 ## Files
 
-- `Q1.md`–`Q4.md`: complete authoritative quarterly snapshots.
-- `Q1_qa.json`–`Q4_qa.json`: 500 labelled tickets per quarter.
-- `Extra.md` and `Extra_qa.json`: protocol and 50-ticket post-Q4 abstention challenge.
+- `shared/Q1.md` and `shared/Q1_qa.json`: canonical CEO-bootstrap snapshot
+  and its 500 labelled tickets.
+- `drift_10/` and `drift_40/`: variant-specific Q2–Q4 documentation, QA
+  records, and manifests.
+- `shared/Extra.md` and `shared/Extra_qa.json`: protocol and 50-ticket post-Q4 abstention challenge.
 - `salesx_knowledge.py`: hand-authored article knowledge and release changes.
 - `generate_dataset.py`: deterministic documentation and corpus renderer.
 - `validate_dataset.py`: structural, temporal, grounding, profile, style, and nuanced-drift audit.
-- `schema.json`: QA-record JSON Schema.
-- `manifest.json`: counts, changed-article lists, checksums, and generator metadata.
+- `shared/schema.json`: QA-record JSON Schema.
+- `drift_10/manifest.json` and `drift_40/manifest.json`: counts,
+  changed-article lists, shared-file references, and checksums.
 - `generate_embeddings.py`: reproducibly embeds the unmodified `question` field with Ollama.
+- `salesx_knowledge_drift_40.py`: individually authored rules and change dimensions for all 120 change events in the 40% variant.
+- `generate_drift_40_dataset.py` and `validate_drift_40_dataset.py`: build and audit the 40% drift variant.
+- `shared/`: canonical files used by both drift variants.
 - `embedding_requirements.txt`: NumPy dependency for generating and reading embeddings.
 - `embeddings/qwen3-embedding-4b/Q1.npz`--`Q4.npz` and `Extra.npz`: compressed, precomputed question embeddings keyed by record `id`.
 - `embeddings/qwen3-embedding-4b/manifest.json`: embedding model identity, representation details, and source/output checksums.
@@ -42,6 +54,8 @@ Every record has three simulated profile answers:
 ```sh
 python3 "experiment data/generate_dataset.py"
 python3 "experiment data/validate_dataset.py"
+python3 "experiment data/generate_drift_40_dataset.py"
+python3 "experiment data/validate_drift_40_dataset.py"
 ```
 
 The validator also checks that each documentation anchor exists, every changed answer links to the correct preceding record, Intern drift answers are exactly stale, and release changes differ in non-numeric policy language. For the Extra split, it verifies the expected abstention label and audits embedding isolation against both the nominal corpus and preceding Extra tickets.

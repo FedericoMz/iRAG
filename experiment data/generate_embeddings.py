@@ -25,6 +25,13 @@ ROOT = Path(__file__).resolve().parent
 DEFAULT_MODEL = "qwen3-embedding:4b"
 DEFAULT_OUTPUT = ROOT / "embeddings" / "qwen3-embedding-4b"
 PERIODS = ("Q1", "Q2", "Q3", "Q4", "Extra")
+SOURCE_FILES = {
+    "Q1": ROOT / "shared" / "Q1_qa.json",
+    "Q2": ROOT / "drift_10" / "Q2_qa.json",
+    "Q3": ROOT / "drift_10" / "Q3_qa.json",
+    "Q4": ROOT / "drift_10" / "Q4_qa.json",
+    "Extra": ROOT / "shared" / "Extra_qa.json",
+}
 
 
 def sha256(path: Path) -> str:
@@ -136,7 +143,7 @@ def main() -> None:
     base_url = args.url.rstrip("/")
     digest = model_digest(base_url, args.model, args.timeout)
     periods = (args.only,) if args.only else PERIODS
-    source_files = [ROOT / f"{period}_qa.json" for period in periods]
+    source_files = [SOURCE_FILES[period] for period in periods]
     missing_sources = [path.name for path in source_files if not path.exists()]
     if missing_sources:
         raise RuntimeError(
@@ -190,7 +197,7 @@ def main() -> None:
         files[output.name] = {
             "records": len(ids),
             "sha256": sha256(output),
-            "source": source.name,
+            "source": str(source.relative_to(ROOT)),
             "source_sha256": sha256(source),
         }
 

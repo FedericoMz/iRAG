@@ -13,6 +13,8 @@ from pathlib import Path
 from salesx_knowledge import ARTICLES, CHANGE_DIMENSIONS, DRIFT_KEYS, RULE_CHANGES
 
 ROOT = Path(__file__).resolve().parent
+OUTPUT = ROOT / "drift_10"
+SHARED = ROOT / "shared"
 QUARTERS = ("Q1", "Q2", "Q3", "Q4")
 CATEGORIES = ("billing", "integrations", "permissions", "reporting", "onboarding")
 SEED = 20260717
@@ -306,14 +308,22 @@ def generate_extra_records():
     return records
 
 def main():
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    SHARED.mkdir(parents=True, exist_ok=True)
     all_records = {}
     for qi, quarter in enumerate(QUARTERS):
-        (ROOT/f"{quarter}.md").write_text(documentation_for(qi), encoding="utf-8")
+        quarter_dir = SHARED if quarter == "Q1" else OUTPUT
+        (quarter_dir/f"{quarter}.md").write_text(
+            documentation_for(qi), encoding="utf-8"
+        )
         rows = generate_records(qi)
         all_records[quarter] = rows
-        (ROOT/f"{quarter}_qa.json").write_text(json.dumps(rows, indent=2, ensure_ascii=False)+"\n", encoding="utf-8")
+        (quarter_dir/f"{quarter}_qa.json").write_text(
+            json.dumps(rows, indent=2, ensure_ascii=False)+"\n",
+            encoding="utf-8",
+        )
     extra_rows = generate_extra_records()
-    (ROOT/"Extra.md").write_text(
+    (SHARED/"Extra.md").write_text(
         "# SalesX Post-Q4 Abstention Challenge\n\n"
         "<a id=\"abstention-challenge\"></a>\n"
         "These tickets intentionally concern mutually distinct subjects that are "
@@ -322,26 +332,33 @@ def main():
         "the individual questions.\n",
         encoding="utf-8",
     )
-    (ROOT/"Extra_qa.json").write_text(
+    (SHARED/"Extra_qa.json").write_text(
         json.dumps(extra_rows, indent=2, ensure_ascii=False)+"\n",
         encoding="utf-8",
     )
-    manifest = {"dataset":"SalesX Quarterly Support QA", "schema_version":"2.1.0", "generator_seed":SEED,
+    manifest = {"dataset":"SalesX Quarterly Support QA — 10% Drift",
+        "variant":"drift_10", "schema_version":"2.1.0", "generator_seed":SEED,
+        "embedding_data_dir":"..",
         "knowledge_articles":sum(len(v) for v in ARTICLES.values()), "questions_per_article":5,
         "categories":list(CATEGORIES), "quarters":{},
-        "notes":["Q1 is the baseline and has no possible prior-quarter drift subset.", "Q2-Q4 each change ten articles and contain exactly 50 changed-answer near-duplicates.", "The post-Q4 Extra split contains 50 mutually isolated questions whose expected model action is abstention.", "Drift changes policy or workflow semantics rather than only scalar limits.", "Generated files are deterministic outputs of generate_dataset.py."]}
+        "notes":["Q1 is the shared canonical baseline and has no possible prior-quarter drift subset.", "Q2-Q4 each change ten articles and contain exactly 50 changed-answer near-duplicates.", "The post-Q4 Extra split is shared and contains 50 mutually isolated questions whose expected model action is abstention.", "Drift changes policy or workflow semantics rather than only scalar limits.", "Generated files are deterministic outputs of generate_dataset.py."]}
     for quarter, rows in all_records.items():
-        raw = (ROOT/f"{quarter}_qa.json").read_bytes()
-        manifest["quarters"][quarter] = {"documentation":f"{quarter}.md", "questions":f"{quarter}_qa.json", "record_count":len(rows), "article_count":len({r['policy_key'] for r in rows}), "category_counts":dict(Counter(r['category'] for r in rows)), "difficulty_counts":dict(Counter(r['difficulty'] for r in rows)), "drift_count":sum(r['is_changed_answer_near_duplicate'] for r in rows), "changed_articles":sorted({r['policy_key'] for r in rows if r['is_changed_answer_near_duplicate']}), "sha256":hashlib.sha256(raw).hexdigest()}
-    extra_raw = (ROOT/"Extra_qa.json").read_bytes()
+        quarter_dir = SHARED if quarter == "Q1" else OUTPUT
+        raw = (quarter_dir/f"{quarter}_qa.json").read_bytes()
+        prefix = "../shared/" if quarter == "Q1" else ""
+        drift_count = sum(r['is_changed_answer_near_duplicate'] for r in rows)
+        manifest["quarters"][quarter] = {"documentation":f"{prefix}{quarter}.md", "questions":f"{prefix}{quarter}_qa.json", "record_count":len(rows), "article_count":len({r['policy_key'] for r in rows}), "category_counts":dict(Counter(r['category'] for r in rows)), "difficulty_counts":dict(Counter(r['difficulty'] for r in rows)), "drift_count":drift_count, "drift_rate":drift_count/len(rows), "changed_articles":sorted({r['policy_key'] for r in rows if r['is_changed_answer_near_duplicate']}), "sha256":hashlib.sha256(raw).hexdigest()}
+    extra_raw = (SHARED/"Extra_qa.json").read_bytes()
     manifest["extra"] = {
-        "documentation": "Extra.md",
-        "questions": "Extra_qa.json",
+        "documentation": "../shared/Extra.md",
+        "questions": "../shared/Extra_qa.json",
         "record_count": len(extra_rows),
         "expected_model_action": "abstain",
         "sha256": hashlib.sha256(extra_raw).hexdigest(),
     }
-    (ROOT/"manifest.json").write_text(json.dumps(manifest, indent=2)+"\n", encoding="utf-8")
+    (OUTPUT/"manifest.json").write_text(
+        json.dumps(manifest, indent=2)+"\n", encoding="utf-8"
+    )
 
 if __name__ == "__main__":
     main()

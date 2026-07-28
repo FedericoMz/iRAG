@@ -1,7 +1,9 @@
 {
-  "dataset": "SalesX Quarterly Support QA",
+  "dataset": "SalesX Quarterly Support QA \u2014 10% Drift",
+  "variant": "drift_10",
   "schema_version": "2.1.0",
   "generator_seed": 20260717,
+  "embedding_data_dir": "..",
   "knowledge_articles": 100,
   "questions_per_article": 5,
   "categories": [
@@ -13,8 +15,8 @@
   ],
   "quarters": {
     "Q1": {
-      "documentation": "Q1.md",
-      "questions": "Q1_qa.json",
+      "documentation": "../shared/Q1.md",
+      "questions": "../shared/Q1_qa.json",
       "record_count": 500,
       "article_count": 100,
       "category_counts": {
@@ -30,6 +32,7 @@
         "hard": 100
       },
       "drift_count": 0,
+      "drift_rate": 0.0,
       "changed_articles": [],
       "sha256": "3cd68c7bd767087f232e9aab14c7014ed6570622ffbbed065fad63a5139939e2"
     },
@@ -51,6 +54,7 @@
         "hard": 100
       },
       "drift_count": 50,
+      "drift_rate": 0.1,
       "changed_articles": [
         "billing.refunds",
         "billing.seat_billing",
@@ -83,6 +87,7 @@
         "hard": 100
       },
       "drift_count": 50,
+      "drift_rate": 0.1,
       "changed_articles": [
         "billing.downgrades",
         "billing.overages",
@@ -115,6 +120,7 @@
         "hard": 100
       },
       "drift_count": 50,
+      "drift_rate": 0.1,
       "changed_articles": [
         "billing.invoices",
         "billing.renewals",
@@ -131,15 +137,15 @@
     }
   },
   "notes": [
-    "Q1 is the baseline and has no possible prior-quarter drift subset.",
+    "Q1 is the shared canonical baseline and has no possible prior-quarter drift subset.",
     "Q2-Q4 each change ten articles and contain exactly 50 changed-answer near-duplicates.",
-    "The post-Q4 Extra split contains 50 mutually isolated questions whose expected model action is abstention.",
+    "The post-Q4 Extra split is shared and contains 50 mutually isolated questions whose expected model action is abstention.",
     "Drift changes policy or workflow semantics rather than only scalar limits.",
     "Generated files are deterministic outputs of generate_dataset.py."
   ],
   "extra": {
-    "documentation": "Extra.md",
-    "questions": "Extra_qa.json",
+    "documentation": "../shared/Extra.md",
+    "questions": "../shared/Extra_qa.json",
     "record_count": 50,
     "expected_model_action": "abstain",
     "sha256": "e5be9889ef03d8df9313e0b21baa674f4cdb4254f08e576ef43d951e71b19bcf"

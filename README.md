@@ -66,7 +66,17 @@ For a smaller local trial using the Ollama model names in `config.env`, run:
 make sample
 ```
 
-This samples 20 tickets from each nominal quarter, including a proportional 10% drift subset in Q2–Q4, plus 20 tickets from the Extra abstention split, and runs one informed-mixture/stochastic-acceptance repetition. Its detailed JSON result is written to an experiment folder under `outputs/`.
+This samples 20 tickets from each nominal quarter, preserving the selected
+dataset's drift proportion in Q2–Q4, plus 20 tickets from the Extra abstention
+split, and runs one informed-mixture/stochastic-acceptance repetition. Its
+detailed JSON result is written to an experiment folder under `outputs/`.
+
+The generated corpora live under `experiment data/drift_10` and
+`experiment data/drift_40`. Select either variant per API request using the
+`dataset` dropdown. Both manifests reference the same canonical Q1 under
+`experiment data/shared`, and both safely reuse the same question embeddings.
+Startup validation checks every record ID and question against the embedding
+source.
 
 Plot FEA, cumulative final-decision error, and the human-only baseline from any
 result with:
@@ -128,7 +138,7 @@ Compose reads the selected provider from `config.env`, connects to host Ollama t
 
 ### Parallel run launcher
 
-Open `http://localhost:8000/docs`, expand `POST /v1/runs`, and select **Try it out**. Expert, acceptance, model provider, and domain-expert category are dropdowns. Repetitions and decay are editable numeric fields with the paper defaults of `10` and `0.99861`. Generation and auxiliary model names are editable because Ollama installations and the OpenRouter catalogue are not fixed. `checkpoint_interval` controls how many completed ticket traces are buffered before being written to disk and defaults to `50`.
+Open `http://localhost:8000/docs`, expand `POST /v1/runs`, and select **Try it out**. Dataset variant, expert, acceptance, model provider, and domain-expert category are dropdowns. The dataset choices are `drift_10` and `drift_40`. Repetitions and decay are editable numeric fields with the paper defaults of `10` and `0.99861`. Generation and auxiliary model names are editable because Ollama installations and the OpenRouter catalogue are not fixed. `checkpoint_interval` controls how many completed ticket traces are buffered before being written to disk and defaults to `50`.
 
 The expert choices are `ceo`, `domain_expert`, `intern`, `random_mixture`, `informed_mixture`, and `ceo_bootstrapped_informed_mixture`. The acceptance choices are `always_refuse`, `always_accept`, `randomize`, and `gold_similarity`; these apply when the model suggestion conflicts with the human answer in the skeptical-contestator state. `gold_similarity` accepts the suggestion exactly when the auxiliary judgment already computed against the benchmark gold answer reports `gold_reference_covered=true`. It is an oracle experimental regime because a deployment normally has no gold answer at decision time.
 
@@ -140,7 +150,7 @@ The same run can be submitted without the browser:
 
 ```sh
 curl -X POST \
-  'http://localhost:8000/v1/runs?expert=informed_mixture&acceptance=randomize&repetitions=10&decay=0.99861&include_extra=true'
+  'http://localhost:8000/v1/runs?dataset=drift_10&expert=informed_mixture&acceptance=randomize&repetitions=10&decay=0.99861&include_extra=true'
 ```
 
 The RUN API processes Q1–Q4 by default. Set `include_extra=true`—or enable **Include extra** in the API documentation form—to append the separate 50-ticket post-Q4 abstention challenge. Every repetition has an independent seeded shuffle within each selected batch and fresh RAG state. Repetitions are submitted concurrently; for Bedrock, `BEDROCK_MAX_CONCURRENCY` limits simultaneous Runtime calls independently of the repetition count. Provider, generation model, auxiliary model, Ollama URL, Bedrock region, timeout, and retries can be selected for the job. Any empty model field falls back to `config.env`; OpenRouter and AWS credentials are always environment-only.
@@ -149,7 +159,7 @@ Its `202` response contains a job ID and status URL. The status response include
 
 ```text
 outputs/
-└── expert-informed_mixture__acceptance-randomize__repetitions-10__decay-0.99861__extra-true__job-<job-id>/
+└── dataset-drift_10__expert-informed_mixture__acceptance-randomize__repetitions-10__decay-0.99861__extra-true__job-<job-id>/
     ├── metadata.json
     ├── result.json
     ├── run-001.json
@@ -174,6 +184,21 @@ that were already finalized, and appends only new tickets to unfinished partial
 files. Tickets processed after the last flushed batch must be processed again;
 lowering `checkpoint_interval` reduces that exposure.
 
+When a completed compatible run already contains the same CEO-controlled Q1,
+pass its ID as `reuse_q1_from`. The API verifies the condition, seed, model
+identities, and canonical Q1 records before copying each repetition's first 500
+tickets into the new job:
+
+```sh
+curl -X POST \
+  'http://localhost:8000/v1/runs?dataset=drift_40&expert=ceo_bootstrapped_informed_mixture&acceptance=gold_similarity&repetitions=10&decay=0.99861&reuse_q1_from=<10-percent-job-id>'
+```
+
+Reuse is intentionally rejected when decay or any other experiment
+configuration differs, because those parameters can alter Q1 retrieval and
+FEA even though the CEO answers are shared. The new metadata records the source
+experiment ID.
+
 Use these endpoints to inspect or download the outputs:
 
 - `GET /v1/experiments/{job-id}` — status, progress, and output directory.
@@ -192,6 +217,7 @@ curl -X POST http://localhost:8000/v1/experiments/bundled \
   -H 'Content-Type: application/json' \
   -d '{
     "name": "informed stochastic run",
+    "dataset": "drift_40",
     "models": {"provider": "ollama"},
     "conditions": [{
       "name": "informed-stochastic",
@@ -235,7 +261,9 @@ IDs, documentation anchor, and generation/evaluation metadata. A record is
 rejected at execution time if its ID or question does not match the bundled
 embedding corpus.
 
-`GET /v1/dataset/quarters/{Q1|Q2|Q3|Q4|Extra}` returns a correctly shaped batch that can be used directly as input.
+`GET /v1/dataset/quarters/{Q1|Q2|Q3|Q4|Extra}?dataset=drift_10`
+returns a correctly shaped batch that can be used directly as input. Its
+`dataset` parameter is also an OpenAPI dropdown.
 
 ## Result structure
 

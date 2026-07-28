@@ -10,6 +10,7 @@ from irag.core.config import settings
 from irag.core.models import (
     AcceptanceRegime,
     AssignmentStrategy,
+    DatasetVariant,
     ExperimentCondition,
     ExperimentRequest,
     ModelProvider,
@@ -40,7 +41,7 @@ def sample_quarter(
         stable = [
             record for record in records if not record.is_changed_answer_near_duplicate
         ]
-        drift_count = round(sample_size * 0.1)
+        drift_count = round(sample_size * len(drift) / len(records))
         selected = rng.sample(drift, drift_count) + rng.sample(
             stable, sample_size - drift_count
         )
@@ -53,6 +54,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--tickets-per-quarter", type=int, default=20)
     parser.add_argument("--seed", type=int, default=20260717)
+    parser.add_argument(
+        "--dataset",
+        choices=[variant.value for variant in DatasetVariant],
+        default=DatasetVariant.DRIFT_10.value,
+    )
     parser.add_argument("--generation-model", default=settings.ollama_generation_model)
     parser.add_argument("--auxiliary-model", default=settings.ollama_auxiliary_model)
     return parser.parse_args()
@@ -64,13 +70,25 @@ def main() -> int:
         print("tickets-per-quarter must be between 1 and 500", file=sys.stderr)
         return 2
 
-    dataset = SalesXDataset(settings.data_dir, settings.embedding_model)
+    dataset_variant = DatasetVariant(args.dataset)
+    dataset_root = (
+        settings.data_dir.parent
+        if settings.data_dir.name in {
+            variant.value for variant in DatasetVariant
+        }
+        else settings.data_dir
+    )
+    dataset = SalesXDataset(
+        dataset_root / dataset_variant.value,
+        settings.embedding_model,
+    )
     quarters = [
         sample_quarter(dataset, quarter, args.tickets_per_quarter, args.seed)
         for quarter in Quarter
     ]
     request = ExperimentRequest(
         name=f"Tentative {args.tickets_per_quarter}-ticket-per-quarter run",
+        dataset=dataset_variant,
         quarters=quarters,
         models=ModelSettings(
             provider=ModelProvider.OLLAMA,

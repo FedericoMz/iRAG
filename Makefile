@@ -4,7 +4,7 @@ export PYTHONPATH := $(CURDIR)/src
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install run test lint validate smoke sample plot legend analyze docker-build up down logs
+.PHONY: help install run test lint validate validate-10 validate-40 smoke sample plot legend analyze docker-build up down logs
 
 help:
 	@echo "Available commands:"
@@ -12,7 +12,9 @@ help:
 	@echo "  make run           Run the FastAPI development server"
 	@echo "  make test          Run the deterministic test suite"
 	@echo "  make lint          Run Ruff checks"
-	@echo "  make validate      Validate the complete SalesX dataset"
+	@echo "  make validate      Validate the default 10% drift dataset"
+	@echo "  make validate-10   Validate the 10% quarterly-drift dataset"
+	@echo "  make validate-40   Validate the 40% quarterly-drift dataset"
 	@echo "  make smoke         Run the live Ollama smoke test"
 	@echo "  make sample        Run a 20-ticket-per-quarter experiment with configured Ollama models"
 	@echo "  make plot RESULT=outputs/<folder>/<result>.json  Plot FEA and cumulative error rate"
@@ -37,8 +39,13 @@ test:
 lint:
 	$(PYTHON) -m ruff check .
 
-validate:
+validate: validate-10
+
+validate-10:
 	$(PYTHON) "experiment data/validate_dataset.py"
+
+validate-40:
+	$(PYTHON) "experiment data/validate_drift_40_dataset.py"
 
 smoke:
 	$(PYTHON) -m irag.tools.ollama_smoke_test

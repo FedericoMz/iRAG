@@ -2,7 +2,11 @@ import json
 
 import pytest
 
-from irag.tools.analyze_experiment import analyze_job, averaged_trajectories
+from irag.tools.analyze_experiment import (
+    analyze_job,
+    averaged_trajectories,
+    infer_quarterly_drift_rate,
+)
 
 
 def make_saved_ticket(
@@ -145,3 +149,24 @@ def test_analyze_job_plots_average_and_writes_abstention_drift_stats(tmp_path):
     assert "EA (non-fading)" not in trajectories
     assert all("coverage" not in label.lower() for label in trajectories)
     assert all("Extra abstention" not in label for label in trajectories)
+
+
+def test_plot_drift_rate_excludes_baseline_and_extra():
+    tickets = [
+        {"quarter": "Q1", "is_drift": False},
+        *[
+            {"quarter": "Q2", "is_drift": index < 4}
+            for index in range(10)
+        ],
+        *[
+            {"quarter": "Q3", "is_drift": index < 4}
+            for index in range(10)
+        ],
+        {
+            "quarter": "Extra",
+            "is_drift": False,
+            "requires_model_abstention": True,
+        },
+    ]
+
+    assert infer_quarterly_drift_rate(tickets) == 0.4

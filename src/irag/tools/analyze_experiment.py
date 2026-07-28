@@ -173,6 +173,26 @@ def averaged_trajectories(runs: list[dict]) -> dict[str, dict[str, list[float]]]
     return trajectories
 
 
+def infer_quarterly_drift_rate(tickets: list[dict]) -> float:
+    nominal_quarters = {
+        quarter: [
+            ticket
+            for ticket in tickets
+            if ticket["quarter"] == quarter
+            and not ticket.get("requires_model_abstention")
+        ]
+        for quarter in dict.fromkeys(ticket["quarter"] for ticket in tickets)
+    }
+    drift_rates = [
+        sum(bool(ticket.get("is_drift")) for ticket in quarter_tickets)
+        / len(quarter_tickets)
+        for quarter_tickets in nominal_quarters.values()
+        if quarter_tickets
+        and any(ticket.get("is_drift") for ticket in quarter_tickets)
+    ]
+    return statistics.fmean(drift_rates) if drift_rates else 0.0
+
+
 def plot_average_results(
     job_id: str,
     configuration: dict,
@@ -263,7 +283,8 @@ def plot_average_results(
     axis.set_ylabel("Mean rate across repetitions")
     axis.grid(axis="both", color="#d1d5db", linewidth=0.7, alpha=0.55)
     decay_title = "Decay" if float(configuration.get("lambda", 1.0)) < 1 else "No Decay"
-    axis.set_title(f"10% Drift - {decay_title}", pad=18)
+    drift_rate = infer_quarterly_drift_rate(tickets)
+    axis.set_title(f"{drift_rate:.0%} Drift - {decay_title}", pad=18)
     for label, values in trajectories.items():
         final_mean = next(
             (

@@ -12,6 +12,8 @@ import numpy as np
 from salesx_knowledge import ARTICLES, CHANGE_DIMENSIONS, DRIFT_KEYS, RULE_CHANGES
 
 ROOT = Path(__file__).resolve().parent
+DATA = ROOT / "drift_10"
+SHARED = ROOT / "shared"
 QUARTERS = ("Q1", "Q2", "Q3", "Q4")
 CATEGORIES = ("billing", "integrations", "permissions", "reporting", "onboarding")
 EXPECTED_DIFFICULTY = Counter({"easy":200, "normal":200, "hard":100})
@@ -33,8 +35,11 @@ def main():
 
     seen = {}
     for qi, quarter in enumerate(QUARTERS):
-        rows = json.loads((ROOT/f"{quarter}_qa.json").read_text(encoding="utf-8"))
-        documentation = (ROOT/f"{quarter}.md").read_text(encoding="utf-8")
+        quarter_dir = SHARED if quarter == "Q1" else DATA
+        rows = json.loads(
+            (quarter_dir/f"{quarter}_qa.json").read_text(encoding="utf-8")
+        )
+        documentation = (quarter_dir/f"{quarter}.md").read_text(encoding="utf-8")
         assert len(documentation.splitlines()) > 1700, f"{quarter} documentation is unexpectedly small"
         assert len(rows) == 500
         assert len({r["id"] for r in rows}) == 500
@@ -93,8 +98,8 @@ def main():
 
     assert len(seen) == 2000
 
-    extra = json.loads((ROOT/"Extra_qa.json").read_text(encoding="utf-8"))
-    extra_documentation = (ROOT/"Extra.md").read_text(encoding="utf-8")
+    extra = json.loads((SHARED/"Extra_qa.json").read_text(encoding="utf-8"))
+    extra_documentation = (SHARED/"Extra.md").read_text(encoding="utf-8")
     assert len(extra) == 50
     assert len({r["id"] for r in extra}) == 50
     assert len({r["question"] for r in extra}) == 50

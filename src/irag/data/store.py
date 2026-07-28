@@ -85,6 +85,18 @@ class ExperimentStore:
             raise ValueError("Saved experiment metadata is missing")
         return json.loads(source.read_text(encoding="utf-8"))
 
+    def read_saved_run(self, experiment_id: str, repetition: int) -> dict:
+        source = (
+            self.saved_directory(experiment_id)
+            / f"run-{repetition:03d}.json"
+        )
+        if not source.is_file():
+            raise ValueError(f"Finalized repetition {repetition} is missing")
+        result = json.loads(source.read_text(encoding="utf-8"))
+        if not isinstance(result, dict):
+            raise ValueError(f"Finalized repetition {repetition} is invalid")
+        return result
+
     def queue_resume(self, experiment_id: str) -> ExperimentStatus:
         self._update(
             experiment_id,
