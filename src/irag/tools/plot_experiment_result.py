@@ -150,8 +150,6 @@ def plot_result(
     fea = [ticket["fea_after"] for ticket in tickets]
     error_rate = cumulative_error_rate(tickets)
     baseline_error_rate = cumulative_human_baseline_error_rate(tickets)
-    gold_coverage = cumulative_observation_rate(tickets, "gold")
-    human_coverage = cumulative_observation_rate(tickets, "human")
     ranges = quarter_ranges(tickets)
 
     figure, fea_axis = plt.subplots(figsize=(14, 7))
@@ -161,20 +159,6 @@ def plot_result(
         color="#2563eb",
         linewidth=2.2,
         label="FEA",
-    )
-    fea_axis.plot(
-        positions,
-        gold_coverage,
-        color="#16a34a",
-        linewidth=2.2,
-        label="Cumulative LLM gold coverage",
-    )
-    fea_axis.plot(
-        positions,
-        human_coverage,
-        color="#0891b2",
-        linewidth=1.8,
-        label="Cumulative human-reference coverage",
     )
     fea_axis.plot(
         positions,

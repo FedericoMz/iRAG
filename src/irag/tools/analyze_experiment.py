@@ -25,7 +25,6 @@ from irag.core.config import settings  # noqa: E402
 from irag.tools.plot_experiment_result import (  # noqa: E402
     cumulative_error_rate,
     cumulative_human_baseline_error_rate,
-    cumulative_observation_rate,
     quarter_ranges,
 )
 from irag.tools.plot_styles import TRAJECTORY_STYLES  # noqa: E402
@@ -157,12 +156,6 @@ def pointwise_mean_std(
 def averaged_trajectories(runs: list[dict]) -> dict[str, dict[str, list[float]]]:
     calculators = {
         "FEA": lambda tickets: [ticket["fea_after"] for ticket in tickets],
-        "Cumulative LLM gold coverage": lambda tickets: cumulative_observation_rate(
-            tickets, "gold"
-        ),
-        "Cumulative human-reference coverage": (
-            lambda tickets: cumulative_observation_rate(tickets, "human")
-        ),
         "Cumulative final-decision error rate": cumulative_error_rate,
         "Cumulative human-only baseline error rate": (
             cumulative_human_baseline_error_rate
@@ -191,8 +184,6 @@ def plot_average_results(
     trajectories = averaged_trajectories(runs)
     endpoint_offsets = {
         "FEA": 0,
-        "Cumulative LLM gold coverage": 12,
-        "Cumulative human-reference coverage": -10,
         "Cumulative final-decision error rate": -2,
         "Cumulative human-only baseline error rate": 2,
     }
@@ -271,17 +262,8 @@ def plot_average_results(
     axis.set_xlabel("Ticket processing order")
     axis.set_ylabel("Mean rate across repetitions")
     axis.grid(axis="both", color="#d1d5db", linewidth=0.7, alpha=0.55)
-    assignment_title = {
-        "ceo_bootstrapped_informed_mixture": "Informed Mixture",
-        "informed_mixture": "Informed Mixture",
-    }.get(
-        configuration.get("assignment_strategy"),
-        str(configuration.get("assignment_strategy", "Experiment")).replace(
-            "_", " "
-        ).title(),
-    )
     decay_title = "Decay" if float(configuration.get("lambda", 1.0)) < 1 else "No Decay"
-    axis.set_title(f"{assignment_title} - {decay_title}", pad=18)
+    axis.set_title(f"10% Drift - {decay_title}", pad=18)
     for label, values in trajectories.items():
         final_mean = next(
             (

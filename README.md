@@ -68,7 +68,8 @@ make sample
 
 This samples 20 tickets from each nominal quarter, including a proportional 10% drift subset in Q2–Q4, plus 20 tickets from the Extra abstention split, and runs one informed-mixture/stochastic-acceptance repetition. Its detailed JSON result is written to an experiment folder under `outputs/`.
 
-Plot FEA and cumulative final-decision error rate from any result with:
+Plot FEA, cumulative final-decision error, and the human-only baseline from any
+result with:
 
 ```sh
 make plot RESULT=outputs/<experiment-folder>/result.json
