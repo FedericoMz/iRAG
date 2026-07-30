@@ -436,6 +436,13 @@ def test_bedrock_nova_uses_forced_tool_for_structured_output():
     schema = tool_spec["inputSchema"]["json"]
     assert "outputConfig" not in request
     assert tool_config["toolChoice"]["tool"]["name"] == "salesx_decision"
+    assert request["inferenceConfig"] == {
+        "maxTokens": 3000,
+        "temperature": 0,
+    }
+    assert request["additionalModelRequestFields"] == {
+        "inferenceConfig": {"topK": 1}
+    }
     assert "additionalProperties" not in schema
     assert result["answer"] == "answer"
     assert result["api_response"]["stop_reason"] == "tool_use"
@@ -706,6 +713,7 @@ def test_bedrock_client_accepts_bearer_token(monkeypatch):
         == 100
     )
     assert client.model_metadata["eu.vendor/generation"]["service_retries"] == 100
+    assert client.model_metadata["eu.vendor/generation"]["tool_max_tokens"] == 3000
     assert client.model_metadata["eu.vendor/generation"]["max_concurrency"] == 3
 
 

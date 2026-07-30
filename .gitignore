@@ -364,6 +364,7 @@ config.env
 outputs/
 logs/
 .claude/
+demo/
 *.log
 .DS_Store
 

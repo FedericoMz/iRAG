@@ -54,6 +54,7 @@ class BedrockClient(BaseModelClient):
         response_retries: int = 10,
         response_max_delay: float = 10.0,
         decision_response_retries: int = 3,
+        tool_max_tokens: int = 3000,
         max_concurrency: int = 3,
         profile: str | None = None,
         session: Any | None = None,
@@ -73,6 +74,9 @@ class BedrockClient(BaseModelClient):
         self.response_retries = response_retries
         self.response_max_delay = response_max_delay
         self.decision_response_retries = decision_response_retries
+        if tool_max_tokens < 1:
+            raise ValueError("Bedrock tool max tokens must be at least 1")
+        self.tool_max_tokens = tool_max_tokens
         if max_concurrency < 1:
             raise ValueError("Bedrock max_concurrency must be at least 1")
         self.max_concurrency = max_concurrency
@@ -122,6 +126,7 @@ class BedrockClient(BaseModelClient):
                 "response_retries": self.response_retries,
                 "response_max_delay": self.response_max_delay,
                 "decision_response_retries": self.decision_response_retries,
+                "tool_max_tokens": self.tool_max_tokens,
                 "max_concurrency": self.max_concurrency,
             }
             for model in {self.generation_model, self.auxiliary_model}
@@ -169,6 +174,17 @@ class BedrockClient(BaseModelClient):
                     }
                 ],
                 "toolChoice": {"tool": {"name": schema_name}},
+            }
+            # AWS recommends greedy decoding with topK=1 and a generous output
+            # budget when Nova reports malformed tool-use sequences. The model
+            # normally stops after the small schema result, so this raises the
+            # ceiling without forcing longer successful responses.
+            request["inferenceConfig"]["maxTokens"] = max(
+                max_tokens,
+                self.tool_max_tokens,
+            )
+            request["additionalModelRequestFields"] = {
+                "inferenceConfig": {"topK": 1}
             }
         else:
             request["outputConfig"] = {

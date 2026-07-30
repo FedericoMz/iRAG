@@ -17,13 +17,15 @@ def make_saved_ticket(
     drift: bool = False,
     error: bool = False,
     fea: float = 0.5,
+    state: str = "silent_observer",
+    suggestion_accepted: bool | None = None,
 ) -> dict:
     return {
         "ticket_id": f"{quarter}-{position}",
         "quarter": quarter,
         "global_position": position,
-        "state_before": "silent_observer",
-        "state_after": "silent_observer",
+        "state_before": state,
+        "state_after": state,
         "fea_after": fea,
         "final_decision_error": error,
         "human_answer_is_correct": not error,
@@ -31,6 +33,7 @@ def make_saved_ticket(
             "gold_reference_covered": not error,
         },
         "reliability_observation": int(not error),
+        "suggestion_accepted": suggestion_accepted,
         "requires_model_abstention": False,
         "model_action_is_correct": None,
         "model_decision": {
@@ -47,7 +50,14 @@ def write_completed_job(tmp_path):
     job_directory.mkdir()
     first_tickets = [
         make_saved_ticket(1, "Q1", abstain=True, fea=0.4),
-        make_saved_ticket(2, "Q1", abstain=False, fea=0.6),
+        make_saved_ticket(
+            2,
+            "Q1",
+            abstain=False,
+            fea=0.6,
+            state="skeptical_contestator",
+            suggestion_accepted=True,
+        ),
         make_saved_ticket(
             3,
             "Q2",
@@ -56,11 +66,25 @@ def write_completed_job(tmp_path):
             error=True,
             fea=0.7,
         ),
-        make_saved_ticket(4, "Q2", abstain=False, fea=0.8),
+        make_saved_ticket(
+            4,
+            "Q2",
+            abstain=False,
+            fea=0.8,
+            state="skeptical_contestator",
+            suggestion_accepted=False,
+        ),
     ]
     second_tickets = [
         make_saved_ticket(1, "Q1", abstain=False, fea=0.6),
-        make_saved_ticket(2, "Q1", abstain=False, fea=0.8),
+        make_saved_ticket(
+            2,
+            "Q1",
+            abstain=False,
+            fea=0.8,
+            state="skeptical_contestator",
+            suggestion_accepted=True,
+        ),
         make_saved_ticket(3, "Q2", abstain=True, drift=True, fea=0.9),
         make_saved_ticket(4, "Q2", abstain=False, error=True, fea=1.0),
     ]
@@ -140,6 +164,12 @@ def test_analyze_job_plots_average_and_writes_abstention_drift_stats(tmp_path):
     assert drift["model_abstention_count"]["total_across_repetitions"] == 2
     assert drift["final_decision_error_rate"]["pooled_rate"] == 0.5
     assert list(stats["drift"]["by_quarter"]) == ["Q2"]
+
+    sc_acceptance = stats["sc_acceptance"]
+    assert sc_acceptance["accepted_count"]["total_across_repetitions"] == 2
+    assert sc_acceptance["rejected_count"]["total_across_repetitions"] == 1
+    assert sc_acceptance["acceptance_rate"]["pooled_rate"] == pytest.approx(2 / 3)
+    assert sc_acceptance["acceptance_rate"]["mean_rate_per_repetition"] == 0.75
 
     trajectories = averaged_trajectories(
         [{"tickets": run_tickets} for run_tickets in tickets]

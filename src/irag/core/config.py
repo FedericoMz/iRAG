@@ -81,6 +81,9 @@ class Settings:
     bedrock_decision_response_retries: int = int(
         os.getenv("BEDROCK_DECISION_RESPONSE_RETRIES", "3")
     )
+    bedrock_tool_max_tokens: int = int(
+        os.getenv("BEDROCK_TOOL_MAX_TOKENS", "3000")
+    )
     bedrock_max_concurrency: int = int(
         os.getenv("BEDROCK_MAX_CONCURRENCY", "3")
     )

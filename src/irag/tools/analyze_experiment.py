@@ -420,6 +420,39 @@ def aggregate_scopes(scopes: list[list[dict]]) -> dict:
     }
 
 
+def aggregate_sc_acceptance(runs: list[dict]) -> dict:
+    per_repetition = []
+    for run in runs:
+        decisions = [
+            ticket["suggestion_accepted"]
+            for ticket in run["tickets"]
+            if ticket.get("state_before") == "skeptical_contestator"
+            and isinstance(ticket.get("suggestion_accepted"), bool)
+        ]
+        accepted = sum(decisions)
+        per_repetition.append(
+            {
+                "opportunities": len(decisions),
+                "accepted": accepted,
+                "rejected": len(decisions) - accepted,
+            }
+        )
+
+    opportunities = [counts["opportunities"] for counts in per_repetition]
+    accepted = [counts["accepted"] for counts in per_repetition]
+    rejected = [counts["rejected"] for counts in per_repetition]
+    return {
+        "opportunity_count": count_distribution(opportunities),
+        "accepted_count": count_distribution(accepted),
+        "rejected_count": count_distribution(rejected),
+        "acceptance_rate": rate_distribution(accepted, opportunities),
+        "per_repetition": [
+            {"repetition": index, **counts}
+            for index, counts in enumerate(per_repetition, start=1)
+        ],
+    }
+
+
 def build_abstention_drift_stats(job_id: str, runs: list[dict]) -> dict:
     quarter_order = []
     for ticket in runs[0]["tickets"]:
@@ -477,8 +510,14 @@ def build_abstention_drift_stats(job_id: str, runs: list[dict]) -> dict:
                 "model_action_is_correct is true on a ticket whose expected "
                 "model action is abstain"
             ),
+            "sc_acceptance": (
+                "suggestion_accepted is true among SC tickets where an explicit "
+                "acceptance decision was made; abstentions and proposals already "
+                "covering the human answer are excluded"
+            ),
             "standard_deviation": "population standard deviation across repetitions",
         },
+        "sc_acceptance": aggregate_sc_acceptance(runs),
         "abstention": {
             "overall": aggregate_scopes(all_scopes),
             "by_quarter": by_quarter,
