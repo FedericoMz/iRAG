@@ -81,14 +81,15 @@ Skeptical Learning
 }
 \end{abstract}
 \section{Introduction}
-Large Language Models (LLMs) are AI models \AF{systems oppure?} trained on large text corpora to generate contextually appropriate natural language. When embedded in a larger software system able to invoke tools, maintain a state, and act on behalf of a user, an LLM constitutes the core of an \textit{agent}~\cite{wang2024beyond}. The behaviour of an LLM-based agent depends on its training data and, at inference time, on the \textit{context} it receives: the user's input, any externally retrieved information, and a system prompt defining the agent's role and constraints~\cite{zamfirescu2023johnny}. Therefore, a frozen LLM can be adapted to different tasks without retraining by suitably defining its context.
+Large Language Models (LLMs) are %AI models \AF{systems oppure?}
+trained on large text corpora to generate contextually appropriate natural language. When embedded in a larger software system to invoke tools, maintain a state, and/or act on behalf of a user, an LLM constitutes the core of an \textit{agent}~\cite{wang2024beyond}. The behaviour of an LLM-based agent depends on its training data and, at inference time, on the \textit{context} it receives: the user's input, any externally retrieved information, and a system prompt defining the agent's role and constraints~\cite{zamfirescu2023johnny}. Therefore, a frozen LLM can be adapted to different tasks without retraining by suitably defining its context.
 
-Retrieval-Augmented Generation (RAG) exploits this property systematically. Rather than relying only on knowledge encoded during training, an LLM agent equipped with RAG retrieves relevant passages from an external Knowledge Base (KB) at query time and includes them in its context before producing a response~\cite{gao2023retrieval}. In this way, RAG grounds LLM outputs in verifiable, domain-specific evidence. However, standard RAG formulations assume a \textit{static} KB, compiled offline before deployment~\cite{lewis2020retrieval}. This assumption is limiting when the relevant knowledge is built incrementally through the decisions being supported, e.g., when an agent is expected to learn from a judge's rulings, a clinician's case resolutions, or an operator's responses to incidents. In these settings, the KB is initially empty and is progressively populated through the human activity.
+Retrieval-Augmented Generation (RAG) exploits this property systematically. Rather than relying on knowledge encoded during training, an LLM agent equipped with RAG retrieves relevant passages from an external Knowledge Base (KB) at query time, and includes them in its context to produce a suitable response~\cite{gao2023retrieval}, grounding LLM outputs in verifiable, domain-specific evidence. However, standard RAG formulations assume a \textit{static} KB, compiled offline before deployment~\cite{lewis2020retrieval}. This assumption is limiting when the relevant knowledge is built incrementally through the decisions being supported, e.g., when an agent is expected to learn from a judge's rulings, a clinician's case resolutions, or an operator's responses to incidents. In these settings, the KB is initially empty and is progressively populated by the human operations.
 
-The coordination of human and machine decisions over time has been extensively studied in the Machine Learning literature under the umbrella of \textit{Hybrid Decision-Making} (HDM)~\cite{punzi2024ai}. Two main paradigms can be identified. In \textit{Learning-to-Abstain} approaches, of which \textit{Learning-to-Defer}~\cite{joshi2021learning} is a prominent example, the model is the primary decision-maker and delegates to a human supervisor when its confidence falls below a threshold. Conversely, in \textit{Learning Together} approaches, the human retains the primary decision-making role and the model learns from their decisions. \textit{Skeptical Learning} (SL)~\cite{zhang2019personal,zeni2019fixing} is a representative example: the machine learns incrementally from human-labelled examples and, once sufficiently confident, challenges the human when detecting a possible mislabelling.
-\textit{Bridget}~\cite{pellungrini2025bridging} unifies the two paradigms by moving between Human-in-Command and Machine-in-Command phases. The transitions are governed by \textit{Fading Empirical Accuracy} (FEA), a temporally weighted variant of the Empirical Accuracy used in SL. By discounting older decisions, FEA provides an updated estimate of the model reliability. The original paper only proposes this idea; to the best of our knowledge, neither FEA nor the phase transition has been tested empirically.
+The coordination of human and machine decisions over time has been extensively studied in the Machine Learning literature under the umbrella of \textit{Hybrid Decision-Making} (HDM)~\cite{punzi2024ai}. Two main paradigms can be identified. In \textit{Learning-to-Abstain} approaches, of which \textit{Learning-to-Defer}~\cite{joshi2021learning} is a prominent example, the model is the primary decision-maker and delegates to a human supervisor when its confidence falls below a threshold. Conversely, in \textit{Learning Together} approaches, the human retains the primary decision-making role and the model learns from their decisions. \textit{Skeptical Learning} (SL)~\cite{zhang2019personal,zeni2019fixing} is a representative example: the machine learns incrementally from human-labelled examples and, once sufficiently confident, challenges the human when detecting a possible mislabelling. Confidence is based on the \textit{Empirical Accuracy}, i.e., the \textit{agreement} between the human annotator and the predictive machine.
+\textit{Bridget}~\cite{pellungrini2025bridging} unifies the two paradigms by moving between Human-in-Command and Machine-in-Command phases. The transitions are governed by \textit{Fading Empirical Accuracy} (FEA), a temporally weighted variant of the Empirical Accuracy. By discounting older decisions, FEA provides an updated estimate of the model reliability. The original paper only proposes this idea; to the best of our knowledge, neither FEA nor the phase transition has been tested empirically.
 
-\AF{Qui manca un paragrafo in cui si evidenzia che RAG su KB statica è/può essere un problema, e perché}
+HDM systems have often implemented Incremental Learning, which has had to deal with the phenomenon known as \textit{concept drift}; the same phenomenon can affect a RAG system built around an incremental, dynamic KB. When decision criteria evolve, passages retrieved from a KB compiled before the change may misrepresent the current criteria, silently degrading the quality of RAG-grounded generations rather than causing an evident failure. Periodic offline re-curation can mitigate this effect, although it introduces a latency between the change and its reflection in the KB, as well as the need for manual intervention. A static formulation of RAG is therefore ill-suited to domains where the KB must be built incrementally, and where the \textit{currency} of retrieved evidence, and not only its coverage, determines decision quality.
 
 In this work, we propose iRAG, an LLM-based system bridging RAG and HDM to support human experts when the KB must be built from their own deliberations. The system is named after both its \textit{incremental} nature, and the close relationship it has with its user(s). Our proposal rests on three main ideas.
 
@@ -102,7 +103,7 @@ The contributions of this paper are as follows:
 \begin{itemize}
     \item We formalise \textit{incremental deliberative RAG}, i.e., RAG over a KB that grows as a direct consequence of the decisions supported by the system.
     \item We define the system behaviour, from silent observation to Skeptical Learning-inspired contestation and, finally, to Learning-to-Defer-inspired autonomy, together with the conditions governing each transition.
-    \item We evaluate iRAG in three domains, showing that it reduces the error rate while preserving human oversight.
+    \item We evaluate iRAG in an experimental setting, showing that it reduces the error rate while preserving human oversight.
 \end{itemize}
 
 The rest of the paper is organised as follows. 
@@ -119,30 +120,31 @@ In this section, we review the literature on Hybrid Decision-Making and Retrieva
 
 Hybrid Decision-Making (HDM) refers to systems where final decisions result, entirely or in part, from the collaboration between a human decision-maker and a Machine Learning model~\cite{wang2021hybrid}. HDM is especially relevant in high-stakes domains, such as legal adjudication, where full automation may be neither safe nor desirable. The literature identifies two broad families, corresponding to \textit{Learning-to-Abstain} and \textit{Learning Together}: \textit{machine-driven} HDM, where the model makes most decisions and defers to the human under specific conditions, and \textit{human-driven} HDM, where the human retains the primary role and the machine proposes corrections or improvements~\cite{punzi2024ai}.
 
-The representative machine-driven paradigm is \textit{Learning-to-Defer} (LtD)~\cite{madras2018predict, mozannar2020consistent, liu2022incorporating}, an extension of \textit{Learning-to-Reject}~\cite{cortes2016learning, zhang2023survey}. Instead of simply abstaining when uncertain, the model routes ambiguous instances to a human supervisor. A limitation of machine-driven HDM is that the human is consulted at the machine's discretion and consequently plays a largely passive role. \textit{Learning-to-Guide}~\cite{banerjee2024learning} addresses this limitation by providing natural-language suggestions, generated through an integrated LLM, to guide the human towards a predicted answer while preserving their final say.
+The representative machine-driven paradigm is \textit{Learning-to-Defer} (LtD)~\cite{madras2018predict, mozannar2020consistent, liu2022incorporating}, an extension of \textit{Learning-to-Reject}~\cite{cortes2016learning, zhang2023survey}. Instead of simply abstaining when uncertain, the model routes ambiguous instances to a human supervisor. A limitation of machine-driven HDM is that the human is consulted at the machine's discretion and consequently plays a largely passive role. \textit{Learning-to-Guide}~\cite{banerjee2024learning} addresses this limitation by providing natural-language suggestions (notably, generated by an integrated LLM) to guide the human towards a predicted answer while preserving their final say.
 
-Skeptical Learning (SL) belongs to the human-driven paradigm and reverses the control structure of LtD~\cite{zhang2019personal, zeni2019fixing, bontempelli2020learning, teso2021interactive, Mazzoni2024frank}. The human is the primary decision-maker, while the model learns incrementally from their decisions and acts as a \textit{surrogate}. When the model prediction differs from the human decision, it computes a \textit{skeptical score} combining epistemic uncertainty and prediction confidence. If the score exceeds a threshold, the model presents its prediction as an alternative that the human can accept or reject; the surrogate is then updated using the final human decision. In this way, it can identify inconsistent or erroneous decisions and help the human remain consistent under fatigue or cognitive bias. All SL variants are affected by \textit{early-decision bias}: the surrogate is strongly influenced by early user decisions and assumes that the user acts in good faith.
+On the other hand, Skeptical Learning (SL) belongs to the human-driven paradigm~\cite{zhang2019personal, zeni2019fixing, bontempelli2020learning, teso2021interactive, Mazzoni2024frank}. The human is the primary decision-maker, while the model learns incrementally from their decisions and acts as a \textit{surrogate}. When the model prediction differs from the human decision, it computes a \textit{skeptical score} combining epistemic uncertainty and prediction confidence. If the score exceeds a threshold, the model presents its prediction as an alternative that the human can accept or reject; the surrogate is then updated using the final human decision. In this way, it can identify inconsistent or erroneous decisions and help the human remain consistent under fatigue or cognitive bias. All SL variants are affected by \textit{early-decision bias}: the surrogate is strongly influenced by early user decisions and assumes that the user acts in good faith.
 
-Notable SL implementations differ in how the surrogate itself is updated. \cite{zeni2019fixing} retrains the model from scratch after each interaction, whereas \cite{bontempelli2020learning, Mazzoni2024frank} instead employ \textit{Incremental Learning} (IL -- also known as continual, sequential, or lifelong learning~\cite{wang2023comprehensive}) which updates the model with new samples rather than retraining it outright, either one record at a time (\textit{online learning}) or in mini-batches~\cite{hayes2020remind}.
+SL implementations differ in how the surrogate itself is updated. \cite{zeni2019fixing} retrains the model from scratch after each interaction, whereas \cite{bontempelli2020learning, Mazzoni2024frank} employ \textit{Incremental Learning} (IL -- also known as continual, sequential, or lifelong learning~\cite{wang2023comprehensive}) which updates the model with new samples rather than retraining it outright. %either one record at a time (\textit{online learning}) or in mini-batches~\cite{hayes2020remind}.
 
-Any system that learns incrementally from a non-stationary stream, however, must contend with \textit{concept drift}: a change in the underlying data distribution over time~\cite{lu2018learning, li2020incremental}. When drift is genuine (i.e., the external reality has changed), it is known as \textit{real concept drift}; when only the input distribution shifts without affecting the target variable, it is \textit{virtual concept drift}~\cite{gama2014survey}. A related notion is \textit{knowledge drift}~\cite{bontempelli2022human}, affecting models with built-in concept hierarchies. Concept drift is particularly relevant for our setting: as the KB grows from human deliberations, a change in the human's decision criteria (e.g., a policy update or a shift in judicial interpretation) can be modelled as a form of concept drift.
-
-A second consequence of learning incrementally from human input is that individual records may later need to be retracted rather than merely superseded (e.g., if a past decision is erroneous or must be removed for privacy reasons). \textit{Machine Unlearning} (MU)~\cite{nguyen2022survey, qu2023learn} is the capacity to selectively erase the influence of specific records from a trained model, whether for privacy compliance, data correction, or removal of biased information. Ideally, a model processed by an MU algorithm should behave as if it had never been trained on the erased data. Practical approaches include pre-processing strategies (data partitioning, noise injection) and post-hoc parameter editing~\cite{golatkar2020eternal}; in the context of IL specifically, \textit{decremental learning}~\cite{zhu2019efficient, lutz2013want} addresses the targeted forgetting of single records. MU is directly relevant here: as the KB is populated by human decisions, some of those decisions may later be revised or flagged as erroneous, and the system must be able to accommodate this without retraining from scratch.
+Systems that learn incrementally from a stream must deal with \textit{concept drift}: a change in the underlying data distribution over time~\cite{lu2018learning, li2020incremental}. When drift is genuine (i.e., the external reality has changed), it is known as \textit{real concept drift}; when only the input distribution shifts without affecting the target variable, it is \textit{virtual concept drift}~\cite{gama2014survey}. A related notion is \textit{knowledge drift}~\cite{bontempelli2022human}, affecting models with built-in concept hierarchies. As such, while exposed to new data, IL models need to maintain a good \textit{stability-plasticity trade-off}, where \textit{stability} refers to the ability to retain previous knowledge while learning something new, and the \textit{plasticity} to modify existing information in light of new data~\cite{kim2023stability, liang2023adaptive}. Concept drift is particularly relevant for our setting: as the KB grows from human deliberations, a change in the human's decision criteria (e.g., a policy update or a shift in the external world) can be modeled as a form of concept drift. Individual records may also later need to be retracted rather than simply superseded (e.g., if a past decision is erroneous or must be removed for privacy reasons). \textit{Machine Unlearning} (MU)~\cite{nguyen2022survey, qu2023learn} is the capacity to selectively erase the influence of specific records from a trained model. Ideally, a model processed by an MU algorithm should behave as if it had never been trained on the erased data.
+%Practical approaches include pre-processing strategies (data partitioning, noise injection) and post-hoc parameter editing~\cite{golatkar2020eternal};
+In the context of IL specifically, \textit{decremental learning}~\cite{zhu2019efficient, lutz2013want} addresses the targeted forgetting of single records. MU is directly relevant here: as the KB is populated by human decisions, some of those decisions may later be revised or flagged as erroneous.%, and the system must be able to accommodate this without retraining from scratch.
 
 \subsection{Retrieval-Augmented Generation}
 
-Retrieval-Augmented Generation (RAG) was introduced by~\cite{lewis2020retrieval} as a general architecture for knowledge-intensive NLP tasks. Instead of relying only on knowledge encoded in the model parameters, a RAG system employs embedding similarity to retrieve passages from an external KB at inference time and includes them in the generation context. This allows the KB to be updated without retraining the model and grounds its outputs in verifiable evidence~\cite{gao2023retrieval}. However, the original formulation treats the KB as a static artefact: the document index is built offline and remains fixed during training and inference~\cite{lewis2020retrieval}.
+Retrieval-Augmented Generation (RAG) was introduced by~\cite{lewis2020retrieval} as a general architecture for knowledge-intensive NLP tasks. Instead of relying only on knowledge encoded in the model parameters, a RAG system employs embedding similarity to retrieve passages from an external KB at inference time and includes them in the generation context. This allows the KB to be updated without retraining the model and grounds its outputs in verifiable evidence~\cite{gao2023retrieval}. However, the original formulation treats the KB as a static artifact: the document index is built offline and remains fixed during training and inference~\cite{lewis2020retrieval}.
 
-Subsequent work has extended the RAG paradigm along two largely separate axes: improving what is retrieved from a fixed KB, and updating the KB itself. On the first axis, \textit{reranking} techniques re-order retrieved documents following either deterministic rules or an auxiliary model~\cite{gao2023retrieval}, improving the relevance of the passages passed to the main LLM. \textit{Self-RAG}~\cite{asai2024self} trains the model to decide adaptively whether to retrieve, and to reflect on the relevance and faithfulness of retrieved passages through special \textit{reflection tokens}, eliminating unnecessary retrievals and improving factual accuracy. \textit{FLARE}~\cite{jiang2023active} adopts a forward-looking strategy, triggering retrieval mid-generation whenever the model assigns low probability to upcoming tokens. \textit{Corrective RAG}~\cite{yan2024corrective} introduces a retrieval evaluator that grades retrieved documents and falls back to web search when the internal KB is insufficient. \textit{RePAQ}~\cite{lewis2021paq} retrieves from a large QA-pair memory by matching the embedded input question against stored question embeddings and returning the answer associated with the nearest question. On the second axis, a smaller body of work addresses the \textit{KB update} problem directly: for example, TG-RAG~\cite{han2025rag} introduces temporal graph structures to handle time-sensitive knowledge, enabling incremental updates as new documents arrive.
+Subsequent work has attempted to improve the retrieval mechanism, e.g., with \textit{reranking} techniques re-ordering retrieved documents following either deterministic rules or an auxiliary model~\cite{gao2023retrieval}, thus improving the relevance of the passages passed to the main LLM. \textit{Self-RAG}~\cite{asai2024self} trains the model to decide adaptively whether to retrieve, and to reflect on the relevance and faithfulness of retrieved passages through special \textit{reflection tokens}, eliminating unnecessary retrievals and improving factual accuracy. \textit{FLARE}~\cite{jiang2023active} adopts a forward-looking strategy, triggering retrieval mid-generation whenever the model assigns low probability to upcoming tokens. \textit{Corrective RAG}~\cite{yan2024corrective} introduces a retrieval evaluator that grades retrieved documents and falls back to web search when the internal KB is insufficient. \textit{RePAQ}~\cite{lewis2021paq} retrieves from a large QA-pair memory by matching the embedded input question against stored question embeddings and returning the answer associated with the nearest question. A smaller body of work addresses the \textit{KB update} problem directly: for example, TG-RAG~\cite{han2025rag} introduces temporal graph structures to handle time-sensitive knowledge, enabling incremental updates as new documents arrive.
 
-These approaches share the assumption that the KB grows by ingesting \textit{external} document streams, such as news feeds, updated encyclopaedias, or domain corpora. iRAG departs from this assumption: its KB grows exclusively from \textit{human deliberations}, represented as structured records of the decisions made by the expert over time. Thus, the KB is not a pre-existing corpus to be indexed, but a living artefact jointly constructed by the human and the system, connecting KB updates in RAG with HDM systems and concept drift.
+These approaches share the assumption that the KB grows by ingesting \textit{external} document streams, such as updated domain corpora. iRAG departs from this assumption: its KB grows from \textit{human deliberations}, represented as structured records of decisions made over time. Thus, the KB is not a pre-existing corpus, but it is rather jointly constructed by the human and the system.%, connecting KB updates in RAG with HDM systems and concept drift.
 
 \section{System Overview}
 \label{sec:model}
 
-We indicate with $H$ and $M$ the human user and the Large Language Model employed by the system, respectively, and with $t_i \in T$ the $i$-th input document from a corpus $T$, e.g., a support ticket, an incident report, or a case file. The system also employs an auxiliary model $M_A$, which assesses whether a candidate decision \emph{covers} a reference decision. We write $M_A^{\mathrm{cov}}(t_C,t_R)$ when every material outcome, condition, responsibility, procedure, and exception in the reference $t_R$ is stated explicitly or clearly entailed by the candidate $t_C$. Wording, structure, and non-material detail may differ, and the candidate may add relevant elaboration; however, coverage is false if the candidate omits or contradicts material reference information, or introduces an additional claim that materially changes the decision. Given $t_i$, $H$ produces the decision document $t_{H,i}$, while $M$ produces $t_{M,i}$. If the available evidence is insufficient, $M$ abstains by returning an empty $t_{M,i}$. The final decision $t_{F,i}$ corresponds to either $t_{H,i}$ or, during the later stages of the system operation, $t_{M,i}$.
+We indicate with $H$ and $M$ the human user and the LLM employed by the system, and with $t_i \in T$ the $i$-th input document from a corpus $T$, e.g., a support ticket. The system also employs an auxiliary model $M_A$, which assesses whether a candidate decision \emph{covers} a reference decision. $M_A^{\mathrm{cov}}(t_C,t_R)$ is true if the content of $t_R$ is explicitly stated in or entailed by $t_C$ without contraddicting it or adding additional claims (wording and structure may, however, differ).
+%We write $M_A^{\mathrm{cov}}(t_C,t_R)$ when every material outcome, condition, responsibility, procedure, and exception in the reference $t_R$ is stated explicitly or clearly entailed by the candidate $t_C$. Wording, structure, and non-material detail may differ, and the candidate may add relevant elaboration; however, coverage is false if the candidate omits or contradicts material reference information, or introduces an additional claim that materially changes the decision.
 
-After each interaction, the system stores the input and its final decision directly as a question--answer record $r_i=(t_i,t_{F,i})$. The set of records forms the KB $D$, whose current size is denoted by $m=|D|$:
+Given $t_i$, $H$ produces the decision document $t_{H,i}$, while $M$ produces $t_{M,i}$. If the available evidence is insufficient, $M$ abstains by returning an empty $t_{M,i}$. The final decision $t_{F,i}$ corresponds to either $t_{H,i}$ or, during the later stages of the system operation, $t_{M,i}$. After each interaction, the system stores the input and its final decision directly as a question--answer record $r_i=(t_i,t_{F,i})$. The set of records forms the KB $D$, whose current size is denoted by $m=|D|$:
 \[
 D=\{r_j=(t_j,t_{F,j})\}_{j=1}^{m}.
 \]
@@ -158,11 +160,11 @@ To generate $t_{M,i}$, iRAG first computes $e_i=E(t_i)$ and its cosine similarit
 \[
 c_{i,j}=\cos\!\big(e_i,E(t_j)\big)\in[-1,1].
 \]
-We use the native positive cosine magnitude as the semantic relevance score,
+We use the native positive cosine magnitude as the semantic relevance score, thus excluding negatively correlated records:
 \[
 s^+_{i,j}=\max(0,c_{i,j})\in[0,1].
 \]
-This rectification excludes negatively correlated records without applying an affine shift to positive cosine values. Such a shift would preserve the cosine ranking in conventional retrieval, but not after multiplication by record-specific temporal weights.
+%This rectification excludes negatively correlated records without applying an affine shift to positive cosine values. Such a shift would preserve the cosine ranking in conventional retrieval, but not after multiplication by record-specific temporal weights.
 
 We then weight $s^+_{i,j}$ by an exponential decay term based on the number of records inserted into the KB after $r_j$:
 \begin{equation}
@@ -173,15 +175,15 @@ s^+_{i,j}\cdot\lambda^{\,(m_i-j)},
 \end{equation}
 where $m_i$ is the size of the KB when $t_i$ is processed, and $\lambda\in(0,1]$ controls how quickly the retrieval relevance of older question--answer records is discounted. The decay is measured in \textit{insertions}, since it depends on the number of records added after $r_j$, rather than on elapsed real time.
 
-To avoid retrieving recent but semantically unrelated records, we require a positive raw cosine similarity satisfying $c_{i,j}>0$ and $c_{i,j}\geq\theta_{\mathrm{sem}}$. Ranking by $S_{i,j}$, including the application of temporal decay, is performed only among records satisfying this constraint. Thus, retrieval extends conventional cosine-based dense retrieval with an insertion-based temporal reranking factor.
+To avoid retrieving recent but semantically unrelated records, we require a positive raw cosine similarity satisfying $c_{i,j}>0$ and $c_{i,j}\geq\theta_{\mathrm{sem}}$. Ranking by $S_{i,j}$, including the application of temporal decay, is performed only among records satisfying this constraint. Traditional cosine-based dense retrieval is thus extended with an insertion-based temporal reranking factor. By construction, $S_{i,j}\to0$ as $m_i-j\to\infty$ whenever $\lambda<1$, making older records progressively harder to retrieve. With this \textit{soft temporal forgetting} , similar older records remain avaliable in the KB (e.g., for audit) and may still be retrieved with lower probability, as the semantic constraint and temporal decay act jointly.
 
-By construction, $S_{i,j}\to0$ as $m_i-j\to\infty$ whenever $\lambda<1$, making older records progressively harder to retrieve. We refer to this mechanism as \textit{soft temporal forgetting}. A sufficiently similar older record may still be retrieved, since the semantic constraint and temporal decay act jointly. Thus, what decreases is the probability that an older record affects the current generation, rather than its presence in the KB, in which it remains available for audit.
+iRAG thus retrieves the top-$K$ records according to $S_{i,j}$
+%among those satisfying $c_{i,j}>0$ and $c_{i,j}\geq\theta_{\mathrm{sem}}$,
+and includes their question and final-answer components in the context of $M$.
 
-iRAG retrieves the top-$K$ records according to $S_{i,j}$ among those satisfying $c_{i,j}>0$ and $c_{i,j}\geq\theta_{\mathrm{sem}}$, and includes their question and final-answer components in the context of $M$.
+iRAG can operate in three states: \textit{Silent Observer} (SO), \textit{Skeptical Contestator} (SC), and \textit{Deferring Surrogate} (DS). Initially, $D=D_E=\emptyset$ and the system is in the SO state. The KB, its embeddings, the reliability estimate, and the current state persist across interactions, as described in Algorithm~\ref{alg:iRAG}\footnote{In the algorithm, \(\mathsf{Retrieve}\) implements Equation~\eqref{eq:score} and the top-\(K\) semantic gate, \(\mathsf{Observe}\) performs the recursive FEA update, and \(\mathsf{Transition}\) applies the SO–SC–DS threshold rules.}.
 
-iRAG can operate in three states: \textit{Silent Observer} (SO), \textit{Skeptical Contestator} (SC), and \textit{Deferring Surrogate} (DS). Initially, $D=D_E=\emptyset$ and the system is in the SO state. The KB, its embeddings, the reliability estimate, and the current state persist across interactions, as described in Algorithm~\ref{alg:iRAG}\footnote{In the algorithm, \(\mathsf{Retrieve}\) implements Equation~\eqref{eq:score} and the top-\(K\) semantic gate, \(\mathsf{Observe}\) performs the recursive FEA update defined above, and \(\mathsf{Transition}\) applies the SO–SC–DS threshold rules.}.
-
-The system tracks the \textit{Fading Empirical Accuracy} (FEA) of $M$\footnote{\footnotesize It should be noted that shared coefficient $\lambda$ operates on two distinct event clocks. Retrieval decay advances at every KB insertion, whereas FEA decay advances only when a new reliability observation is recorded. Consequently, periods without human validation do not alter the FEA point estimate. This is a deliberate scope choice: FEA represents fading across observed evidence rather than elapsed interactions.}, an HDM metric introduced in~\cite{pellungrini2025bridging}, redefined in our context as
+The system tracks the \textit{Fading Empirical Accuracy} (FEA) of $M$. Following SL literature, FEA measures agreement with final human decisions rather than objective task accuracy; treating it as evidence for autonomy assumes that final human decisions are sufficiently reliable\footnote{\footnotesize It should be noted that shared coefficient $\lambda$ operates on two distinct event clocks. Retrieval decay advances at every KB insertion, whereas FEA decay advances only when a new reliability observation is recorded. Consequently, periods without human validation do not alter the FEA point estimate. This is a deliberate scope choice: FEA represents fading across observed evidence rather than elapsed interactions.}, an HDM metric introduced in~\cite{pellungrini2025bridging}, redefined in our context as
 \[
 \mathrm{FEA}_v(M)
 =
@@ -221,48 +223,38 @@ W_v
 
 
 \textbf{Silent Observer.}
-After $M$ generates $t_M$, the system checks whether it abstained. If $t_M$ is non-empty, $M_A$ compares it with $t_H$, a new observation $\delta$ is recorded, and $\mathrm{FEA}(M)$ is updated. An abstention produces no reliability observation. Throughout this state, $t_F\gets t_H$: the human decision is always taken as final, regardless of the model output, and $t_M$ is not shown to $H$. The system transitions to SC when $\mathrm{FEA}(M)>\alpha$ and $v\geq N$.
+After $M$ generates $t_M$, the system checks whether it abstained. If $t_M$ is non-empty, $M_A$ compares it with $t_H$, a new observation $\delta$ is recorded, and $\mathrm{FEA}(M)$ is updated.
+%An abstention produces no reliability observation.
+Throughout this state, $t_F\gets t_H$: the human decision is always taken as final, regardless of the model output, and $t_M$ is not shown to $H$. The system transitions to SC when $\mathrm{FEA}(M)>\alpha$ and $v\geq N$.
 
 \textbf{Skeptical Contestator.}
-$M$ first produces $t_M$. If it abstains, the human decision is retained and no reliability observation is recorded. Otherwise, $M_A$ assesses whether $t_M$ covers $t_H$. The human decision $t_H$ is provisionally taken as $t_F$. If $M_A^{\mathrm{cov}}(t_M,t_H)$ holds, the system records $\delta=1$. Otherwise, $t_M$ is presented to the human as an alternative. If the human revises their decision, the resulting $t_F$ replaces its provisional value. The system then updates $\mathrm{FEA}(M)$ after recording
-\[\delta=\mathbb{1}\left[M_A^{\mathrm{cov}}(t_M,t_F)\right].\]
+$M$ first produces $t_M$. If it abstains, $t_F\gets t_H$ and no reliability observation is recorded. Otherwise, $M_A$ assesses whether $t_M$ covers $t_H$. $t_H$ is provisionally taken as $t_F$. If $M_A^{\mathrm{cov}}(t_M,t_H)$ holds, the system records $\delta=1$. Otherwise, $t_M$ is presented to the human as an alternative. If the human revises their decision, the resulting $t_F$ replaces its provisional value. The system then updates $\mathrm{FEA}(M)$ after recording $\delta=\mathbb{1}\left[M_A^{\mathrm{cov}}(t_M,t_F)\right]$.
 
 The system returns to SO if $\mathrm{FEA}(M)<\beta$, and may transition to DS if $\mathrm{FEA}(M)>\gamma$ or the human explicitly authorises it. We require $\beta<\alpha\leq\gamma$, preventing the system from oscillating between SO and SC after a single disagreement and ensuring that autonomy is not granted at a lower reliability threshold than contestation. Explicit human authorisation may trigger the transition to DS independently of $\mathrm{FEA}(M)$ and $N$.
 
 \textbf{Deferring Surrogate.}
 $M$ becomes the primary decision-maker\footnote{Leaving the model in control may render iRAG a \textit{high-risk AI system} under the EU AI Act, so the DS state should be employed responsibly and only in low-risk contexts; the Act's exclusion for systems not intended to replace or influence a previously completed human assessment without proper review supports the use of the SC state under appropriate supervision.}: for each $t$, $M$ produces $t_M$, and $H$ is consulted if $M$ abstains, in a \textit{Learning-to-Defer} fashion. Otherwise, $t_M$ becomes the final decision. Autonomous decisions do not update $\mathrm{FEA}(M)$, since they are not compared with a corresponding human decision. However, $H$ may review and override an autonomous decision. If the decision is flagged as incorrect, a new observation with $\delta=0$ is recorded and $\mathrm{FEA}(M)$ is updated. The system returns to SO if the updated $\mathrm{FEA}(M)$ is lower than $\beta$. Otherwise, it remains in DS unless the human explicitly retakes control.
 
-\section{Evaluation}
-\label{sec:eval}
-
-We evaluate iRAG on a synthetic benchmark simulating customer-support ticket resolution for a CRM-like product undergoing quarterly releases, chosen to combine evolving domain knowledge, heterogeneous human reliability, and incremental KB construction.
-
-\textbf{Dataset.} We simulate four quarters $Q_1,\dots,Q_4$ of product evolution. For each $Q_i$, an LLM pipeline generates: (i) documentation (full for $Q_1$, diffs thereafter); (ii) $X\approx500$ support tickets, each tagged with difficulty (easy, normal, or hard) and one of five topics (billing, integrations, permissions, reporting, onboarding); (iii) a gold answer consistent with that quarter's documentation; (iv) for each simulated human profile, a perturbed answer reflecting that profile's competence and blind spots. About 10\% of tickets per quarter are near-duplicates of earlier tickets whose correct answer changed after a release (e.g., a pricing question with different $Q_1$/$Q_2$ answers); this \textit{drift subset} is analysed separately to test whether iRAG and the human profiles track \textit{real concept drift} rather than stale precedent. We release the generation pipeline and resulting corpus as a standalone, drift-annotated QA benchmark independent of iRAG.
-
-\textbf{Human Profiles.} Following~\cite{Mazzoni2024frank}, we simulate three human profiles by perturbing gold answers: \textit{CEO} (always correct), \textit{Domain Expert} (reliable only within one declared topic), and \textit{Intern} (reliable on easy tickets, and systematically defaults to the previous quarter's answer on the drift subset). Moreover, the \textit{informed-mixture} combines the three profiles. In SC phase, they all accept $t_M$ if it covers the content gold answer (this is verified by an auxiliary LLM call). This is an experimental condition rather than a deployable policy (as the gold answers are not normally available at decision time); it simulates human user pondering over the content of the proposed answer.
+Like similar LtD systems, DS operates under selective feedback, with human labels observed only after deferral or review. As such, FEA may remain stale during extended autonomous operation. Periodic review is therefore required if FEA is used for continued authorization of autonomy.
 
 \begin{algorithm}[H]
 \small
-\caption{iRAG: Incremental Deliberative RAG}
+\caption{iRAG: Incremental RAG}
 \label{alg:iRAG}
 \SetKwInOut{Input}{Input}
 \SetKwInOut{Output}{Output}
 
 \Input{$T$, thresholds $\alpha,\beta,\gamma$, minimum observations $N$,
-review length $B$, retrieval parameters $K,\theta_{\mathrm{sem}},\lambda$}
+retrieval parameters $K,\theta_{\mathrm{sem}},\lambda$}
 \Output{Final decisions $(t_{F,i})_{i=1}^{|T|}$}
 
 $D,D_E\gets\emptyset$; $\mathit{state}\gets SO$; initialise FEA\;
 
 \ForEach{$t_i\in T$}{
-    \If{$\mathit{firstOfQuarter}(t_i)\wedge B>0\wedge\mathit{state}=DS$}{
-        $\mathit{state}\gets SC$\;
-    }
-    $\mathit{review}\gets\mathit{firstBOfQuarter}(t_i,B)$\;
     $\mathcal C\gets\mathsf{Retrieve}(t_i,D,D_E,K,\theta_{\mathrm{sem}},\lambda)$\;
     $t_M\gets M(t_i,\mathcal C)$\;
 
-    \uIf{$\mathit{state}=DS\wedge\neg\mathit{review}$}{
+    \uIf{$\mathit{state}=DS$}{
         \uIf{$t_M=\emptyset$}{$t_F\gets H(t_i)$}
         \Else{$t_F\gets t_M$}
 
@@ -273,8 +265,7 @@ $D,D_E\gets\emptyset$; $\mathit{state}\gets SO$; initialise FEA\;
         \If{$\mathit{retakeControl}_H$}{$\mathit{state}\gets SO$}
     }
     \Else{
-        $t_H\gets CEO(t_i)$ if $\mathit{review}$, otherwise $H(t_i)$\;
-        $t_F\gets t_H$\;
+        $t_H\gets H(t_i)$; $t_F\gets t_H$\;
 
         \If{$t_M\neq\emptyset$}{
             \If{$\mathit{state}=SC\wedge
@@ -286,31 +277,210 @@ $D,D_E\gets\emptyset$; $\mathit{state}\gets SO$; initialise FEA\;
               \bigl(\mathbb{1}[M_A^{\mathrm{cov}}(t_M,t_F)]\bigr)$\;
         }
 
-        \If{$\neg\mathit{review}\vee\mathit{endOfReview}(t_i,B)$}{
-            $\mathit{state}\gets
-            \mathsf{Transition}(\mathit{state},\mathrm{FEA},v,
-                                \alpha,\beta,\gamma,N)$\;
-        }
+        $\mathit{state}\gets
+        \mathsf{Transition}(\mathit{state},\mathrm{FEA},v,
+                            \alpha,\beta,\gamma,N)$\;
     }
 
     $D\gets D\cup\{(t_i,t_F)\}$;
     $D_E\gets D_E\cup\{E(t_i)\}$\;
 }
 \end{algorithm}
+\section{Evaluation}
+\label{sec:eval}
 
-\textbf{Experimental Conditions.} Quarters are processed in order ($Q_1\!\to\!Q_4$) to preserve drift events; tickets within each quarter are shuffled, with every configuration repeated $R$ times over independent permutations.
+iRAG was evaluated on a synthetic benchmark simulating customer-support tickets for a CRM-like product undergoing quarterly releases. The evaluation tests whether temporal decay improves adaptation to evolving decision criteria, and at what cost to performance on stable knowledge.
 
-The informed-mixture assignment begins with a trusted bootstrap: every $Q_1$ ticket is assigned to the CEO, while the system remains locked in SO, constructs the KB, and updates FEA. Normal state transitions and informed-mixture routing begin in $Q_2$. Hard tickets and 50\% of out-of-domain normal tickets are assigned to the CEO; in-domain normal and easy tickets go to the Domain Expert; out-of-domain easy tickets go to the Intern; and the remaining out-of-domain normal tickets go to the Domain Expert acting outside their area of expertise. The assignment of out-of-domain normal tickets is randomized independently in each repetition. Consequently, $\mathrm{FEA}(M)$ measures reliability against the aggregate assignment policy rather than against a single human profile. Moreover, under this assignment, the first $100$ tickets at every quarter boundary are assigned to the CEO, and state transitions are suspended until the review window ends. If a quarter begins in DS, the system first returns to SC. The trusted bootstrap at the beginning of each quarter (and throughout the entirety of $Q_1$) is intended to establish a strong KB and prevent the early-decision bias associated with SL-based systems.
+\textbf{Dataset.}
+We created a synthetic dataset representing four quarters $Q_1,\dots,Q_4$ of product evolution. Each quarter contains 500 tickets, balanced across five topics (\textit{Billing, Integrations, Permissions, Reporting}, and \textit{Onboarding}) and tagged as easy, normal, or hard. An LLM-based pipeline generated the product documentation, the tickets, a gold answer consistent with the documentation of the corresponding quarter, and a perturbed answer for each simulated human profile. The first quarter contains no drift and is shared by both dataset variants. In $Q_2$--$Q_4$, either 50 (10\%) or 200 (40\%) tickets are near-duplicates of earlier tickets whose correct answer changed after a release. These tickets form the \textit{drift subset}; the remaining tickets form the \textit{stable subset}. The two variants therefore contain, respectively, 150 and 600 drift tickets among the 2,000 nominal tickets.
 
-Each of the four assignments is tested twice: once with $\lambda\approx0.99861$, corresponding to a retrieval half-life of approximately one quarter, and once with $\lambda=1$, in which no temporal decay is applied and FEA reduces to unweighted empirical accuracy. Experiments have been performed with $\theta_{\mathrm{sem}} = 0.7$, retaining high recall while excluding weak matches, and $K = 5$. $\alpha,\beta,\gamma$ has been respectively set to $0.70,0.55,0.80$, and $N$ to $30$. Finally, each of the eight experimental condition is repeated $10$ times, and we reported the average values. 
+\smallskip
+\textbf{Human Profiles.}
+Following~\cite{Mazzoni2024frank}, we simulate three profiles by perturbing the gold answers: the \textit{CEO}, who is always correct; the \textit{Domain Expert}, who is reliable only within one declared topic; and the \textit{Intern}, who is reliable on easy tickets and systematically defaults to the previous quarter's answer on drift tickets. The profiles cooperate under an \textit{informed-mixture} assignment. Hard tickets and a randomly selected 50\% of out-of-domain normal tickets are assigned to the CEO; in-domain easy and normal tickets are assigned to the Domain Expert; out-of-domain easy tickets are assigned to the Intern; and the remaining out-of-domain normal tickets are assigned to the Domain Expert acting outside their area of expertise. The expert's declared topic is \textit{Billing}. The random assignment is resampled independently in each repetition.
 
-\textbf{Metrics.} For each assignment and decay setting, we report five cumulative trajectories over ticket-processing order. First, $\mathrm{FEA}_v(M)$ represents the system's current reliability estimate and governs transitions between SO, SC, and DS. Second, \textit{LLM gold coverage} is the proportion of non-abstaining model answers that cover the material content of the corresponding gold answer. Third, \textit{human-reference coverage} is the proportion of evaluated model answers that cover the initial human answer. The difference between FEA and human-reference coverage reflects both temporal weighting and, in SC, cases in which the human revises their decision after considering the model's suggestion. Fourth, the \textit{final-decision error rate} is the cumulative proportion of final decisions that do not cover the gold answer. Finally, the \textit{human-only baseline error rate} is the counterfactual cumulative error rate obtained if the initially assigned human answers were always retained and the system never influenced the final decisions. The plots also mark quarter boundaries, the thresholds $\alpha$, $\beta$, and $\gamma$, and the ticket positions at which state transitions occur.
+In SC, a suggestion is accepted when it covers the gold answer, as assessed by $M_A$. This \textit{gold-similarity} regime is an experimental oracle rather than a deployable policy, because gold answers are not normally available at decision time. It models a user who accepts a disputed proposal when its material content is correct, without requiring its wording to match the reference.
+
+\smallskip
+\textbf{Experimental Protocol.}
+Quarters are processed in order to preserve drift, while tickets within each quarter are shuffled. Every run begins with a trusted bootstrap: all $Q_1$ tickets are assigned to the CEO and iRAG is locked in SO while constructing the KB and updating FEA. Normal state transitions and informed-mixture assignment begin in $Q_2$. The first 100 tickets of every subsequent quarter are also assigned to the CEO, and state transitions are suspended until this review window ends. If a quarter begins in DS, iRAG first returns to SC. This periodic review provides recent trusted decisions, potentially including drift tickets because the within-quarter order is random, and mitigates the early-decision bias of SL-based systems. Since $Q_1$ is identical across the two drift variants, its recorded interactions are reused between variants for the corresponding decay setting.
+
+We compare decay ($\mathrm{D}$), with $\lambda=0.99861$ and a retrieval half-life of approximately one quarter, against no decay ($\mathrm{ND}$), with $\lambda=1$ and unweighted FEA. We set $\theta_{\mathrm{sem}}=0.7$, $K=5$, $(\alpha,\beta,\gamma)=(0.70,0.55,0.80)$, and $N=30$. Both $M$ and $M_A$ use Amazon Nova 2 Lite through Amazon Bedrock with temperature zero; questions were embedded with \texttt{qwen3-embedding:4b} through Ollama. Each of the four configurations is repeated ten times using the same initial seed and independent within-quarter permutations.
+
+\smallskip
+\textbf{Evaluation Measures.}
+The \textit{final-decision error} is the proportion of final answers that do not cover the gold answer. The \textit{human-only baseline} is the counterfactual error obtained by always retaining the initially assigned human answer. We report final-decision error separately for stable and drift tickets. The \textit{abstention rate} is computed conditionally on the tickets processed in SO, SC, or DS. The \textit{SC proposal-acceptance rate} is the number of accepted proposals divided by the number of explicit accept/reject decisions; model abstentions and model answers that already cover the human answer are excluded. Finally, \textit{model-finalized tickets} is the proportion of all nominal tickets for which the autonomous model supplies the final answer. Table~\ref{tab:experimental-results} reports means across repetitions. Figure~\ref{fig:drift-comparison} reports the mean FEA and cumulative final-decision and human-only error trajectories; shaded areas denote one population standard deviation.
+
+The ten D and ND repetitions are paired by seed: within each drift setting, a pair uses the same ticket permutation and human-assignment draws. For every reported metric, we provide the arithmetic mean and sample standard deviation across repetitions. Our primary outcomes are final-decision error, stable-ticket error, drift-ticket error, and the proportion of model-finalized tickets. For each primary outcome, we compute the paired difference $\Delta=\mathrm{D}-\mathrm{ND}$, its two-sided 95\% Student-$t$ confidence interval, and Cohen's $d_z$. We test $\Delta=0$ using a two-sided exact sign-flip randomization test and apply Holm correction across the four primary outcomes within each drift setting. The complete per-run rates, event counts, seeds, FEA values, and final states are included in the supplementary artifacts (\texttt{paper-results/per-run-results.csv}); the corresponding summaries and paired tests are provided in machine-readable form.
+
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\renewcommand{\arraystretch}{0.84}
+\begin{tabular}{@{}l*{4}{c}@{}}
+\toprule
+& \multicolumn{2}{c}{10\%}
+& \multicolumn{2}{c}{40\%} \\
+\cmidrule(lr){2-3}
+\cmidrule(lr){4-5}
+Metric
+& D & ND
+& D & ND \\
+\midrule
+Human-only baseline
+& \multicolumn{2}{c}{$11.47\pm0.52$}
+& \multicolumn{2}{c}{$17.22\pm0.68$} \\
+Final-decision error
+& $7.59\pm0.97$ & $\mathbf{5.52\pm0.41}$
+& $10.52\pm0.68$ & $\mathbf{9.51\pm0.82}$ \\
+% LLM gold coverage
+% & 80.66 & \textbf{85.28}
+% & \textbf{77.56} & 76.42 \\
+% Human-reference coverage
+% & 78.06 & \textbf{80.81}
+% & 78.06 & \textbf{78.80} \\
+Abstain (SO)
+& $15.73\pm0.65$ & $\mathbf{15.17\pm0.32}$
+& $15.71\pm0.71$ & $\mathbf{15.12\pm0.36}$ \\
+Abstain (SC)
+& $2.63\pm0.72$ & $\mathbf{0.02\pm0.08}$
+& $2.83\pm0.54$ & $\mathbf{0.02\pm0.07}$ \\
+Abstain (DS)
+& $3.36\pm0.63$ & $\mathbf{0.12\pm0.12}$
+& $3.01\pm0.86$ & $\mathbf{0.00\pm0.00}$ \\
+Accepted proposals (SC)
+& $52.39\pm2.29$ & $\mathbf{53.73\pm7.69}$
+& $\mathbf{50.39\pm2.84}$ & $45.55\pm2.67$ \\
+Stable-ticket error
+& $6.08\pm0.62$ & $\mathbf{3.20\pm0.38}$
+& $5.02\pm0.90$ & $\mathbf{2.65\pm0.55}$ \\
+Drift-ticket error
+& $\mathbf{26.20\pm5.87}$ & $34.07\pm2.00$
+& $\mathbf{23.33\pm1.42}$ & $25.50\pm1.88$ \\
+%DS error
+%& 15.82 & \textbf{10.35}
+%& 20.58 & \textbf{18.99} \\
+Model-finalized tickets
+& $43.34\pm4.36$ & $\mathbf{50.70\pm1.88}$
+& $\mathbf{35.80\pm4.67}$ & $26.12\pm2.99$ \\
+Final FEA
+& $0.8001\pm0.0001$ & $\mathbf{0.8081\pm0.0049}$
+& $\mathbf{0.8001\pm0.0001}$ & $0.7880\pm0.0053$ \\
+Final state (DS/SC)
+& 10/0 & 10/0
+& 10/0 & 0/10 \\
+\bottomrule
+\end{tabular}
+\caption{Mean $\pm$ sample standard deviation across ten repetitions. Rates
+are percentages except for FEA; final-state entries are repetition counts.
+D: decay; ND: no decay. Abstention rates are conditional on the indicated
+state, and SC acceptance is conditional on explicit accept/reject decisions.
+Bold denotes the preferable direction within each drift setting: lower error
+or abstention, and higher acceptance, autonomy, or FEA.}
+\label{tab:experimental-results}
+\end{table*}
+
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.2pt}
+\renewcommand{\arraystretch}{0.90}
+\begin{tabular}{@{}lccc@{\qquad}ccc@{}}
+\toprule
+& \multicolumn{3}{c}{10\% drift}
+& \multicolumn{3}{c}{40\% drift} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Metric
+& $\Delta$ [95\% CI] & $d_z$ & $p_{\mathrm H}$
+& $\Delta$ [95\% CI] & $d_z$ & $p_{\mathrm H}$ \\
+\midrule
+Final-decision error
+& $+2.07$ [$1.43,2.71$] & $2.32$ & $.008$
+& $+1.01$ [$0.50,1.52$] & $1.43$ & $.008$ \\
+Stable-ticket error
+& $+2.88$ [$2.43,3.33$] & $4.58$ & $.008$
+& $+2.37$ [$1.82,2.92$] & $3.10$ & $.008$ \\
+Drift-ticket error
+& $-7.87$ [$-11.22,-4.51$] & $-1.68$ & $.008$
+& $-2.17$ [$-3.93,-0.40$] & $-0.88$ & $.023$ \\
+Model-finalized tickets
+& $-7.36$ [$-10.95,-3.76$] & $-1.46$ & $.008$
+& $+9.68$ [$5.67,13.69$] & $1.73$ & $.008$ \\
+\bottomrule
+\end{tabular}
+\caption{Matched decay effects on the primary outcomes. Differences are
+$\Delta=\mathrm{D}-\mathrm{ND}$ in percentage points. Confidence intervals
+are two-sided paired Student-$t$ intervals; $d_z$ is the paired effect size,
+and $p_{\mathrm H}$ is the Holm-adjusted two-sided exact sign-flip $p$-value.}
+\label{tab:paired-results}
+\end{table*}
+
+\begin{table*}[t]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3.0pt}
+\renewcommand{\arraystretch}{0.88}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Mean event count / eligible tickets
+& 10\% D & 10\% ND & 40\% D & 40\% ND \\
+\midrule
+Final-decision errors       & 151.7/2000 & 110.3/2000 & 210.3/2000 & 190.1/2000 \\
+Stable-ticket errors        & 112.4/1850 & 59.2/1850  & 70.3/1400  & 37.1/1400 \\
+Drift-ticket errors         & 39.3/150   & 51.1/150   & 140.0/600  & 153.0/600 \\
+SO abstentions              & 94.6/601.3 & 91.0/600.0 & 95.0/605.2 & 90.7/600.0 \\
+SC abstentions              & 14.3/531.9 & 0.1/386.1  & 19.4/678.9 & 0.2/877.7 \\
+DS abstentions              & 29.1/866.8 & 1.2/1013.9 & 21.7/715.9 & 0.0/522.3 \\
+Accepted SC proposals       & 90.4/172.7 & 48.6/89.8  & 113.2/224.0& 133.5/292.9 \\
+Model-finalized tickets     & 866.8/2000 & 1013.9/2000& 715.9/2000 & 522.3/2000 \\
+\bottomrule
+\end{tabular}
+\caption{Mean event counts per repetition. Denominators are fixed ticket
+subsets for error metrics, tickets processed in the indicated state for
+abstention, and explicit accept/reject decisions for SC acceptance. Fractional
+counts arise from averaging ten integer-valued runs; per-run counts and their
+sample standard deviations are supplied with the artifacts.}
+\label{tab:event-counts}
+\end{table*}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{figures/drift-comparison.png}
+    \caption{Mean FEA, cumulative final-decision error, and counterfactual
+    human-only error under 10\% and 40\% drift, with and without temporal
+    decay. Vertical dotted lines separate quarters; horizontal dashed lines
+    mark $\alpha$, $\beta$, and $\gamma$.}
+    \label{fig:drift-comparison}
+\end{figure}
+
+\smallskip
+\textbf{Results.}
+All four iRAG configurations improve upon their matched human-only baseline. Under 10\% drift, the final-decision error is $7.59\pm0.97$\% with decay and $5.52\pm0.41$\% without decay, compared with a baseline of $11.47\pm0.52$\%. The paired reductions relative to the baseline are $-3.89$ percentage points (95\% CI $[-4.82,-2.95]$) and $-5.96$ points ($[-6.49,-5.42]$), respectively. Under 40\% drift, D and ND obtain $10.52\pm0.68$\% and $9.51\pm0.82$\%, compared with $17.22\pm0.68$\%; the corresponding reductions are $-6.70$ points ($[-7.18,-6.22]$) and $-7.71$ points ($[-8.34,-7.09]$). All four comparisons have exact $p=.008$ after Holm adjustment across the four baseline tests, and iRAG has lower error than the human-only baseline in each of the 40 individual runs. Thus, even when two out of every five tickets in $Q_2$--$Q_4$ reflect changed knowledge, iRAG consistently lowers the error of the unaided assignment policy in this experiment.
+
+The stable and drift subsets reveal a \textit{stability--plasticity trade-off} reminiscent of that in the Incremental Learning literature (Sec.~\ref{sec:related}). As shown in Table~\ref{tab:paired-results}, D increases stable-ticket error relative to ND by $2.88$ points under 10\% drift and $2.37$ points under 40\% drift; both paired intervals exclude zero and both adjusted $p$-values are $.008$. Conversely, D reduces drift-ticket error by $7.87$ points (95\% CI $[-11.22,-4.51]$, $p_{\mathrm H}=.008$) in the 10\% dataset and by $2.17$ points ($[-3.93,-0.40]$, $p_{\mathrm H}=.023$) in the 40\% dataset. Temporal discounting therefore improves \textit{plasticity} by reducing the influence of stale precedents, but sacrifices \textit{stability} by also weakening older evidence that remains valid. The smaller drift advantage under 40\% shows that the effect does not scale linearly with drift prevalence. The present design does not isolate its cause: denser changed semantic neighborhoods, randomized ticket order, CEO review, and state occupancy all vary together.
+
+Fig.~\ref{fig:drift-comparison} shows how the trade-off develops over time. The configurations share the same trusted $Q_1$ decisions and closely overlap during the bootstrap, where the CEO makes every final decision. From $Q_2$ onward, the final-decision error remains below the human-only baseline in every condition. Under 10\% drift, ND finishes with FEA $0.8081\pm0.0049$ and D with $0.8001\pm0.0001$; all ten repetitions finish in DS. Under 40\% drift, all D repetitions also recover to DS, whereas all ND repetitions finish in SC with FEA $0.7880\pm0.0053$. For a state observed in 10/10 repetitions, the two-sided 95\% exact binomial interval for its population probability is $[69.2,100]$\% (and $[0,30.8]$\% for 0/10); the observed consistency should therefore not be read as certainty beyond this experiment. The categorical result is accompanied by a $+9.68$-point paired decay effect on model-finalized tickets (95\% CI $[5.67,13.69]$, $p_{\mathrm H}=.008$). Under 10\% drift the direction reverses: D finalizes $7.36$ points fewer tickets ($[-10.95,-3.76]$, $p_{\mathrm H}=.008$). Decay therefore preserves more autonomy under strong drift, even though ND retains the lower aggregate error.
+
+Table~\ref{tab:event-counts} complements the conditional rates with their event counts. SO abstention corresponds to approximately 91--95 decisions per repetition in every condition. After SO, ND records at most 1.2 mean abstentions in either state, whereas D records 14--29. About half of explicitly contested proposals are accepted: under 10\% drift, D and ND accept $90.4/172.7$ and $48.6/89.8$ mean proposals, respectively; under 40\% drift they accept $113.2/224.0$ and $133.5/292.9$. These counts show that acceptance percentages alone conceal substantial differences in how long the system remains in SC.
+
+The repeated permutations also quantify sensitivity to stochastic ticket order and human assignment. Final-decision error has a sample standard deviation between $0.41$ and $0.97$ points, while model-finalized proportion varies by $1.88$--$4.67$ points. Drift-ticket error is most order-sensitive in the 10\% D condition ($5.87$ points; per-run range $18.67$--$36.67$\%), where only 150 drift tickets are available, but its standard deviation falls to $1.42$--$1.88$ points in the 40\% conditions. Random assignment produces 1,214--1,256 CEO, 366--402 Domain Expert, and 372--391 Intern tickets per repetition. Despite this variation, the final state is invariant within every configuration (Table~\ref{tab:experimental-results}). Because the same seed controls both ticket order and randomized human assignment, these values measure their joint sensitivity; attributing variance to either factor separately would require a crossed resampling design. The supplementary file records profile counts and cryptographic fingerprints of both sequences, and the analysis rejects any D--ND pair whose order or assignments do not match.
+
+\section{Conclusion}
+\label{sec:conclusion}
+We have presented iRAG, a human-in-the-loop system combining an incrementally constructed RAG knowledge base with state transitions inspired by Skeptical Learning and Learning-to-Defer. iRAG first observes human decisions, then contests unsupported disagreements, and finally becomes the primary decision-maker when its FEA is sufficiently high. Previous final decisions remain available as auditable question--answer records, while temporal reranking allows their retrieval influence to decrease as newer decisions enter the KB.
+
+The experiments show that iRAG reduces final-decision error relative to the simulated human-only policy under both 10\% and 40\% concept drift. They also provide empirical evidence for the stability--plasticity trade-off introduced by temporal decay. Removing decay improves aggregate and stable-ticket accuracy, whereas applying decay consistently lowers drift-ticket error. Under 40\% drift, decay also allows every repetition to recover to DS after the $Q_4$ review, while every no-decay repetition remains in SC. Decay is therefore not uniformly more accurate; rather, it exchanges some stability for faster adaptation and, under stronger drift, greater operational autonomy.
+
+The evaluation has several limitations. It uses one synthetic support domain, simulated human profiles, one generation model, and an auxiliary LLM judge. Moreover, gold-similarity acceptance is an oracle condition intended to isolate system behaviour, not a policy that can be deployed when reference answers are unavailable. The CEO bootstrap and quarterly review also assume access to a trusted and comparatively expensive supervisor. Although the matched analysis controls for shared seeds, ten repetitions leave substantial uncertainty about tail events and final-state probabilities, while ticket order and randomized human assignment vary jointly and cannot be disentangled. Finally, the same $\lambda$ controls two processes operating on different clocks---KB insertions for retrieval and reliability observations for FEA---and autonomous DS decisions update FEA only when a human flags an error.
+
+Future work could evaluate iRAG with real experts and naturally occurring policy changes, separate and adapt the retrieval and FEA decay parameters, and replace gold-based acceptance with deployable confidence or independent-review mechanisms. Further directions include calibrated abstention on genuinely out-of-scope requests, selective removal or revision of obsolete KB records, and evaluation across different LLMs, embedding models, drift patterns, and supervision budgets.
+
 
 
 {
 \scriptsize
 \textbf{Acknowledgment.}
-iRAG
+The work was funded by the Pasqualino Research Fund.
 }
 
 

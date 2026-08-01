@@ -4,7 +4,7 @@ export PYTHONPATH := $(CURDIR)/src
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install run test lint validate validate-10 validate-40 smoke sample plot legend analyze docker-build up down logs
+.PHONY: help install run test lint validate validate-10 validate-40 smoke sample plot legend analyze paper-stats docker-build up down logs
 
 help:
 	@echo "Available commands:"
@@ -20,6 +20,7 @@ help:
 	@echo "  make plot RESULT=outputs/<folder>/<result>.json  Plot FEA and cumulative error rate"
 	@echo "  make legend        Render the horizontal plot legend as a separate image"
 	@echo "  make analyze JOB=<job-id>  Plot repetition averages and export abstention/drift statistics"
+	@echo "  make paper-stats    Export matched-seed statistics for the four paper jobs"
 	@echo "  make docker-build  Build the Docker image"
 	@echo "  make up            Build and start the app with Docker Compose"
 	@echo "  make down          Stop the Docker Compose services"
@@ -63,6 +64,9 @@ legend:
 analyze:
 	@test -n "$(JOB)" || (echo "Usage: make analyze JOB=<job-id>"; exit 2)
 	$(PYTHON) -m irag.tools.analyze_experiment "$(JOB)"
+
+paper-stats:
+	$(PYTHON) -m irag.tools.paper_statistics
 
 docker-build:
 	docker compose build

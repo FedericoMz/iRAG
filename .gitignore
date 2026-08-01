@@ -448,3 +448,19 @@ FodyWeavers.xsd
 
 *.tex
 !main.tex
+
+# LaTeX build artifacts (keep main.tex, figures, and paper-results tracked)
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.xdv
+main.pdf
