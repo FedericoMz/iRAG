@@ -363,6 +363,8 @@ htmlcov/
 config.env
 outputs/
 logs/
+paper-results/
+figures/
 .claude/
 demo/
 *.log
@@ -449,7 +451,7 @@ FodyWeavers.xsd
 *.tex
 !main.tex
 
-# LaTeX build artifacts (keep main.tex, figures, and paper-results tracked)
+# LaTeX build artifacts (keep main.tex tracked)
 *.aux
 *.bbl
 *.bcf
