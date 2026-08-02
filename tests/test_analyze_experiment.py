@@ -7,6 +7,7 @@ from irag.tools.analyze_experiment import (
     averaged_trajectories,
     infer_quarterly_drift_rate,
 )
+from irag.tools.plot_experiment_result import cumulative_llm_gold_error_rate
 
 
 def make_saved_ticket(
@@ -42,6 +43,16 @@ def make_saved_ticket(
         },
         "is_drift": drift,
     }
+
+
+def test_llm_gold_error_excludes_abstentions():
+    abstention = make_saved_ticket(1, "Q1", abstain=True, error=True)
+    correct_answer = make_saved_ticket(2, "Q1", abstain=False)
+    incorrect_answer = make_saved_ticket(3, "Q1", abstain=False, error=True)
+
+    assert cumulative_llm_gold_error_rate(
+        [abstention, correct_answer, incorrect_answer]
+    ) == [None, 0.0, 0.5]
 
 
 def write_completed_job(tmp_path):
@@ -179,6 +190,7 @@ def test_analyze_job_plots_average_and_writes_abstention_drift_stats(tmp_path):
     assert "EA (non-fading)" not in trajectories
     assert all("coverage" not in label.lower() for label in trajectories)
     assert all("Extra abstention" not in label for label in trajectories)
+    assert "Cumulative LLM gold-answer error rate" in trajectories
 
 
 def test_plot_drift_rate_excludes_baseline_and_extra():

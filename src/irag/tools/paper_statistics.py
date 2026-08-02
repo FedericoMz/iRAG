@@ -31,6 +31,7 @@ STATE_NAMES = {
 
 RATE_FIELDS = (
     "human_only_error_pct",
+    "llm_gold_error_pct",
     "final_error_pct",
     "stable_error_pct",
     "drift_error_pct",
@@ -112,6 +113,17 @@ def per_run_metrics(run: dict, drift_rate: str, decay: str) -> dict:
         "final_error": (
             tickets,
             lambda ticket: ticket["final_decision_error"],
+        ),
+        "llm_gold_error": (
+            [
+                ticket
+                for ticket in tickets
+                if ticket.get("gold_judgment") is not None
+                and not bool((ticket.get("model_decision") or {}).get("abstain"))
+            ],
+            lambda ticket: not bool(
+                ticket["gold_judgment"]["gold_reference_covered"]
+            ),
         ),
         "stable_error": (
             [ticket for ticket in tickets if not ticket["is_drift"]],
@@ -304,7 +316,7 @@ def baseline_comparisons(condition_rows: dict[tuple[str, str], list[dict]]) -> l
 def write_csv(path: Path, rows: list[dict], fieldnames: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         writer.writerows(
             {field: row.get(field) for field in fieldnames} for row in rows

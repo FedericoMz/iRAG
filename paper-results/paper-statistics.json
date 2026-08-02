@@ -29,6 +29,18 @@
     {
       "drift_rate": 10,
       "decay": "D",
+      "metric": "llm_gold_error_pct",
+      "n": 10,
+      "mean": 19.33573895313591,
+      "sample_sd": 1.1299852134262978,
+      "ci95_low": 18.527396227087117,
+      "ci95_high": 20.1440816791847,
+      "minimum": 18.191603875134554,
+      "maximum": 21.42471667566109
+    },
+    {
+      "drift_rate": 10,
+      "decay": "D",
       "metric": "final_error_pct",
       "n": 10,
       "mean": 7.585000000000001,
@@ -337,6 +349,18 @@
       "ci95_high": 11.840638034714313,
       "minimum": 10.85,
       "maximum": 12.25
+    },
+    {
+      "drift_rate": 10,
+      "decay": "ND",
+      "metric": "llm_gold_error_pct",
+      "n": 10,
+      "mean": 14.719000921351892,
+      "sample_sd": 0.44627698660824516,
+      "ci95_low": 14.39975359701398,
+      "ci95_high": 15.038248245689804,
+      "minimum": 14.113326337880377,
+      "maximum": 15.30398322851153
     },
     {
       "drift_rate": 10,
@@ -653,6 +677,18 @@
     {
       "drift_rate": 40,
       "decay": "D",
+      "metric": "llm_gold_error_pct",
+      "n": 10,
+      "mean": 22.436620515011604,
+      "sample_sd": 0.5727534938534083,
+      "ci95_low": 22.026897347775105,
+      "ci95_high": 22.846343682248104,
+      "minimum": 21.467098166127293,
+      "maximum": 23.16353887399464
+    },
+    {
+      "drift_rate": 40,
+      "decay": "D",
       "metric": "final_error_pct",
       "n": 10,
       "mean": 10.515,
@@ -961,6 +997,18 @@
       "ci95_high": 17.702822943003717,
       "minimum": 16.2,
       "maximum": 18.05
+    },
+    {
+      "drift_rate": 40,
+      "decay": "ND",
+      "metric": "llm_gold_error_pct",
+      "n": 10,
+      "mean": 23.576422276302598,
+      "sample_sd": 1.0471697075573134,
+      "ci95_low": 22.82732219429714,
+      "ci95_high": 24.325522358308056,
+      "minimum": 21.69811320754717,
+      "maximum": 25.54973821989529
     },
     {
       "drift_rate": 40,

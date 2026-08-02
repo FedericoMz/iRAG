@@ -363,8 +363,8 @@ htmlcov/
 config.env
 outputs/
 logs/
-paper-results/
 figures/
+drift-comparison.png
 .claude/
 demo/
 *.log

@@ -55,6 +55,27 @@ def cumulative_human_baseline_error_rate(tickets: list[dict]) -> list[float]:
     return rates
 
 
+def cumulative_llm_gold_error_rate(
+    tickets: list[dict],
+) -> list[float | None]:
+    """Error among non-abstaining LLM answers evaluated against gold."""
+    errors = 0
+    observations = 0
+    rates = []
+    for ticket in tickets:
+        judgment = ticket.get("gold_judgment")
+        model_decision = ticket.get("model_decision") or {}
+        if (
+            judgment is not None
+            and not bool(model_decision.get("abstain"))
+            and not ticket.get("requires_model_abstention")
+        ):
+            observations += 1
+            errors += int(not bool(judgment["gold_reference_covered"]))
+        rates.append(errors / observations if observations else None)
+    return rates
+
+
 def cumulative_observation_rate(
     tickets: list[dict],
     field: str,
@@ -150,6 +171,7 @@ def plot_result(
     fea = [ticket["fea_after"] for ticket in tickets]
     error_rate = cumulative_error_rate(tickets)
     baseline_error_rate = cumulative_human_baseline_error_rate(tickets)
+    llm_gold_error_rate = cumulative_llm_gold_error_rate(tickets)
     ranges = quarter_ranges(tickets)
 
     figure, fea_axis = plt.subplots(figsize=(14, 7))
@@ -174,6 +196,14 @@ def plot_result(
         linewidth=1.8,
         linestyle="--",
         label="Cumulative human-only baseline error rate",
+    )
+    fea_axis.plot(
+        positions,
+        llm_gold_error_rate,
+        color="#0f766e",
+        linewidth=1.8,
+        linestyle="-.",
+        label="Cumulative LLM gold-answer error rate",
     )
     thresholds = [
         ("alpha", "α", "#15803d"),
