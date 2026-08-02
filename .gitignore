@@ -456,6 +456,7 @@ FodyWeavers.xsd
 *.bbl
 *.bcf
 *.blg
+*.bst
 *.fdb_latexmk
 *.fls
 *.lof
