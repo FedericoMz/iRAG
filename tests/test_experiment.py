@@ -17,9 +17,37 @@ from irag.core.models import (
 )
 from irag.engine.experiment import (
     ExperimentRunner,
+    Reliability,
     accepts_suggestion,
     assign_profile,
 )
+
+
+def test_legacy_joint_lambda_populates_both_decay_parameters():
+    condition = ExperimentCondition.model_validate(
+        {
+            "name": "legacy",
+            "assignment_strategy": "informed_mixture",
+            "lambda": 0.9,
+        }
+    )
+
+    assert condition.lambda_rag == 0.9
+    assert condition.lambda_fea == 0.9
+    dumped = condition.model_dump(mode="json")
+    assert dumped["lambda_rag"] == 0.9
+    assert dumped["lambda_fea"] == 0.9
+
+
+def test_reliability_uses_only_fea_lambda():
+    reliability = Reliability(lambda_fea=0.5)
+
+    reliability.observe(1)
+    reliability.observe(0)
+
+    assert reliability.numerator == 0.5
+    assert reliability.denominator == 1.5
+    assert reliability.fea == 1 / 3
 
 
 def make_ticket(

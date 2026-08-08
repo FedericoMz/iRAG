@@ -42,7 +42,7 @@ class DecisionClient(Protocol):
 
 @dataclass
 class Reliability:
-    decay: float
+    lambda_fea: float
     numerator: float = 0.0
     denominator: float = 0.0
     observations: int = 0
@@ -52,8 +52,8 @@ class Reliability:
         return self.numerator / self.denominator if self.denominator else 0.0
 
     def observe(self, delta: int) -> None:
-        self.numerator = self.decay * self.numerator + delta
-        self.denominator = self.decay * self.denominator + 1
+        self.numerator = self.lambda_fea * self.numerator + delta
+        self.denominator = self.lambda_fea * self.denominator + 1
         self.observations += 1
 
 
@@ -228,7 +228,8 @@ class ExperimentRunner:
                 "gamma": 0.8,
                 "minimum_observations": 30,
                 "quarterly_ceo_tickets": 100,
-                "lambda": 0.99861,
+                "lambda_rag": 0.99861,
+                "lambda_fea": 0.99861,
                 "autonomous_review": (
                     "Every nominal quarter routes its first 100 tickets to the CEO; "
                     "a quarter beginning in DS first returns to SC"
@@ -274,7 +275,7 @@ class ExperimentRunner:
         if ticket_batch_size < 1:
             raise ValueError("ticket_batch_size must be at least 1")
         rng = random.Random(seed)
-        reliability = Reliability(decay=condition.decay)
+        reliability = Reliability(lambda_fea=condition.lambda_fea)
         context = RunContext()
         saved_tickets = resume_tickets or []
         outputs = list(saved_tickets) if on_ticket_batch is None else []
@@ -627,7 +628,7 @@ class ExperimentRunner:
                 self.dataset.vector(record.id),
                 condition.top_k,
                 condition.semantic_threshold,
-                condition.decay,
+                condition.lambda_rag,
             )
             model_decision = self.client.decide(record.question, retrieved)
             abstained = bool(model_decision["abstain"])

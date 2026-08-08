@@ -467,3 +467,10 @@ FodyWeavers.xsd
 *.toc
 *.xdv
 main.pdf
+
+# Local SCITEPRESS paper template and bundled assets
+SCITEPRESS.sty
+apalike.sty
+article.cls
+orcid.eps
+orcid.png

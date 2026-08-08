@@ -119,7 +119,8 @@ def create_parallel_run(
             f"__expert-{request.expert.value}"
             f"__acceptance-{request.acceptance.value}"
             f"__repetitions-{request.repetitions}"
-            f"__decay-{request.decay:.8g}"
+            f"__lambda-rag-{request.lambda_rag:.8g}"
+            f"__lambda-fea-{request.lambda_fea:.8g}"
             f"__extra-{str(request.include_extra).lower()}"
         ),
     )
@@ -343,7 +344,8 @@ def build_parallel_request(request: ParallelRunRequest) -> ExperimentRequest:
         domain_expert_category=request.domain_expert_category,
         repetitions=request.repetitions,
         seed=request.seed,
-        decay=request.decay,
+        lambda_rag=request.lambda_rag,
+        lambda_fea=request.lambda_fea,
     )
     return ExperimentRequest(
         name=(

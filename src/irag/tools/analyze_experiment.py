@@ -285,7 +285,17 @@ def plot_average_results(
     axis.set_xlabel("Ticket processing order")
     axis.set_ylabel("Mean rate across repetitions")
     axis.grid(axis="both", color="#d1d5db", linewidth=0.7, alpha=0.55)
-    decay_title = "Decay" if float(configuration.get("lambda", 1.0)) < 1 else "No Decay"
+    legacy_lambda = float(configuration.get("lambda", 1.0))
+    lambda_rag = float(configuration.get("lambda_rag", legacy_lambda))
+    lambda_fea = float(configuration.get("lambda_fea", legacy_lambda))
+    if lambda_rag < 1 and lambda_fea < 1:
+        decay_title = "Decay"
+    elif lambda_rag < 1:
+        decay_title = "RAG Decay"
+    elif lambda_fea < 1:
+        decay_title = "FEA Decay"
+    else:
+        decay_title = "No Decay"
     drift_rate = infer_quarterly_drift_rate(tickets)
     axis.set_title(f"{drift_rate:.0%} Drift - {decay_title}", pad=18)
     for label, values in trajectories.items():

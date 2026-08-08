@@ -188,9 +188,45 @@ class ExperimentCondition(StrictModel):
     )
     top_k: int = Field(default=5, ge=1, le=100)
     semantic_threshold: float = Field(default=0.7, ge=0, le=1)
-    decay: float = Field(default=0.99861, gt=0, le=1, alias="lambda")
+    lambda_rag: float = Field(
+        default=0.99861,
+        gt=0,
+        le=1,
+        description="Insertion-based temporal decay used for RAG reranking.",
+    )
+    lambda_fea: float = Field(
+        default=0.99861,
+        gt=0,
+        le=1,
+        description="Observation-based temporal decay used for FEA updates.",
+    )
     recent_gold_window: int = Field(default=30, ge=1, le=1000)
     system_enabled: bool = True
+
+    @model_validator(mode="before")
+    @classmethod
+    def migrate_joint_decay(cls, values: Any) -> Any:
+        """Read legacy configurations where one lambda controlled both clocks."""
+        if not isinstance(values, dict):
+            return values
+        migrated = dict(values)
+        legacy_values = [
+            migrated.pop(key)
+            for key in ("lambda", "decay")
+            if key in migrated
+        ]
+        if not legacy_values:
+            return migrated
+        legacy = legacy_values[0]
+        if any(value != legacy for value in legacy_values[1:]):
+            raise ValueError("Legacy lambda and decay values disagree")
+        for field_name in ("lambda_rag", "lambda_fea"):
+            if field_name in migrated and migrated[field_name] != legacy:
+                raise ValueError(
+                    f"{field_name} conflicts with the legacy joint decay value"
+                )
+            migrated.setdefault(field_name, legacy)
+        return migrated
 
     @model_validator(mode="after")
     def validate_condition(self) -> ExperimentCondition:
@@ -264,11 +300,23 @@ class ParallelRunRequest(StrictModel):
         le=100,
         description="Independent repetitions submitted concurrently.",
     )
-    decay: float = Field(
+    lambda_rag: float = Field(
         default=0.99861,
         gt=0,
         le=1,
-        description="Temporal decay lambda; the default is the value from the paper.",
+        description=(
+            "Insertion-based RAG decay lambda; the paper decay condition uses "
+            "0.99861."
+        ),
+    )
+    lambda_fea: float = Field(
+        default=0.99861,
+        gt=0,
+        le=1,
+        description=(
+            "Observation-based FEA decay lambda; the paper decay condition uses "
+            "0.99861."
+        ),
     )
     seed: int = 20260717
     domain_expert_category: Category = Category.BILLING

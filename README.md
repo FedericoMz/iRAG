@@ -2,7 +2,7 @@
 
 FastAPI application for the SalesX experiments in the paper. This is deliberately not a general-purpose RAG framework: it accepts only SalesX records whose IDs and exact question text match the precomputed `qwen3-embedding:4b` corpus.
 
-The runner implements the paper's insertion-decayed retrieval, semantic gate, Fading Empirical Accuracy, SO/SC/DS state machine, profile routing, acceptance regimes, chronological quarter processing, repeated seeded shuffles, baselines, and joint-decay ablation.
+The runner implements insertion-decayed retrieval, independently decayed Fading Empirical Accuracy, the semantic gate, SO/SC/DS state machine, profile routing, acceptance regimes, chronological quarter processing, repeated seeded shuffles, and baselines. The paper's coupled-decay ablation is reproduced by setting both lambdas to the same value.
 
 The never-accept regime can enter SC but never DS: a simulated human who never accepts model suggestions does not grant the model autonomous control.
 
@@ -139,7 +139,7 @@ Compose reads the selected provider from `config.env`, connects to host Ollama t
 
 ### Parallel run launcher
 
-Open `http://localhost:8000/docs`, expand `POST /v1/runs`, and select **Try it out**. Dataset variant, expert, acceptance, model provider, and domain-expert category are dropdowns. The dataset choices are `drift_10` and `drift_40`. Repetitions and decay are editable numeric fields with the paper defaults of `10` and `0.99861`. Generation and auxiliary model names are editable because Ollama installations and the OpenRouter catalogue are not fixed. `checkpoint_interval` controls how many completed ticket traces are buffered before being written to disk and defaults to `50`.
+Open `http://localhost:8000/docs`, expand `POST /v1/runs`, and select **Try it out**. Dataset variant, expert, acceptance, model provider, and domain-expert category are dropdowns. The dataset choices are `drift_10` and `drift_40`. Repetitions, `lambda_rag`, and `lambda_fea` are editable numeric fields with paper defaults of `10`, `0.99861`, and `0.99861`. `lambda_rag` discounts older KB records by insertion age; `lambda_fea` discounts older reliability observations. Generation and auxiliary model names are editable because Ollama installations and the OpenRouter catalogue are not fixed. `checkpoint_interval` controls how many completed ticket traces are buffered before being written to disk and defaults to `50`.
 
 The expert choices are `ceo`, `domain_expert`, `intern`, `random_mixture`, `informed_mixture`, and `ceo_bootstrapped_informed_mixture`. The acceptance choices are `always_refuse`, `always_accept`, `randomize`, and `gold_similarity`; these apply when the model suggestion conflicts with the human answer in the skeptical-contestator state. `gold_similarity` accepts the suggestion exactly when the auxiliary judgment already computed against the benchmark gold answer reports `gold_reference_covered=true`. It is an oracle experimental regime because a deployment normally has no gold answer at decision time.
 
@@ -151,7 +151,7 @@ The same run can be submitted without the browser:
 
 ```sh
 curl -X POST \
-  'http://localhost:8000/v1/runs?dataset=drift_10&expert=informed_mixture&acceptance=randomize&repetitions=10&decay=0.99861&include_extra=true'
+  'http://localhost:8000/v1/runs?dataset=drift_10&expert=informed_mixture&acceptance=randomize&repetitions=10&lambda_rag=0.99861&lambda_fea=0.99861&include_extra=true'
 ```
 
 The RUN API processes Q1–Q4 by default. Set `include_extra=true`—or enable **Include extra** in the API documentation form—to append the separate 50-ticket post-Q4 abstention challenge. Every repetition has an independent seeded shuffle within each selected batch and fresh RAG state. Repetitions are submitted concurrently; for Bedrock, `BEDROCK_MAX_CONCURRENCY` limits simultaneous Runtime calls independently of the repetition count. Provider, generation model, auxiliary model, Ollama URL, Bedrock region, timeout, and retries can be selected for the job. Any empty model field falls back to `config.env`; OpenRouter and AWS credentials are always environment-only.
@@ -160,7 +160,7 @@ Its `202` response contains a job ID and status URL. The status response include
 
 ```text
 outputs/
-└── dataset-drift_10__expert-informed_mixture__acceptance-randomize__repetitions-10__decay-0.99861__extra-true__job-<job-id>/
+└── dataset-drift_10__expert-informed_mixture__acceptance-randomize__repetitions-10__lambda-rag-0.99861__lambda-fea-0.99861__extra-true__job-<job-id>/
     ├── metadata.json
     ├── result.json
     ├── run-001.json
@@ -192,13 +192,14 @@ tickets into the new job:
 
 ```sh
 curl -X POST \
-  'http://localhost:8000/v1/runs?dataset=drift_40&expert=ceo_bootstrapped_informed_mixture&acceptance=gold_similarity&repetitions=10&decay=0.99861&reuse_q1_from=<10-percent-job-id>'
+  'http://localhost:8000/v1/runs?dataset=drift_40&expert=ceo_bootstrapped_informed_mixture&acceptance=gold_similarity&repetitions=10&lambda_rag=0.99861&lambda_fea=0.99861&reuse_q1_from=<10-percent-job-id>'
 ```
 
-Reuse is intentionally rejected when decay or any other experiment
-configuration differs, because those parameters can alter Q1 retrieval and
-FEA even though the CEO answers are shared. The new metadata records the source
-experiment ID.
+Reuse is intentionally rejected when either lambda or any other experiment
+configuration differs, because those parameters can alter Q1 retrieval or FEA
+even though the CEO answers are shared. The new metadata records the source
+experiment ID. Legacy metadata containing one `lambda` value is interpreted as
+using that value for both `lambda_rag` and `lambda_fea`.
 
 Use these endpoints to inspect or download the outputs:
 

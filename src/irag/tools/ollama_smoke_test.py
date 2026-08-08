@@ -211,7 +211,7 @@ def retrieve(
     query_vector: list[float],
     top_k: int,
     semantic_threshold: float,
-    decay: float,
+    lambda_rag: float,
 ) -> list[dict[str, Any]]:
     """Apply the paper's raw cosine gate and insertion-based decay."""
     m = len(kb)
@@ -219,7 +219,7 @@ def retrieve(
     for index, (record, vector) in enumerate(zip(kb, vectors), start=1):
         cosine = max(-1.0, min(1.0, dot(query_vector, vector)))
         rectified_similarity = max(0.0, cosine)
-        temporal_score = rectified_similarity * decay ** (m - index)
+        temporal_score = rectified_similarity * lambda_rag ** (m - index)
         if cosine > 0.0 and cosine >= semantic_threshold:
             ranked.append(
                 {
@@ -251,7 +251,8 @@ def run_tests(
     client: OllamaClient,
     top_k: int,
     semantic_threshold: float,
-    decay: float,
+    lambda_rag: float,
+    lambda_fea: float,
 ) -> bool:
     installed = {item["name"] for item in client.tags().get("models", [])}
     for model in (client.model, client.auxiliary_model, client.embedding_model):
@@ -277,7 +278,7 @@ def run_tests(
         query_vector,
         top_k,
         semantic_threshold,
-        decay,
+        lambda_rag,
     )
     print(f"\n[retrieval] {elapsed:.2f}s")
     for rank, item in enumerate(retrieved, start=1):
@@ -327,8 +328,8 @@ def run_tests(
     observations = 0
     if covered is not None:
         delta = int(bool(covered["verdict"]))
-        A = decay * A + delta
-        W = decay * W + 1
+        A = lambda_fea * A + delta
+        W = lambda_fea * W + 1
         observations += 1
     fea = A / W if W else 0.0
     print(f"\n[reliability] observations={observations}, FEA={fea:.4f}")
@@ -386,7 +387,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--semantic-threshold", type=float, default=0.7)
-    parser.add_argument("--decay", type=float, default=0.99861)
+    parser.add_argument("--lambda-rag", type=float, default=0.99861)
+    parser.add_argument("--lambda-fea", type=float, default=0.99861)
     return parser.parse_args()
 
 
@@ -403,7 +405,8 @@ def main() -> int:
             ),
             args.top_k,
             args.semantic_threshold,
-            args.decay,
+            args.lambda_rag,
+            args.lambda_fea,
         )
     except (KeyError, StopIteration, ValueError, RuntimeError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

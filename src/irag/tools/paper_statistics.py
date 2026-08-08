@@ -313,6 +313,42 @@ def baseline_comparisons(condition_rows: dict[tuple[str, str], list[dict]]) -> l
     return comparisons
 
 
+def controller_comparisons(
+    condition_rows: dict[tuple[str, str], list[dict]],
+) -> list[dict]:
+    comparisons = []
+    raw_p_values = []
+    for (drift_rate, decay), rows in condition_rows.items():
+        differences = [
+            row["llm_gold_error_pct"] - row["final_error_pct"] for row in rows
+        ]
+        summary = summarize(differences)
+        raw_p = exact_sign_flip_p(differences)
+        raw_p_values.append(raw_p)
+        comparisons.append(
+            {
+                "drift_rate": int(drift_rate),
+                "decay": decay,
+                "difference_direction": "llm_gold_error_minus_final_error",
+                **summary,
+                "cohens_dz": (
+                    summary["mean"] / summary["sample_sd"]
+                    if summary["sample_sd"]
+                    else None
+                ),
+                "exact_sign_flip_p": raw_p,
+                "paired_differences": differences,
+            }
+        )
+    for row, adjusted_p in zip(
+        comparisons,
+        holm_adjust(raw_p_values),
+        strict=True,
+    ):
+        row["holm_adjusted_p"] = adjusted_p
+    return comparisons
+
+
 def write_csv(path: Path, rows: list[dict], fieldnames: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as handle:
@@ -367,6 +403,7 @@ def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
 
     comparisons = paired_comparisons(condition_rows)
     baseline_results = baseline_comparisons(condition_rows)
+    controller_results = controller_comparisons(condition_rows)
     state_rows = []
     for (drift_rate, decay), rows in condition_rows.items():
         counts: dict[str, int] = {}
@@ -402,6 +439,17 @@ def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
     ]
     write_csv(baseline_path, baseline_csv_rows, list(baseline_csv_rows[0]))
 
+    controller_path = destination / "controller-comparisons.csv"
+    controller_csv_rows = [
+        {key: value for key, value in row.items() if key != "paired_differences"}
+        for row in controller_results
+    ]
+    write_csv(
+        controller_path,
+        controller_csv_rows,
+        list(controller_csv_rows[0]),
+    )
+
     json_path = destination / "paper-statistics.json"
     json_path.write_text(
         json.dumps(
@@ -432,8 +480,9 @@ def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
                 },
                 "condition_summaries": summary_rows,
                 "paired_comparisons": comparisons,
-                "baseline_comparisons": baseline_results,
-                "final_states": state_rows,
+                    "baseline_comparisons": baseline_results,
+                    "controller_comparisons": controller_results,
+                    "final_states": state_rows,
             },
             indent=2,
             ensure_ascii=False,
@@ -446,6 +495,7 @@ def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
         summary_path,
         paired_path,
         baseline_path,
+        controller_path,
         json_path,
     ]
 

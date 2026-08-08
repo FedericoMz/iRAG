@@ -21,7 +21,7 @@ def retrieve(
     query_vector: np.ndarray,
     top_k: int,
     semantic_threshold: float,
-    decay: float,
+    lambda_rag: float,
 ) -> list[dict]:
     if not kb:
         return []
@@ -37,7 +37,7 @@ def retrieve(
         if float(cosine) <= 0.0 or float(cosine) < semantic_threshold:
             continue
         age = size - record.insertion_index
-        temporal_score = float(rectified) * decay**age
+        temporal_score = float(rectified) * lambda_rag**age
         ranked.append(
             {
                 "record_id": record.id,

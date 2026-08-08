@@ -136,7 +136,8 @@ def test_parallel_run_endpoint_uses_dropdown_values_and_parameter_folder(
             "expert": "informed_mixture",
             "acceptance": "randomize",
             "repetitions": 2,
-            "decay": 0.99,
+            "lambda_rag": 0.99,
+            "lambda_fea": 0.97,
             "provider": "openrouter",
             "generation_model": "vendor/decision-model",
             "auxiliary_model": "vendor/judge-model",
@@ -151,13 +152,16 @@ def test_parallel_run_endpoint_uses_dropdown_values_and_parameter_folder(
     output_directory = status_response.json()["output_directory"]
     assert (
         "dataset-drift_40__expert-informed_mixture__acceptance-randomize"
-        "__repetitions-2__decay-0.99__extra-false__job-"
+        "__repetitions-2__lambda-rag-0.99__lambda-fea-0.97"
+        "__extra-false__job-"
     ) in output_directory
     assert submitted[0].models.provider.value == "openrouter"
     assert submitted[0].models.generation_model == "vendor/decision-model"
     assert submitted[0].models.auxiliary_model == "vendor/judge-model"
     assert submitted[0].models.timeout == 120
     assert submitted[0].models.retries == 2
+    assert submitted[0].conditions[0].lambda_rag == 0.99
+    assert submitted[0].conditions[0].lambda_fea == 0.97
     assert submitted[0].dataset == DatasetVariant.DRIFT_40
     assert sum(
         record.is_changed_answer_near_duplicate
@@ -166,7 +170,8 @@ def test_parallel_run_endpoint_uses_dropdown_values_and_parameter_folder(
 
 
 def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
-    schemas = api.app.openapi()["components"]["schemas"]
+    schema = api.app.openapi()
+    schemas = schema["components"]["schemas"]
 
     assert schemas["ExpertSelection"]["enum"] == [
         "ceo",
@@ -187,6 +192,13 @@ def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
         "openrouter",
         "bedrock",
     ]
+    run_parameters = {
+        parameter["name"]
+        for parameter in schema["paths"]["/v1/runs"]["post"]["parameters"]
+    }
+    assert "lambda_rag" in run_parameters
+    assert "lambda_fea" in run_parameters
+    assert "decay" not in run_parameters
     assert schemas["DatasetVariant"]["enum"] == ["drift_10", "drift_40"]
     parameters = {
         parameter["name"]: parameter
@@ -356,7 +368,8 @@ def test_parallel_run_can_reuse_a_compatible_completed_q1(
             expert="ceo_bootstrapped_informed_mixture",
             acceptance="gold_similarity",
             repetitions=1,
-            decay=0.99861,
+            lambda_rag=0.99861,
+            lambda_fea=0.99861,
         )
     )
     source = experiment_store.create(source_request, "source")
@@ -410,7 +423,8 @@ def test_parallel_run_can_reuse_a_compatible_completed_q1(
             "expert": "ceo_bootstrapped_informed_mixture",
             "acceptance": "gold_similarity",
             "repetitions": 1,
-            "decay": 0.99861,
+            "lambda_rag": 0.99861,
+            "lambda_fea": 0.99861,
             "reuse_q1_from": source.experiment_id,
         },
     )

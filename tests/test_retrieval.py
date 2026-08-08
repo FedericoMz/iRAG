@@ -16,7 +16,7 @@ def test_retrieval_applies_semantic_gate_before_temporal_decay():
         np.array([1.0, 0.0]),
         top_k=5,
         semantic_threshold=0.6,
-        decay=0.5,
+        lambda_rag=0.5,
     )
 
     assert [item["record_id"] for item in results] == ["recent", "old"]
@@ -40,7 +40,7 @@ def test_retrieval_uses_rectified_cosine_without_affine_normalization():
         np.array([1.0, 0.0]),
         top_k=5,
         semantic_threshold=0.0,
-        decay=0.5,
+        lambda_rag=0.5,
     )
 
     assert [item["record_id"] for item in results] == ["positive"]
