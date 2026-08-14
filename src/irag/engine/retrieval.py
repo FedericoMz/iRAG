@@ -29,14 +29,17 @@ def retrieve(
     matrix = np.stack([record.vector for record in kb])
     cosine_scores = np.clip(matrix @ query_vector, -1.0, 1.0)
     rectified_scores = np.maximum(0.0, cosine_scores)
-    size = len(kb)
+    # Normal iRAG KBs are contiguous, so this is equivalent to ``len(kb)``.
+    # Using the latest insertion index also keeps ages valid for snapshot
+    # baselines that deliberately exclude the current ticket from the corpus.
+    latest_insertion_index = max(record.insertion_index for record in kb)
     ranked = []
     for record, cosine, rectified in zip(
         kb, cosine_scores, rectified_scores, strict=True
     ):
         if float(cosine) <= 0.0 or float(cosine) < semantic_threshold:
             continue
-        age = size - record.insertion_index
+        age = latest_insertion_index - record.insertion_index
         temporal_score = float(rectified) * lambda_rag**age
         ranked.append(
             {

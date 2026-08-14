@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export matched-seed statistics for the four paper experiments."""
+"""Export matched-seed statistics for the factorial paper experiments."""
 
 from __future__ import annotations
 
@@ -14,12 +14,17 @@ from pathlib import Path
 
 from irag.core.config import settings
 from irag.tools.analyze_experiment import find_job_directory, load_completed_runs
+from irag.tools.plot_experiment_result import static_rag_defer_error
 
 
 PAPER_JOBS = {
     ("10", "D"): "45db2764a46e4506ba34886786ad7983",
+    ("10", "R_D_F_ND"): "d35eae33e3b04c90a2f35f8959151719",
+    ("10", "R_ND_F_D"): "e5b37af13f4d47308fb8e18d967c0333",
     ("10", "ND"): "030f145d48d844d49a2872c805ace823",
     ("40", "D"): "1ad12d351a8b4e7391a286ed1d414c65",
+    ("40", "R_D_F_ND"): "7d41af2df5a5489e8fe0429144459dfb",
+    ("40", "R_ND_F_D"): "bb5b89fed1e84bd5bd4108b9e3d3e9a9",
     ("40", "ND"): "4e9394df9ba3463db13bc3a604d37afc",
 }
 
@@ -32,6 +37,7 @@ STATE_NAMES = {
 RATE_FIELDS = (
     "human_only_error_pct",
     "llm_gold_error_pct",
+    "static_rag_defer_error_pct",
     "final_error_pct",
     "stable_error_pct",
     "drift_error_pct",
@@ -124,6 +130,10 @@ def per_run_metrics(run: dict, drift_rate: str, decay: str) -> dict:
             lambda ticket: not bool(
                 ticket["gold_judgment"]["gold_reference_covered"]
             ),
+        ),
+        "static_rag_defer_error": (
+            tickets,
+            static_rag_defer_error,
         ),
         "stable_error": (
             [ticket for ticket in tickets if not ticket["is_drift"]],
@@ -278,6 +288,187 @@ def paired_comparisons(condition_rows: dict[tuple[str, str], list[dict]]) -> lis
     return comparisons
 
 
+def factorial_comparisons(
+    condition_rows: dict[tuple[str, str], list[dict]],
+) -> list[dict]:
+    """Compare each decay factor while holding the other factor fixed."""
+    contrasts = (
+        ("RAG", "FEA_D", "D", "R_ND_F_D"),
+        ("RAG", "FEA_ND", "R_D_F_ND", "ND"),
+        ("FEA", "RAG_D", "D", "R_D_F_ND"),
+        ("FEA", "RAG_ND", "R_ND_F_D", "ND"),
+    )
+    comparisons = []
+    for drift_rate in ("10", "40"):
+        for factor, fixed_factor, decay_condition, reference_condition in contrasts:
+            decay_by_seed = {
+                row["seed"]: row
+                for row in condition_rows[(drift_rate, decay_condition)]
+            }
+            reference_by_seed = {
+                row["seed"]: row
+                for row in condition_rows[(drift_rate, reference_condition)]
+            }
+            if decay_by_seed.keys() != reference_by_seed.keys():
+                raise ValueError(
+                    f"Seeds are not paired for {drift_rate}% drift, "
+                    f"{factor} with {fixed_factor}"
+                )
+            for seed in decay_by_seed:
+                for fingerprint in (
+                    "ticket_order_sha256",
+                    "human_assignment_sha256",
+                ):
+                    if decay_by_seed[seed][fingerprint] != reference_by_seed[seed][
+                        fingerprint
+                    ]:
+                        raise ValueError(
+                            f"Mismatched {fingerprint} for {drift_rate}% drift, "
+                            f"{factor} with {fixed_factor}, seed {seed}"
+                        )
+
+            block = []
+            raw_p_values = []
+            for metric in PRIMARY_FIELDS:
+                differences = [
+                    decay_by_seed[seed][metric]
+                    - reference_by_seed[seed][metric]
+                    for seed in sorted(decay_by_seed)
+                ]
+                summary = summarize(differences)
+                raw_p = exact_sign_flip_p(differences)
+                raw_p_values.append(raw_p)
+                block.append(
+                    {
+                        "drift_rate": int(drift_rate),
+                        "factor": factor,
+                        "fixed_factor": fixed_factor,
+                        "decay_condition": decay_condition,
+                        "reference_condition": reference_condition,
+                        "metric": metric,
+                        "difference_direction": (
+                            f"{decay_condition}_minus_{reference_condition}"
+                        ),
+                        **summary,
+                        "cohens_dz": (
+                            summary["mean"] / summary["sample_sd"]
+                            if summary["sample_sd"]
+                            else None
+                        ),
+                        "exact_sign_flip_p": raw_p,
+                        "paired_differences": differences,
+                    }
+                )
+            for row, adjusted_p in zip(
+                block,
+                holm_adjust(raw_p_values),
+                strict=True,
+            ):
+                row["holm_adjusted_p"] = adjusted_p
+                comparisons.append(row)
+    return comparisons
+
+
+def normalized_answer(value: str | None) -> str:
+    return " ".join((value or "").split())
+
+
+def load_gold_answers(data_dir: Path, drift_rate: str) -> dict[str, str]:
+    paths = [
+        data_dir / "shared" / "Q1_qa.json",
+        *(data_dir / f"drift_{drift_rate}").glob("Q[234]_qa.json"),
+    ]
+    answers = {}
+    for path in paths:
+        records = json.loads(path.read_text(encoding="utf-8"))
+        answers.update(
+            {record["id"]: record["gold_answer"] for record in records}
+        )
+    return answers
+
+
+def auxiliary_judge_audit(
+    condition_runs: dict[tuple[str, str], list[dict]],
+    data_dir: Path,
+) -> dict:
+    """Audit reference judgments used to discuss possible M/M_A self-bias."""
+    counts = {
+        "recorded_ticket_traces": 0,
+        "non_abstaining_gold_judgments": 0,
+        "gold_judgments_rejected": 0,
+        "explicit_sc_decisions": 0,
+        "explicit_sc_rejections": 0,
+        "exact_incorrect_human_matches": 0,
+        "exact_incorrect_human_matches_rejected": 0,
+        "exact_gold_matches": 0,
+        "exact_gold_matches_accepted": 0,
+    }
+    gold_by_drift = {
+        drift_rate: load_gold_answers(data_dir, drift_rate)
+        for drift_rate in ("10", "40")
+    }
+    for (drift_rate, _), runs in condition_runs.items():
+        gold_answers = gold_by_drift[drift_rate]
+        for run in runs:
+            for ticket in run["tickets"]:
+                if ticket["quarter"] == "Extra":
+                    continue
+                counts["recorded_ticket_traces"] += 1
+                decision = ticket.get("model_decision") or {}
+                if decision.get("abstain"):
+                    continue
+
+                judgment = ticket.get("gold_judgment")
+                if judgment is not None:
+                    counts["non_abstaining_gold_judgments"] += 1
+                    if not judgment["gold_reference_covered"]:
+                        counts["gold_judgments_rejected"] += 1
+
+                accepted = ticket.get("suggestion_accepted")
+                if isinstance(accepted, bool):
+                    counts["explicit_sc_decisions"] += 1
+                    if not accepted:
+                        counts["explicit_sc_rejections"] += 1
+
+                model_answer = normalized_answer(decision.get("answer"))
+                if (
+                    not ticket["human_answer_is_correct"]
+                    and model_answer == normalized_answer(ticket["human_answer"])
+                ):
+                    counts["exact_incorrect_human_matches"] += 1
+                    if judgment is not None and not judgment["gold_reference_covered"]:
+                        counts["exact_incorrect_human_matches_rejected"] += 1
+
+                if model_answer == normalized_answer(
+                    gold_answers[ticket["ticket_id"]]
+                ):
+                    counts["exact_gold_matches"] += 1
+                    if judgment is not None and judgment["gold_reference_covered"]:
+                        counts["exact_gold_matches_accepted"] += 1
+
+    def rate(numerator: str, denominator: str) -> float:
+        return 100 * counts[numerator] / counts[denominator]
+
+    return {
+        "counts": counts,
+        "rates_pct": {
+            "explicit_sc_rejection": rate(
+                "explicit_sc_rejections", "explicit_sc_decisions"
+            ),
+            "gold_judgment_rejection": rate(
+                "gold_judgments_rejected", "non_abstaining_gold_judgments"
+            ),
+            "exact_incorrect_human_match_rejection": rate(
+                "exact_incorrect_human_matches_rejected",
+                "exact_incorrect_human_matches",
+            ),
+            "exact_gold_match_acceptance": rate(
+                "exact_gold_matches_accepted", "exact_gold_matches"
+            ),
+        },
+    }
+
+
 def baseline_comparisons(condition_rows: dict[tuple[str, str], list[dict]]) -> list[dict]:
     comparisons = []
     raw_p_values = []
@@ -320,7 +511,8 @@ def controller_comparisons(
     raw_p_values = []
     for (drift_rate, decay), rows in condition_rows.items():
         differences = [
-            row["llm_gold_error_pct"] - row["final_error_pct"] for row in rows
+            row["static_rag_defer_error_pct"] - row["final_error_pct"]
+            for row in rows
         ]
         summary = summarize(differences)
         raw_p = exact_sign_flip_p(differences)
@@ -329,7 +521,9 @@ def controller_comparisons(
             {
                 "drift_rate": int(drift_rate),
                 "decay": decay,
-                "difference_direction": "llm_gold_error_minus_final_error",
+                "difference_direction": (
+                    "static_rag_defer_error_minus_final_error"
+                ),
                 **summary,
                 "cohens_dz": (
                     summary["mean"] / summary["sample_sd"]
@@ -361,10 +555,12 @@ def write_csv(path: Path, rows: list[dict], fieldnames: list[str]) -> None:
 
 def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
     condition_rows: dict[tuple[str, str], list[dict]] = {}
+    condition_runs: dict[tuple[str, str], list[dict]] = {}
     all_rows = []
     for condition, job_id in PAPER_JOBS.items():
         job_directory = find_job_directory(job_id, output_dir)
         _, runs = load_completed_runs(job_directory, job_id)
+        condition_runs[condition] = runs
         rows = [per_run_metrics(run, *condition) for run in runs]
         condition_rows[condition] = rows
         all_rows.extend(rows)
@@ -402,8 +598,10 @@ def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
             )
 
     comparisons = paired_comparisons(condition_rows)
+    factorial_results = factorial_comparisons(condition_rows)
     baseline_results = baseline_comparisons(condition_rows)
     controller_results = controller_comparisons(condition_rows)
+    judge_audit = auxiliary_judge_audit(condition_runs, settings.data_dir)
     state_rows = []
     for (drift_rate, decay), rows in condition_rows.items():
         counts: dict[str, int] = {}
@@ -431,6 +629,17 @@ def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
         for row in comparisons
     ]
     write_csv(paired_path, paired_csv_rows, list(paired_csv_rows[0]))
+
+    factorial_path = destination / "factorial-comparisons.csv"
+    factorial_csv_rows = [
+        {key: value for key, value in row.items() if key != "paired_differences"}
+        for row in factorial_results
+    ]
+    write_csv(
+        factorial_path,
+        factorial_csv_rows,
+        list(factorial_csv_rows[0]),
+    )
 
     baseline_path = destination / "baseline-comparisons.csv"
     baseline_csv_rows = [
@@ -463,7 +672,9 @@ def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
                     "condition_ci": (
                         "two-sided 95% Student-t confidence interval for the mean"
                     ),
-                    "paired_difference": "decay minus no decay in percentage points",
+                    "paired_difference": (
+                        "coupled decay minus no decay in percentage points"
+                    ),
                     "paired_ci": (
                         "two-sided 95% Student-t confidence interval for the "
                         "matched mean difference"
@@ -472,17 +683,27 @@ def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
                         "two-sided exact sign-flip randomization test on the "
                         "matched mean difference"
                     ),
+                    "static_rag_defer": (
+                        "the model finalizes every non-abstaining proposal and "
+                        "the initially assigned human answers on abstention"
+                    ),
+                    "controller_comparison": (
+                        "static RAG-with-defer error minus iRAG final-decision "
+                        "error on the same realised retrieval trajectory"
+                    ),
                     "multiple_testing": (
                         "Holm adjustment across four primary metrics within each "
-                        "drift setting; baseline comparisons are adjusted across "
-                        "the four paper conditions"
+                        "paired contrast; baseline and controller comparisons are "
+                        "adjusted across the eight paper conditions"
                     ),
                 },
                 "condition_summaries": summary_rows,
                 "paired_comparisons": comparisons,
-                    "baseline_comparisons": baseline_results,
-                    "controller_comparisons": controller_results,
-                    "final_states": state_rows,
+                "factorial_comparisons": factorial_results,
+                "baseline_comparisons": baseline_results,
+                "controller_comparisons": controller_results,
+                "auxiliary_judge_audit": judge_audit,
+                "final_states": state_rows,
             },
             indent=2,
             ensure_ascii=False,
@@ -494,6 +715,7 @@ def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
         per_run_path,
         summary_path,
         paired_path,
+        factorial_path,
         baseline_path,
         controller_path,
         json_path,

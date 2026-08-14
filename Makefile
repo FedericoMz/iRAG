@@ -20,7 +20,7 @@ help:
 	@echo "  make plot RESULT=outputs/<folder>/<result>.json  Plot FEA and cumulative error rate"
 	@echo "  make legend        Render the horizontal plot legend as a separate image"
 	@echo "  make analyze JOB=<job-id>  Plot repetition averages and export abstention/drift statistics"
-	@echo "  make paper-stats    Export matched-seed statistics for the four paper jobs"
+	@echo "  make paper-stats    Export matched-seed statistics for the eight paper jobs"
 	@echo "  make docker-build  Build the Docker image"
 	@echo "  make up            Build and start the app with Docker Compose"
 	@echo "  make down          Stop the Docker Compose services"

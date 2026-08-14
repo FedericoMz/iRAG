@@ -265,6 +265,49 @@ def test_ollama_client_uses_native_structured_format(monkeypatch):
     assert result["provider"] == "ollama"
 
 
+def test_forced_decision_schema_and_prompt_disallow_abstention(monkeypatch):
+    client = OllamaClient(
+        base_url="http://ollama.test",
+        generation_model="local-generation",
+        auxiliary_model="local-judge",
+        timeout=1,
+        retries=1,
+    )
+    captured = {}
+
+    def fake_request(method, path, payload=None):
+        captured.update(method=method, path=path, payload=payload)
+        return {
+            "message": {
+                "content": json.dumps(
+                    {
+                        "answer": "best supported answer",
+                        "evidence_ids": ["record-1"],
+                        "reason": "test",
+                    }
+                )
+            }
+        }
+
+    monkeypatch.setattr(client, "_request", fake_request)
+    result = client.decide_forced(
+        "question",
+        [
+            {
+                "record_id": "record-1",
+                "question": "precedent",
+                "final_answer": "answer",
+            }
+        ],
+    )
+
+    schema = captured["payload"]["format"]
+    system = captured["payload"]["messages"][0]["content"]
+    assert "abstain" not in schema["properties"]
+    assert "does not permit abstention" in system
+    assert result["abstain"] is False
+
+
 def test_ollama_judges_asymmetric_reference_coverage(monkeypatch):
     client = OllamaClient(
         base_url="http://ollama.test",

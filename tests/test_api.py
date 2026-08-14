@@ -218,6 +218,40 @@ def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
     assert "reuse_q1_from" in parameters
 
 
+def test_quarterly_snapshot_endpoint_exposes_only_the_dataset_parameter(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(api, "store", ExperimentStore(tmp_path))
+    submitted = []
+    monkeypatch.setattr(
+        api,
+        "run_quarterly_snapshot_experiment",
+        lambda *arguments: submitted.append(arguments),
+    )
+
+    response = TestClient(api.app).post(
+        "/v1/baselines/quarterly-snapshot-rag",
+        params={"dataset": "drift_40"},
+    )
+
+    assert response.status_code == 202
+    experiment_id = response.json()["experiment_id"]
+    assert submitted == [(experiment_id, DatasetVariant.DRIFT_40)]
+    job = api.store.get(experiment_id)
+    assert job is not None
+    assert job.total_repetitions == 1
+    assert "baseline-quarterly-snapshot-rag__dataset-drift_40" in (
+        job.output_directory
+    )
+
+    parameters = api.app.openapi()["paths"][
+        "/v1/baselines/quarterly-snapshot-rag"
+    ]["post"]["parameters"]
+    assert [parameter["name"] for parameter in parameters] == ["dataset"]
+    assert parameters[0]["required"] is True
+    assert parameters[0]["schema"]["$ref"].endswith("/DatasetVariant")
+
+
 def test_openapi_does_not_expose_obsolete_paper_suite_endpoints():
     paths = api.app.openapi()["paths"]
 

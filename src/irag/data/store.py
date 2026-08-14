@@ -23,18 +23,33 @@ class ExperimentStore:
         request: ExperimentRequest,
         folder_label: str = "experiment",
     ) -> ExperimentStatus:
+        return self.create_job(
+            name=request.name,
+            total_repetitions=sum(
+                condition.repetitions for condition in request.conditions
+            ),
+            folder_label=folder_label,
+        )
+
+    def create_job(
+        self,
+        name: str,
+        total_repetitions: int,
+        folder_label: str,
+    ) -> ExperimentStatus:
+        """Create a persisted asynchronous job without an iRAG request schema."""
+        if total_repetitions < 1:
+            raise ValueError("total_repetitions must be at least 1")
         experiment_id = uuid4().hex
         safe_label = re.sub(r"[^a-zA-Z0-9._=-]+", "-", folder_label).strip("-")
         directory = self.output_dir / f"{safe_label}__job-{experiment_id}"
         directory.mkdir(parents=True, exist_ok=False)
         status = ExperimentStatus(
             experiment_id=experiment_id,
-            name=request.name,
+            name=name,
             status=JobStatus.QUEUED,
             created_at=datetime.now(UTC),
-            total_repetitions=sum(
-                condition.repetitions for condition in request.conditions
-            ),
+            total_repetitions=total_repetitions,
             output_directory=str(directory.resolve()),
         )
         with self._lock:

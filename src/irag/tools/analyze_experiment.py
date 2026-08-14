@@ -25,7 +25,7 @@ from irag.core.config import settings  # noqa: E402
 from irag.tools.plot_experiment_result import (  # noqa: E402
     cumulative_error_rate,
     cumulative_human_baseline_error_rate,
-    cumulative_llm_gold_error_rate,
+    cumulative_static_rag_defer_error_rate,
     quarter_ranges,
 )
 from irag.tools.plot_styles import TRAJECTORY_STYLES  # noqa: E402
@@ -161,7 +161,9 @@ def averaged_trajectories(runs: list[dict]) -> dict[str, dict[str, list[float]]]
         "Cumulative human-only baseline error rate": (
             cumulative_human_baseline_error_rate
         ),
-        "Cumulative LLM gold-answer error rate": cumulative_llm_gold_error_rate,
+        "Cumulative static RAG-with-defer error rate": (
+            cumulative_static_rag_defer_error_rate
+        ),
     }
     trajectories = {}
     for label, calculate in calculators.items():
@@ -208,7 +210,7 @@ def plot_average_results(
         "FEA": 0,
         "Cumulative final-decision error rate": -2,
         "Cumulative human-only baseline error rate": 2,
-        "Cumulative LLM gold-answer error rate": 0,
+        "Cumulative static RAG-with-defer error rate": 0,
     }
 
     figure, axis = plt.subplots(figsize=(14, 7))
@@ -289,7 +291,7 @@ def plot_average_results(
     lambda_rag = float(configuration.get("lambda_rag", legacy_lambda))
     lambda_fea = float(configuration.get("lambda_fea", legacy_lambda))
     if lambda_rag < 1 and lambda_fea < 1:
-        decay_title = "Decay"
+        decay_title = "RAG + FEA Decay"
     elif lambda_rag < 1:
         decay_title = "RAG Decay"
     elif lambda_fea < 1:

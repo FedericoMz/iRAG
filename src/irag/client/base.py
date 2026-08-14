@@ -51,6 +51,17 @@ ANSWER_SCHEMA = {
     "additionalProperties": False,
 }
 
+FORCED_ANSWER_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "answer": {"type": "string", "minLength": 1},
+        "evidence_ids": {"type": "array", "items": {"type": "string"}},
+        "reason": {"type": "string", "maxLength": 500},
+    },
+    "required": ["answer", "evidence_ids", "reason"],
+    "additionalProperties": False,
+}
+
 JUDGMENT_SCHEMA = {
     "type": "object",
     "properties": {
@@ -118,6 +129,45 @@ class BaseModelClient(ABC):
         if result.get("abstain"):
             result["answer"] = ""
             result["evidence_ids"] = []
+        return result
+
+    def decide_forced(self, question: str, retrieved: list[dict]) -> dict[str, Any]:
+        """Produce the best supported answer without the iRAG abstention policy."""
+        system = (
+            "Answer only the issue or issues raised in the current SalesX support "
+            "ticket. Ground the answer in the retrieved quarterly snapshot and ignore "
+            "details that address a different issue. Preserve every "
+            "condition, responsibility, procedure, or exception that materially "
+            "changes the answer, but do not combine requirements from unrelated "
+            "records. The records are ordered from highest to lowest semantic "
+            "relevance. If the evidence is incomplete, return the best answer you can "
+            "infer rather than refusing. Always return a non-empty answer; this "
+            "baseline does not permit abstention. Cite only supplied record IDs "
+            "actually used in evidence_ids."
+        )
+        user = (
+            f"CURRENT TICKET:\n{question}\n\n"
+            f"QUARTERLY SNAPSHOT RECORDS:\n{self._format_context(retrieved)}"
+        )
+        with model_call_context(stage="decide_forced"):
+            result, elapsed = self._chat(
+                self.generation_model,
+                system,
+                user,
+                FORCED_ANSWER_SCHEMA,
+                schema_name="salesx_forced_decision",
+                max_tokens=500,
+            )
+        answer = result.get("answer")
+        if not isinstance(answer, str) or not answer.strip():
+            raise RuntimeError(
+                f"Model {self.generation_model} returned an empty forced answer"
+            )
+        result["answer"] = answer.strip()
+        result["abstain"] = False
+        result["latency_seconds"] = elapsed
+        result["model"] = self.generation_model
+        result["provider"] = self.provider
         return result
 
     def judge(self, answer: str, human_answer: str) -> dict[str, Any]:

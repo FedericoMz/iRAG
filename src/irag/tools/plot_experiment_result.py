@@ -76,6 +76,30 @@ def cumulative_llm_gold_error_rate(
     return rates
 
 
+def static_rag_defer_error(ticket: dict) -> bool:
+    """Whether model-first RAG with human fallback gives an incorrect answer."""
+    model_decision = ticket.get("model_decision") or {}
+    if bool(model_decision.get("abstain")):
+        return not bool(ticket["human_answer_is_correct"])
+    judgment = ticket.get("gold_judgment")
+    if judgment is None:
+        raise ValueError("A non-abstaining model answer requires a gold judgment")
+    return not bool(judgment["gold_reference_covered"])
+
+
+def cumulative_static_rag_defer_error_rate(tickets: list[dict]) -> list[float]:
+    """Final error when the model answers first and humans handle abstentions."""
+    errors = 0
+    observations = 0
+    rates = []
+    for ticket in tickets:
+        if not ticket.get("requires_model_abstention"):
+            observations += 1
+            errors += int(static_rag_defer_error(ticket))
+        rates.append(errors / observations if observations else 0.0)
+    return rates
+
+
 def cumulative_observation_rate(
     tickets: list[dict],
     field: str,
@@ -171,7 +195,7 @@ def plot_result(
     fea = [ticket["fea_after"] for ticket in tickets]
     error_rate = cumulative_error_rate(tickets)
     baseline_error_rate = cumulative_human_baseline_error_rate(tickets)
-    llm_gold_error_rate = cumulative_llm_gold_error_rate(tickets)
+    static_rag_defer_error_rate = cumulative_static_rag_defer_error_rate(tickets)
     ranges = quarter_ranges(tickets)
 
     figure, fea_axis = plt.subplots(figsize=(14, 7))
@@ -199,11 +223,11 @@ def plot_result(
     )
     fea_axis.plot(
         positions,
-        llm_gold_error_rate,
+        static_rag_defer_error_rate,
         color="#0f766e",
         linewidth=1.8,
         linestyle="-.",
-        label="Cumulative LLM gold-answer error rate",
+        label="Cumulative static RAG-with-defer error rate",
     )
     thresholds = [
         ("alpha", "α", "#15803d"),
