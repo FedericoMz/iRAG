@@ -1,0 +1,1626 @@
+{
+  "experiment_id": "030f145d48d844d49a2872c805ace823",
+  "repetitions": 10,
+  "definitions": {
+    "model_abstention": "model_decision.abstain is true",
+    "drift_ticket": "is_drift is true",
+    "required_abstention_success": "model_action_is_correct is true on a ticket whose expected model action is abstain",
+    "sc_acceptance": "suggestion_accepted is true among SC tickets where an explicit acceptance decision was made; abstentions and proposals already covering the human answer are excluded",
+    "standard_deviation": "population standard deviation across repetitions"
+  },
+  "sc_acceptance": {
+    "opportunity_count": {
+      "total_across_repetitions": 898,
+      "mean_per_repetition": 89.8,
+      "standard_deviation_per_repetition": 10.961751684835777,
+      "minimum_per_repetition": 77,
+      "maximum_per_repetition": 109
+    },
+    "accepted_count": {
+      "total_across_repetitions": 486,
+      "mean_per_repetition": 48.6,
+      "standard_deviation_per_repetition": 10.8,
+      "minimum_per_repetition": 35,
+      "maximum_per_repetition": 68
+    },
+    "rejected_count": {
+      "total_across_repetitions": 412,
+      "mean_per_repetition": 41.2,
+      "standard_deviation_per_repetition": 6.43117407632541,
+      "minimum_per_repetition": 31,
+      "maximum_per_repetition": 54
+    },
+    "acceptance_rate": {
+      "pooled_numerator": 486,
+      "pooled_denominator": 898,
+      "pooled_rate": 0.5412026726057907,
+      "mean_rate_per_repetition": 0.5372971070445061,
+      "standard_deviation_per_repetition": 0.07292435229107104
+    },
+    "per_repetition": [
+      {
+        "repetition": 1,
+        "opportunities": 91,
+        "accepted": 49,
+        "rejected": 42
+      },
+      {
+        "repetition": 2,
+        "opportunities": 98,
+        "accepted": 67,
+        "rejected": 31
+      },
+      {
+        "repetition": 3,
+        "opportunities": 80,
+        "accepted": 41,
+        "rejected": 39
+      },
+      {
+        "repetition": 4,
+        "opportunities": 83,
+        "accepted": 43,
+        "rejected": 40
+      },
+      {
+        "repetition": 5,
+        "opportunities": 77,
+        "accepted": 36,
+        "rejected": 41
+      },
+      {
+        "repetition": 6,
+        "opportunities": 93,
+        "accepted": 49,
+        "rejected": 44
+      },
+      {
+        "repetition": 7,
+        "opportunities": 109,
+        "accepted": 68,
+        "rejected": 41
+      },
+      {
+        "repetition": 8,
+        "opportunities": 78,
+        "accepted": 46,
+        "rejected": 32
+      },
+      {
+        "repetition": 9,
+        "opportunities": 83,
+        "accepted": 35,
+        "rejected": 48
+      },
+      {
+        "repetition": 10,
+        "opportunities": 106,
+        "accepted": 52,
+        "rejected": 54
+      }
+    ]
+  },
+  "abstention": {
+    "overall": {
+      "ticket_count": {
+        "total_across_repetitions": 20000,
+        "mean_per_repetition": 2000.0,
+        "standard_deviation_per_repetition": 0.0,
+        "minimum_per_repetition": 2000,
+        "maximum_per_repetition": 2000
+      },
+      "model_decision_count": {
+        "total_across_repetitions": 20000,
+        "mean_per_repetition": 2000.0,
+        "standard_deviation_per_repetition": 0.0,
+        "minimum_per_repetition": 2000,
+        "maximum_per_repetition": 2000
+      },
+      "model_abstention_count": {
+        "total_across_repetitions": 923,
+        "mean_per_repetition": 92.3,
+        "standard_deviation_per_repetition": 2.7586228448267445,
+        "minimum_per_repetition": 88,
+        "maximum_per_repetition": 97
+      },
+      "model_abstention_rate": {
+        "pooled_numerator": 923,
+        "pooled_denominator": 20000,
+        "pooled_rate": 0.04615,
+        "mean_rate_per_repetition": 0.046150000000000004,
+        "standard_deviation_per_repetition": 0.0013793114224133734
+      },
+      "final_decision_error_count": {
+        "total_across_repetitions": 1103,
+        "mean_per_repetition": 110.3,
+        "standard_deviation_per_repetition": 7.798076685952761,
+        "minimum_per_repetition": 96,
+        "maximum_per_repetition": 123
+      },
+      "final_decision_error_rate": {
+        "pooled_numerator": 1103,
+        "pooled_denominator": 20000,
+        "pooled_rate": 0.05515,
+        "mean_rate_per_repetition": 0.05515,
+        "standard_deviation_per_repetition": 0.00389903834297638
+      },
+      "required_abstention_ticket_count": {
+        "total_across_repetitions": 0,
+        "mean_per_repetition": 0.0,
+        "standard_deviation_per_repetition": 0.0,
+        "minimum_per_repetition": 0,
+        "maximum_per_repetition": 0
+      },
+      "correct_required_abstention_count": {
+        "total_across_repetitions": 0,
+        "mean_per_repetition": 0.0,
+        "standard_deviation_per_repetition": 0.0,
+        "minimum_per_repetition": 0,
+        "maximum_per_repetition": 0
+      },
+      "required_abstention_success_rate": {
+        "pooled_numerator": 0,
+        "pooled_denominator": 0,
+        "pooled_rate": null,
+        "mean_rate_per_repetition": null,
+        "standard_deviation_per_repetition": null
+      },
+      "per_repetition": [
+        {
+          "repetition": 1,
+          "tickets": 2000,
+          "model_decisions": 2000,
+          "model_abstentions": 92,
+          "final_decisions": 2000,
+          "final_decision_errors": 119,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 2,
+          "tickets": 2000,
+          "model_decisions": 2000,
+          "model_abstentions": 89,
+          "final_decisions": 2000,
+          "final_decision_errors": 114,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 3,
+          "tickets": 2000,
+          "model_decisions": 2000,
+          "model_abstentions": 97,
+          "final_decisions": 2000,
+          "final_decision_errors": 115,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 4,
+          "tickets": 2000,
+          "model_decisions": 2000,
+          "model_abstentions": 95,
+          "final_decisions": 2000,
+          "final_decision_errors": 104,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 5,
+          "tickets": 2000,
+          "model_decisions": 2000,
+          "model_abstentions": 89,
+          "final_decisions": 2000,
+          "final_decision_errors": 110,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 6,
+          "tickets": 2000,
+          "model_decisions": 2000,
+          "model_abstentions": 94,
+          "final_decisions": 2000,
+          "final_decision_errors": 101,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 7,
+          "tickets": 2000,
+          "model_decisions": 2000,
+          "model_abstentions": 93,
+          "final_decisions": 2000,
+          "final_decision_errors": 109,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 8,
+          "tickets": 2000,
+          "model_decisions": 2000,
+          "model_abstentions": 88,
+          "final_decisions": 2000,
+          "final_decision_errors": 123,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 9,
+          "tickets": 2000,
+          "model_decisions": 2000,
+          "model_abstentions": 94,
+          "final_decisions": 2000,
+          "final_decision_errors": 112,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 10,
+          "tickets": 2000,
+          "model_decisions": 2000,
+          "model_abstentions": 92,
+          "final_decisions": 2000,
+          "final_decision_errors": 96,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        }
+      ]
+    },
+    "by_quarter": {
+      "Q1": {
+        "ticket_count": {
+          "total_across_repetitions": 5000,
+          "mean_per_repetition": 500.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 500,
+          "maximum_per_repetition": 500
+        },
+        "model_decision_count": {
+          "total_across_repetitions": 5000,
+          "mean_per_repetition": 500.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 500,
+          "maximum_per_repetition": 500
+        },
+        "model_abstention_count": {
+          "total_across_repetitions": 907,
+          "mean_per_repetition": 90.7,
+          "standard_deviation_per_repetition": 2.0518284528683193,
+          "minimum_per_repetition": 88,
+          "maximum_per_repetition": 94
+        },
+        "model_abstention_rate": {
+          "pooled_numerator": 907,
+          "pooled_denominator": 5000,
+          "pooled_rate": 0.1814,
+          "mean_rate_per_repetition": 0.1814,
+          "standard_deviation_per_repetition": 0.004103656905736642
+        },
+        "final_decision_error_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "final_decision_error_rate": {
+          "pooled_numerator": 0,
+          "pooled_denominator": 5000,
+          "pooled_rate": 0.0,
+          "mean_rate_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0
+        },
+        "required_abstention_ticket_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "correct_required_abstention_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "required_abstention_success_rate": {
+          "pooled_numerator": 0,
+          "pooled_denominator": 0,
+          "pooled_rate": null,
+          "mean_rate_per_repetition": null,
+          "standard_deviation_per_repetition": null
+        },
+        "per_repetition": [
+          {
+            "repetition": 1,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 90,
+            "final_decisions": 500,
+            "final_decision_errors": 0,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 2,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 88,
+            "final_decisions": 500,
+            "final_decision_errors": 0,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 3,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 94,
+            "final_decisions": 500,
+            "final_decision_errors": 0,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 4,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 92,
+            "final_decisions": 500,
+            "final_decision_errors": 0,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 5,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 88,
+            "final_decisions": 500,
+            "final_decision_errors": 0,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 6,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 93,
+            "final_decisions": 500,
+            "final_decision_errors": 0,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 7,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 91,
+            "final_decisions": 500,
+            "final_decision_errors": 0,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 8,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 88,
+            "final_decisions": 500,
+            "final_decision_errors": 0,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 9,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 91,
+            "final_decisions": 500,
+            "final_decision_errors": 0,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 10,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 92,
+            "final_decisions": 500,
+            "final_decision_errors": 0,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          }
+        ]
+      },
+      "Q2": {
+        "ticket_count": {
+          "total_across_repetitions": 5000,
+          "mean_per_repetition": 500.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 500,
+          "maximum_per_repetition": 500
+        },
+        "model_decision_count": {
+          "total_across_repetitions": 5000,
+          "mean_per_repetition": 500.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 500,
+          "maximum_per_repetition": 500
+        },
+        "model_abstention_count": {
+          "total_across_repetitions": 6,
+          "mean_per_repetition": 0.6,
+          "standard_deviation_per_repetition": 0.4898979485566356,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 1
+        },
+        "model_abstention_rate": {
+          "pooled_numerator": 6,
+          "pooled_denominator": 5000,
+          "pooled_rate": 0.0012,
+          "mean_rate_per_repetition": 0.0012000000000000001,
+          "standard_deviation_per_repetition": 0.0009797958971132714
+        },
+        "final_decision_error_count": {
+          "total_across_repetitions": 192,
+          "mean_per_repetition": 19.2,
+          "standard_deviation_per_repetition": 4.1182520563948,
+          "minimum_per_repetition": 14,
+          "maximum_per_repetition": 26
+        },
+        "final_decision_error_rate": {
+          "pooled_numerator": 192,
+          "pooled_denominator": 5000,
+          "pooled_rate": 0.0384,
+          "mean_rate_per_repetition": 0.038400000000000004,
+          "standard_deviation_per_repetition": 0.0082365041127896
+        },
+        "required_abstention_ticket_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "correct_required_abstention_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "required_abstention_success_rate": {
+          "pooled_numerator": 0,
+          "pooled_denominator": 0,
+          "pooled_rate": null,
+          "mean_rate_per_repetition": null,
+          "standard_deviation_per_repetition": null
+        },
+        "per_repetition": [
+          {
+            "repetition": 1,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 1,
+            "final_decisions": 500,
+            "final_decision_errors": 24,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 2,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 1,
+            "final_decisions": 500,
+            "final_decision_errors": 14,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 3,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 1,
+            "final_decisions": 500,
+            "final_decision_errors": 24,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 4,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 19,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 5,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 1,
+            "final_decisions": 500,
+            "final_decision_errors": 26,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 6,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 14,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 7,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 1,
+            "final_decisions": 500,
+            "final_decision_errors": 15,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 8,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 19,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 9,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 1,
+            "final_decisions": 500,
+            "final_decision_errors": 20,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 10,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 17,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          }
+        ]
+      },
+      "Q3": {
+        "ticket_count": {
+          "total_across_repetitions": 5000,
+          "mean_per_repetition": 500.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 500,
+          "maximum_per_repetition": 500
+        },
+        "model_decision_count": {
+          "total_across_repetitions": 5000,
+          "mean_per_repetition": 500.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 500,
+          "maximum_per_repetition": 500
+        },
+        "model_abstention_count": {
+          "total_across_repetitions": 4,
+          "mean_per_repetition": 0.4,
+          "standard_deviation_per_repetition": 0.4898979485566356,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 1
+        },
+        "model_abstention_rate": {
+          "pooled_numerator": 4,
+          "pooled_denominator": 5000,
+          "pooled_rate": 0.0008,
+          "mean_rate_per_repetition": 0.0008,
+          "standard_deviation_per_repetition": 0.0009797958971132714
+        },
+        "final_decision_error_count": {
+          "total_across_repetitions": 379,
+          "mean_per_repetition": 37.9,
+          "standard_deviation_per_repetition": 4.592385001282014,
+          "minimum_per_repetition": 33,
+          "maximum_per_repetition": 47
+        },
+        "final_decision_error_rate": {
+          "pooled_numerator": 379,
+          "pooled_denominator": 5000,
+          "pooled_rate": 0.0758,
+          "mean_rate_per_repetition": 0.0758,
+          "standard_deviation_per_repetition": 0.009184770002564025
+        },
+        "required_abstention_ticket_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "correct_required_abstention_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "required_abstention_success_rate": {
+          "pooled_numerator": 0,
+          "pooled_denominator": 0,
+          "pooled_rate": null,
+          "mean_rate_per_repetition": null,
+          "standard_deviation_per_repetition": null
+        },
+        "per_repetition": [
+          {
+            "repetition": 1,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 1,
+            "final_decisions": 500,
+            "final_decision_errors": 44,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 2,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 41,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 3,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 1,
+            "final_decisions": 500,
+            "final_decision_errors": 35,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 4,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 1,
+            "final_decisions": 500,
+            "final_decision_errors": 35,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 5,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 33,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 6,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 39,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 7,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 1,
+            "final_decisions": 500,
+            "final_decision_errors": 38,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 8,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 47,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 9,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 33,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 10,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 34,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          }
+        ]
+      },
+      "Q4": {
+        "ticket_count": {
+          "total_across_repetitions": 5000,
+          "mean_per_repetition": 500.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 500,
+          "maximum_per_repetition": 500
+        },
+        "model_decision_count": {
+          "total_across_repetitions": 5000,
+          "mean_per_repetition": 500.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 500,
+          "maximum_per_repetition": 500
+        },
+        "model_abstention_count": {
+          "total_across_repetitions": 6,
+          "mean_per_repetition": 0.6,
+          "standard_deviation_per_repetition": 0.8,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 2
+        },
+        "model_abstention_rate": {
+          "pooled_numerator": 6,
+          "pooled_denominator": 5000,
+          "pooled_rate": 0.0012,
+          "mean_rate_per_repetition": 0.0012000000000000001,
+          "standard_deviation_per_repetition": 0.0016
+        },
+        "final_decision_error_count": {
+          "total_across_repetitions": 532,
+          "mean_per_repetition": 53.2,
+          "standard_deviation_per_repetition": 4.6,
+          "minimum_per_repetition": 45,
+          "maximum_per_repetition": 59
+        },
+        "final_decision_error_rate": {
+          "pooled_numerator": 532,
+          "pooled_denominator": 5000,
+          "pooled_rate": 0.1064,
+          "mean_rate_per_repetition": 0.10640000000000001,
+          "standard_deviation_per_repetition": 0.0092
+        },
+        "required_abstention_ticket_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "correct_required_abstention_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "required_abstention_success_rate": {
+          "pooled_numerator": 0,
+          "pooled_denominator": 0,
+          "pooled_rate": null,
+          "mean_rate_per_repetition": null,
+          "standard_deviation_per_repetition": null
+        },
+        "per_repetition": [
+          {
+            "repetition": 1,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 51,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 2,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 59,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 3,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 1,
+            "final_decisions": 500,
+            "final_decision_errors": 56,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 4,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 2,
+            "final_decisions": 500,
+            "final_decision_errors": 50,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 5,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 51,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 6,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 1,
+            "final_decisions": 500,
+            "final_decision_errors": 48,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 7,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 56,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 8,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 57,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 9,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 2,
+            "final_decisions": 500,
+            "final_decision_errors": 59,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 10,
+            "tickets": 500,
+            "model_decisions": 500,
+            "model_abstentions": 0,
+            "final_decisions": 500,
+            "final_decision_errors": 45,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          }
+        ]
+      }
+    }
+  },
+  "drift": {
+    "overall": {
+      "ticket_count": {
+        "total_across_repetitions": 1500,
+        "mean_per_repetition": 150.0,
+        "standard_deviation_per_repetition": 0.0,
+        "minimum_per_repetition": 150,
+        "maximum_per_repetition": 150
+      },
+      "model_decision_count": {
+        "total_across_repetitions": 1500,
+        "mean_per_repetition": 150.0,
+        "standard_deviation_per_repetition": 0.0,
+        "minimum_per_repetition": 150,
+        "maximum_per_repetition": 150
+      },
+      "model_abstention_count": {
+        "total_across_repetitions": 5,
+        "mean_per_repetition": 0.5,
+        "standard_deviation_per_repetition": 0.5,
+        "minimum_per_repetition": 0,
+        "maximum_per_repetition": 1
+      },
+      "model_abstention_rate": {
+        "pooled_numerator": 5,
+        "pooled_denominator": 1500,
+        "pooled_rate": 0.0033333333333333335,
+        "mean_rate_per_repetition": 0.003333333333333333,
+        "standard_deviation_per_repetition": 0.0033333333333333335
+      },
+      "final_decision_error_count": {
+        "total_across_repetitions": 511,
+        "mean_per_repetition": 51.1,
+        "standard_deviation_per_repetition": 2.8442925306655784,
+        "minimum_per_repetition": 47,
+        "maximum_per_repetition": 56
+      },
+      "final_decision_error_rate": {
+        "pooled_numerator": 511,
+        "pooled_denominator": 1500,
+        "pooled_rate": 0.3406666666666667,
+        "mean_rate_per_repetition": 0.3406666666666667,
+        "standard_deviation_per_repetition": 0.018961950204437188
+      },
+      "required_abstention_ticket_count": {
+        "total_across_repetitions": 0,
+        "mean_per_repetition": 0.0,
+        "standard_deviation_per_repetition": 0.0,
+        "minimum_per_repetition": 0,
+        "maximum_per_repetition": 0
+      },
+      "correct_required_abstention_count": {
+        "total_across_repetitions": 0,
+        "mean_per_repetition": 0.0,
+        "standard_deviation_per_repetition": 0.0,
+        "minimum_per_repetition": 0,
+        "maximum_per_repetition": 0
+      },
+      "required_abstention_success_rate": {
+        "pooled_numerator": 0,
+        "pooled_denominator": 0,
+        "pooled_rate": null,
+        "mean_rate_per_repetition": null,
+        "standard_deviation_per_repetition": null
+      },
+      "per_repetition": [
+        {
+          "repetition": 1,
+          "tickets": 150,
+          "model_decisions": 150,
+          "model_abstentions": 1,
+          "final_decisions": 150,
+          "final_decision_errors": 53,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 2,
+          "tickets": 150,
+          "model_decisions": 150,
+          "model_abstentions": 0,
+          "final_decisions": 150,
+          "final_decision_errors": 51,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 3,
+          "tickets": 150,
+          "model_decisions": 150,
+          "model_abstentions": 1,
+          "final_decisions": 150,
+          "final_decision_errors": 48,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 4,
+          "tickets": 150,
+          "model_decisions": 150,
+          "model_abstentions": 0,
+          "final_decisions": 150,
+          "final_decision_errors": 54,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 5,
+          "tickets": 150,
+          "model_decisions": 150,
+          "model_abstentions": 1,
+          "final_decisions": 150,
+          "final_decision_errors": 49,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 6,
+          "tickets": 150,
+          "model_decisions": 150,
+          "model_abstentions": 0,
+          "final_decisions": 150,
+          "final_decision_errors": 49,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 7,
+          "tickets": 150,
+          "model_decisions": 150,
+          "model_abstentions": 1,
+          "final_decisions": 150,
+          "final_decision_errors": 54,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 8,
+          "tickets": 150,
+          "model_decisions": 150,
+          "model_abstentions": 0,
+          "final_decisions": 150,
+          "final_decision_errors": 56,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 9,
+          "tickets": 150,
+          "model_decisions": 150,
+          "model_abstentions": 1,
+          "final_decisions": 150,
+          "final_decision_errors": 50,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        },
+        {
+          "repetition": 10,
+          "tickets": 150,
+          "model_decisions": 150,
+          "model_abstentions": 0,
+          "final_decisions": 150,
+          "final_decision_errors": 47,
+          "required_abstention_tickets": 0,
+          "correct_required_abstentions": 0
+        }
+      ]
+    },
+    "by_quarter": {
+      "Q2": {
+        "ticket_count": {
+          "total_across_repetitions": 500,
+          "mean_per_repetition": 50.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 50,
+          "maximum_per_repetition": 50
+        },
+        "model_decision_count": {
+          "total_across_repetitions": 500,
+          "mean_per_repetition": 50.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 50,
+          "maximum_per_repetition": 50
+        },
+        "model_abstention_count": {
+          "total_across_repetitions": 5,
+          "mean_per_repetition": 0.5,
+          "standard_deviation_per_repetition": 0.5,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 1
+        },
+        "model_abstention_rate": {
+          "pooled_numerator": 5,
+          "pooled_denominator": 500,
+          "pooled_rate": 0.01,
+          "mean_rate_per_repetition": 0.01,
+          "standard_deviation_per_repetition": 0.01
+        },
+        "final_decision_error_count": {
+          "total_across_repetitions": 123,
+          "mean_per_repetition": 12.3,
+          "standard_deviation_per_repetition": 2.147091055358389,
+          "minimum_per_repetition": 10,
+          "maximum_per_repetition": 17
+        },
+        "final_decision_error_rate": {
+          "pooled_numerator": 123,
+          "pooled_denominator": 500,
+          "pooled_rate": 0.246,
+          "mean_rate_per_repetition": 0.246,
+          "standard_deviation_per_repetition": 0.04294182110716779
+        },
+        "required_abstention_ticket_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "correct_required_abstention_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "required_abstention_success_rate": {
+          "pooled_numerator": 0,
+          "pooled_denominator": 0,
+          "pooled_rate": null,
+          "mean_rate_per_repetition": null,
+          "standard_deviation_per_repetition": null
+        },
+        "per_repetition": [
+          {
+            "repetition": 1,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 1,
+            "final_decisions": 50,
+            "final_decision_errors": 14,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 2,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 10,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 3,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 1,
+            "final_decisions": 50,
+            "final_decision_errors": 17,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 4,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 12,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 5,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 1,
+            "final_decisions": 50,
+            "final_decision_errors": 14,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 6,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 10,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 7,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 1,
+            "final_decisions": 50,
+            "final_decision_errors": 10,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 8,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 11,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 9,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 1,
+            "final_decisions": 50,
+            "final_decision_errors": 13,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 10,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 12,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          }
+        ]
+      },
+      "Q3": {
+        "ticket_count": {
+          "total_across_repetitions": 500,
+          "mean_per_repetition": 50.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 50,
+          "maximum_per_repetition": 50
+        },
+        "model_decision_count": {
+          "total_across_repetitions": 500,
+          "mean_per_repetition": 50.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 50,
+          "maximum_per_repetition": 50
+        },
+        "model_abstention_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "model_abstention_rate": {
+          "pooled_numerator": 0,
+          "pooled_denominator": 500,
+          "pooled_rate": 0.0,
+          "mean_rate_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0
+        },
+        "final_decision_error_count": {
+          "total_across_repetitions": 173,
+          "mean_per_repetition": 17.3,
+          "standard_deviation_per_repetition": 2.968164415931166,
+          "minimum_per_repetition": 12,
+          "maximum_per_repetition": 22
+        },
+        "final_decision_error_rate": {
+          "pooled_numerator": 173,
+          "pooled_denominator": 500,
+          "pooled_rate": 0.346,
+          "mean_rate_per_repetition": 0.346,
+          "standard_deviation_per_repetition": 0.05936328831862332
+        },
+        "required_abstention_ticket_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "correct_required_abstention_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "required_abstention_success_rate": {
+          "pooled_numerator": 0,
+          "pooled_denominator": 0,
+          "pooled_rate": null,
+          "mean_rate_per_repetition": null,
+          "standard_deviation_per_repetition": null
+        },
+        "per_repetition": [
+          {
+            "repetition": 1,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 17,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 2,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 19,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 3,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 16,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 4,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 19,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 5,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 13,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 6,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 19,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 7,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 20,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 8,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 22,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 9,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 12,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 10,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 16,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          }
+        ]
+      },
+      "Q4": {
+        "ticket_count": {
+          "total_across_repetitions": 500,
+          "mean_per_repetition": 50.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 50,
+          "maximum_per_repetition": 50
+        },
+        "model_decision_count": {
+          "total_across_repetitions": 500,
+          "mean_per_repetition": 50.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 50,
+          "maximum_per_repetition": 50
+        },
+        "model_abstention_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "model_abstention_rate": {
+          "pooled_numerator": 0,
+          "pooled_denominator": 500,
+          "pooled_rate": 0.0,
+          "mean_rate_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0
+        },
+        "final_decision_error_count": {
+          "total_across_repetitions": 215,
+          "mean_per_repetition": 21.5,
+          "standard_deviation_per_repetition": 2.7294688127912363,
+          "minimum_per_repetition": 15,
+          "maximum_per_repetition": 25
+        },
+        "final_decision_error_rate": {
+          "pooled_numerator": 215,
+          "pooled_denominator": 500,
+          "pooled_rate": 0.43,
+          "mean_rate_per_repetition": 0.43,
+          "standard_deviation_per_repetition": 0.054589376255824724
+        },
+        "required_abstention_ticket_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "correct_required_abstention_count": {
+          "total_across_repetitions": 0,
+          "mean_per_repetition": 0.0,
+          "standard_deviation_per_repetition": 0.0,
+          "minimum_per_repetition": 0,
+          "maximum_per_repetition": 0
+        },
+        "required_abstention_success_rate": {
+          "pooled_numerator": 0,
+          "pooled_denominator": 0,
+          "pooled_rate": null,
+          "mean_rate_per_repetition": null,
+          "standard_deviation_per_repetition": null
+        },
+        "per_repetition": [
+          {
+            "repetition": 1,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 22,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 2,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 22,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 3,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 15,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 4,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 23,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 5,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 22,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 6,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 20,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 7,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 24,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 8,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 23,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 9,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 25,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          },
+          {
+            "repetition": 10,
+            "tickets": 50,
+            "model_decisions": 50,
+            "model_abstentions": 0,
+            "final_decisions": 50,
+            "final_decision_errors": 19,
+            "required_abstention_tickets": 0,
+            "correct_required_abstentions": 0
+          }
+        ]
+      }
+    }
+  },
+  "run_files": [
+    "run-001.json",
+    "run-002.json",
+    "run-003.json",
+    "run-004.json",
+    "run-005.json",
+    "run-006.json",
+    "run-007.json",
+    "run-008.json",
+    "run-009.json",
+    "run-010.json"
+  ]
+}

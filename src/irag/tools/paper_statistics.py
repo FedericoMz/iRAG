@@ -5,16 +5,24 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gzip
 import hashlib
 import itertools
 import json
 import math
+import shutil
 import statistics
 from pathlib import Path
 
 from irag.core.config import settings
-from irag.tools.analyze_experiment import find_job_directory, load_completed_runs
+from irag.tools.analyze_experiment import (
+    find_job_directory,
+    load_completed_runs,
+    plot_average_results,
+)
+from irag.tools.compose_plot_grid import compose_plot_grid
 from irag.tools.plot_experiment_result import static_rag_defer_error
+from irag.tools.plot_legend import plot_legend
 
 
 PAPER_JOBS = {
@@ -27,6 +35,24 @@ PAPER_JOBS = {
     ("40", "R_ND_F_D"): "bb5b89fed1e84bd5bd4108b9e3d3e9a9",
     ("40", "ND"): "4e9394df9ba3463db13bc3a604d37afc",
 }
+
+CONDITION_SLUGS = {
+    "D": "rag-d__fea-d",
+    "R_D_F_ND": "rag-d__fea-nd",
+    "R_ND_F_D": "rag-nd__fea-d",
+    "ND": "rag-nd__fea-nd",
+}
+
+PLOT_ORDER = (
+    ("10", "D"),
+    ("40", "D"),
+    ("10", "R_D_F_ND"),
+    ("40", "R_D_F_ND"),
+    ("10", "R_ND_F_D"),
+    ("40", "R_ND_F_D"),
+    ("10", "ND"),
+    ("40", "ND"),
+)
 
 STATE_NAMES = {
     "SO": "silent_observer",
@@ -553,14 +579,134 @@ def write_csv(path: Path, rows: list[dict], fieldnames: list[str]) -> None:
         )
 
 
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def compress_json(source: Path, destination: Path) -> None:
+    """Losslessly compress a JSON artifact with deterministic gzip metadata."""
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with (
+        source.open("rb") as source_handle,
+        destination.open("wb") as destination_handle,
+        gzip.GzipFile(
+            filename="",
+            mode="wb",
+            fileobj=destination_handle,
+            mtime=0,
+        ) as compressed_handle,
+    ):
+        shutil.copyfileobj(source_handle, compressed_handle)
+
+
+def export_source_artifacts(
+    destination: Path,
+    condition_results: dict[tuple[str, str], dict],
+    condition_runs: dict[tuple[str, str], list[dict]],
+    job_directories: dict[tuple[str, str], Path],
+) -> tuple[list[Path], list[dict]]:
+    """Export compact source-job evidence and plots for all paper conditions."""
+    exported_paths: list[Path] = []
+    manifest_rows: list[dict] = []
+    plot_paths: dict[tuple[str, str], Path] = {}
+    source_root = destination / "source-outputs"
+    plot_root = destination / "plots"
+
+    for condition, job_id in PAPER_JOBS.items():
+        drift_rate, decay = condition
+        slug = f"drift-{drift_rate}__{CONDITION_SLUGS[decay]}"
+        source_directory = job_directories[condition]
+        result = condition_results[condition]
+        configuration = result["conditions"][0]["configuration"]
+        source_result = source_directory / "result.json"
+        source_stats = source_directory / "abstention-drift-stats.json"
+        source_metadata = source_directory / "metadata.json"
+        output_directory = source_root / slug
+        output_directory.mkdir(parents=True, exist_ok=True)
+
+        copied_result = output_directory / "result.json"
+        copied_stats = output_directory / "abstention-drift-stats.json"
+        compressed_metadata = output_directory / "metadata.json.gz"
+        shutil.copy2(source_result, copied_result)
+        shutil.copy2(source_stats, copied_stats)
+        compress_json(source_metadata, compressed_metadata)
+        exported_paths.extend(
+            [copied_result, copied_stats, compressed_metadata]
+        )
+
+        plot_path = plot_root / f"{slug}.png"
+        plot_average_results(
+            job_id,
+            configuration,
+            condition_runs[condition],
+            plot_path,
+        )
+        plot_paths[condition] = plot_path
+        exported_paths.append(plot_path)
+
+        run_files = sorted(source_directory.glob("run-*.json"))
+        legacy_lambda = float(configuration.get("lambda", 1.0))
+        manifest_rows.append(
+            {
+                "drift_rate": int(drift_rate),
+                "decay": decay,
+                "lambda_rag": float(
+                    configuration.get("lambda_rag", legacy_lambda)
+                ),
+                "lambda_fea": float(
+                    configuration.get("lambda_fea", legacy_lambda)
+                ),
+                "job_id": job_id,
+                "started_at": result.get("started_at"),
+                "completed_at": result.get("completed_at"),
+                "source_job_directory": source_directory.name,
+                "source_result_sha256": sha256_file(source_result),
+                "included_result": copied_result.relative_to(destination).as_posix(),
+                "included_result_sha256": sha256_file(copied_result),
+                "included_stats": copied_stats.relative_to(destination).as_posix(),
+                "included_stats_sha256": sha256_file(copied_stats),
+                "included_metadata_gzip": compressed_metadata.relative_to(
+                    destination
+                ).as_posix(),
+                "included_metadata_gzip_sha256": sha256_file(
+                    compressed_metadata
+                ),
+                "included_plot": plot_path.relative_to(destination).as_posix(),
+                "source_run_file_count": len(run_files),
+                "source_run_bytes": sum(path.stat().st_size for path in run_files),
+                "raw_run_files_included": False,
+            }
+        )
+
+    legend_path = plot_root / "trajectory-legend.png"
+    plot_legend(legend_path)
+    combined_path = plot_root / "all-eight-settings.png"
+    compose_plot_grid(
+        [plot_paths[condition] for condition in PLOT_ORDER],
+        legend_path,
+        combined_path,
+        columns=2,
+    )
+    exported_paths.extend([legend_path, combined_path])
+    return exported_paths, manifest_rows
+
+
 def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
     condition_rows: dict[tuple[str, str], list[dict]] = {}
     condition_runs: dict[tuple[str, str], list[dict]] = {}
+    condition_results: dict[tuple[str, str], dict] = {}
+    job_directories: dict[tuple[str, str], Path] = {}
     all_rows = []
     for condition, job_id in PAPER_JOBS.items():
         job_directory = find_job_directory(job_id, output_dir)
-        _, runs = load_completed_runs(job_directory, job_id)
+        result, runs = load_completed_runs(job_directory, job_id)
+        condition_results[condition] = result
         condition_runs[condition] = runs
+        job_directories[condition] = job_directory
         rows = [per_run_metrics(run, *condition) for run in runs]
         condition_rows[condition] = rows
         all_rows.extend(rows)
@@ -616,6 +762,22 @@ def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
             }
         )
 
+    state_csv_rows = []
+    for row in state_rows:
+        counts = row["final_state_counts"]
+        state_csv_rows.append(
+            {
+                "drift_rate": row["drift_rate"],
+                "decay": row["decay"],
+                "repetitions": row["n"],
+                "silent_observer": counts.get("silent_observer", 0),
+                "skeptical_contestator": counts.get(
+                    "skeptical_contestator", 0
+                ),
+                "deferring_surrogate": counts.get("deferring_surrogate", 0),
+            }
+        )
+
     destination.mkdir(parents=True, exist_ok=True)
     per_run_path = destination / "per-run-results.csv"
     write_csv(per_run_path, all_rows, list(all_rows[0]))
@@ -657,6 +819,32 @@ def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
         controller_path,
         controller_csv_rows,
         list(controller_csv_rows[0]),
+    )
+
+    final_states_path = destination / "final-state-frequencies.csv"
+    write_csv(
+        final_states_path,
+        state_csv_rows,
+        list(state_csv_rows[0]),
+    )
+
+    judge_audit_path = destination / "auxiliary-judge-audit.json"
+    judge_audit_path.write_text(
+        json.dumps(judge_audit, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+    source_paths, artifact_manifest_rows = export_source_artifacts(
+        destination,
+        condition_results,
+        condition_runs,
+        job_directories,
+    )
+    artifact_manifest_path = destination / "artifact-manifest.csv"
+    write_csv(
+        artifact_manifest_path,
+        artifact_manifest_rows,
+        list(artifact_manifest_rows[0]),
     )
 
     json_path = destination / "paper-statistics.json"
@@ -718,7 +906,11 @@ def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
         factorial_path,
         baseline_path,
         controller_path,
+        final_states_path,
+        judge_audit_path,
+        artifact_manifest_path,
         json_path,
+        *source_paths,
     ]
 
 

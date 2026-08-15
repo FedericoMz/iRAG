@@ -31,7 +31,6 @@ from irag.core.models import (
 from irag.data.dataset import SalesXDataset
 from irag.data.store import ExperimentStore
 from irag.engine.experiment import ExperimentRunner
-from irag.engine.quarterly_snapshot import QuarterlySnapshotRunner
 from irag.tools.logger import logger
 
 
@@ -135,37 +134,6 @@ def create_parallel_run(
         reused_q1,
         None,
         request.reuse_q1_from,
-    )
-    return created_response(job)
-
-
-@app.post(
-    "/v1/baselines/quarterly-snapshot-rag",
-    response_model=ExperimentCreated,
-    status_code=status.HTTP_202_ACCEPTED,
-    summary="Run the single-repetition Quarterly Snapshot RAG baseline",
-)
-def create_quarterly_snapshot_rag(
-    background_tasks: BackgroundTasks,
-    dataset: Annotated[
-        DatasetVariant,
-        Query(
-            description=(
-                "SalesX dataset variant. This is the baseline's only "
-                "configurable parameter."
-            )
-        ),
-    ],
-) -> ExperimentCreated:
-    job = store.create_job(
-        name=f"Quarterly Snapshot RAG / {dataset.value}",
-        total_repetitions=1,
-        folder_label=f"baseline-quarterly-snapshot-rag__dataset-{dataset.value}",
-    )
-    background_tasks.add_task(
-        run_quarterly_snapshot_experiment,
-        job.experiment_id,
-        dataset,
     )
     return created_response(job)
 
@@ -704,81 +672,8 @@ def run_parallel_experiment(
         store.fail(experiment_id, str(exc))
 
 
-def run_quarterly_snapshot_experiment(
-    experiment_id: str,
-    dataset_variant: DatasetVariant,
-) -> None:
-    logger.info(
-        "Starting Quarterly Snapshot RAG baseline %s: %s",
-        experiment_id,
-        dataset_variant.value,
-    )
-    store.start(experiment_id)
-    try:
-        client = make_model_client_from_settings(ModelSettings())
-        runner = QuarterlySnapshotRunner(dataset_for(dataset_variant), client)
-        run_result = runner.run(
-            experiment_id,
-            on_metadata=lambda metadata: store.write_metadata(
-                experiment_id, metadata
-            ),
-            on_ticket_batch=lambda tickets: store.append_run_tickets(
-                experiment_id, 1, tickets
-            ),
-            ticket_batch_size=50,
-            on_progress=lambda completed, total: store.progress(
-                experiment_id,
-                f"quarterly_snapshot_rag.parallel.{completed}/{total}",
-                0,
-            ),
-        )
-        run_path = store.finalize_run(
-            experiment_id,
-            1,
-            {
-                "experiment_id": experiment_id,
-                "metadata_file": "metadata.json",
-                "baseline": "quarterly_snapshot_rag",
-                **run_result,
-            },
-        )
-        result = {
-            "experiment_id": experiment_id,
-            "name": "Quarterly Snapshot RAG",
-            "baseline": "quarterly_snapshot_rag",
-            "dataset_variant": dataset_variant.value,
-            "repetitions": 1,
-            "metadata_file": "metadata.json",
-            "runs": [
-                {
-                    "repetition": 1,
-                    "output_file": run_path.name,
-                    "summary": run_result["summary"],
-                }
-            ],
-            "aggregate": run_result["summary"],
-            "completed_at": run_result["completed_at"],
-        }
-        path = store.complete(experiment_id, result)
-        logger.info(
-            "Quarterly Snapshot RAG baseline %s completed: %s",
-            experiment_id,
-            path,
-        )
-    except Exception as exc:
-        logger.exception(
-            "Quarterly Snapshot RAG baseline %s failed", experiment_id
-        )
-        store.fail(experiment_id, str(exc))
-
-
 def make_model_client(request: ExperimentRequest) -> BaseModelClient:
-    return make_model_client_from_settings(request.models)
-
-
-def make_model_client_from_settings(
-    models: ModelSettings,
-) -> BaseModelClient:
+    models = request.models
     try:
         provider = models.provider or ModelProvider(settings.model_provider.lower())
     except ValueError as exc:

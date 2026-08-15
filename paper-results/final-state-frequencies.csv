@@ -1,0 +1,9 @@
+drift_rate,decay,repetitions,silent_observer,skeptical_contestator,deferring_surrogate
+10,D,10,0,0,10
+10,R_D_F_ND,10,0,0,10
+10,R_ND_F_D,10,0,0,10
+10,ND,10,0,0,10
+40,D,10,0,0,10
+40,R_D_F_ND,10,0,0,10
+40,R_ND_F_D,10,0,9,1
+40,ND,10,0,10,0

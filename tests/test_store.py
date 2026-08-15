@@ -43,19 +43,3 @@ def test_store_writes_metadata_summary_and_numbered_runs(tmp_path):
         "run-002.json",
     ]
     assert not store.partial_run_path(job.experiment_id, 1).exists()
-
-
-def test_store_can_create_a_non_irag_single_repetition_job(tmp_path):
-    store = ExperimentStore(tmp_path)
-
-    job = store.create_job(
-        name="Quarterly Snapshot RAG",
-        total_repetitions=1,
-        folder_label="baseline-quarterly-snapshot-rag__dataset-drift_10",
-    )
-
-    assert job.name == "Quarterly Snapshot RAG"
-    assert job.total_repetitions == 1
-    assert "baseline-quarterly-snapshot-rag__dataset-drift_10" in (
-        job.output_directory
-    )

@@ -210,40 +210,6 @@ Use these endpoints to inspect or download the outputs:
 - `GET /v1/experiments/{job-id}/result` — aggregate result after completion.
 - `POST /v1/runs/{job-id}/resume` — continue every unfinished repetition of a failed run from its checkpoint.
 
-### Quarterly Snapshot RAG baseline
-
-`POST /v1/baselines/quarterly-snapshot-rag` runs the controller-free,
-human-free Quarterly Snapshot RAG baseline. Its only parameter is the dataset
-dropdown (`drift_10` or `drift_40`), and it always runs exactly one repetition
-using the models configured in `config.env`:
-
-```sh
-curl -X POST \
-  'http://localhost:8000/v1/baselines/quarterly-snapshot-rag?dataset=drift_10'
-```
-
-The baseline evaluates only Q2--Q4. For a ticket in Q2, its static snapshot
-contains gold Q&A records from Q1 and Q2; Q3 contains Q1--Q3; and Q4 contains
-Q1--Q4. The ticket currently being evaluated is always removed from its own
-snapshot. Q1 therefore contributes 500 records to every snapshot but is never
-processed or scored. Model outputs are not added to the KB. Because these
-snapshots are immutable, Q2--Q4 tickets are evaluated concurrently in one
-bounded worker pool. Saved traces are still ordered deterministically by
-quarter and ticket position. For Bedrock, `BEDROCK_MAX_CONCURRENCY` determines
-the worker count and the existing Runtime semaphore enforces the same bound.
-
-Retrieval uses the paper settings (`top_k=5`, semantic threshold `0.7`) without
-temporal decay (`lambda_rag=1`). The generation model must return an answer:
-there is no human, SO/SC/DS controller, or abstention path. The auxiliary model
-judges every answer against gold, and the result reports overall, per-quarter,
-stable-ticket, and drift-ticket error counts and rates, including the
-stable/drift split within each quarter, across the 1,500 Q2--Q4 tickets. This is
-deliberately an offline, gold-curated snapshot baseline; the current-quarter
-snapshot may include records that occur later in that quarter.
-
-The request returns `202` and a job ID. The standard experiment status,
-metadata, run-file, and result endpoints listed above also serve this baseline.
-
 ### Other experiment APIs
 
 For a quick run over the checked-in corpus, submit one or more conditions to:
@@ -308,7 +274,6 @@ Results from the general experiment endpoints are self-contained:
 - `records` stores the full input metadata once, keyed by stable ticket ID.
 - `models` records the provider, generation/auxiliary model identities and available provider metadata, plus the complete embedding manifest.
 - `conditions[].repetitions[].tickets` stores retrieval scores, model and human decisions, auxiliary judgments, FEA values, state transitions, final origin, correctness, and drift labels for every interaction.
-- Quarterly Snapshot RAG stores its single Q2--Q4 trace in `run-001.json`; its metadata records the cumulative gold-snapshot policy and explicitly marks Q1 as unprocessed.
 - Extra tickets additionally store `expected_model_action="abstain"` and `model_action_is_correct`; summaries expose their failure rate under `abstention_challenge.Extra`.
 - `fea_trajectory` and `transitions` provide the acceptance-ratchet diagnostics from the paper, including recent gold accuracy and its gap from FEA at DS entry.
 - `summary` and `aggregate` report error rates overall and by quarter, profile, state, metric component, and drift subset.
