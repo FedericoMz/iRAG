@@ -448,10 +448,13 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+# Local paper source and publisher templates
+main.tex
+IOS-Book-Article.cls
+vancouver.bst
 *.tex
-!main.tex
 
-# LaTeX build artifacts (keep main.tex tracked)
+# LaTeX build artifacts
 *.aux
 *.bbl
 *.bcf
