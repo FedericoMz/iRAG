@@ -77,8 +77,10 @@ def cumulative_llm_gold_error_rate(
 
 
 def static_rag_defer_error(ticket: dict) -> bool:
-    """Whether model-first RAG with human fallback gives an incorrect answer."""
-    model_decision = ticket.get("model_decision") or {}
+    """Legacy model-first replay error over an already realised iRAG trace."""
+    model_decision = ticket.get("model_decision")
+    if not isinstance(model_decision, dict):
+        return bool(ticket["final_decision_error"])
     if bool(model_decision.get("abstain")):
         return not bool(ticket["human_answer_is_correct"])
     judgment = ticket.get("gold_judgment")
@@ -227,7 +229,7 @@ def plot_result(
         color="#0f766e",
         linewidth=1.8,
         linestyle="-.",
-        label="Cumulative static RAG-with-defer error rate",
+        label="Cumulative model-first replay error rate",
     )
     thresholds = [
         ("alpha", "α", "#15803d"),

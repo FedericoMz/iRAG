@@ -1,27 +1,131 @@
-# iRAG experiments
+# iRAG
 
-FastAPI application for the SalesX experiments in the paper. This is deliberately not a general-purpose RAG framework: it accepts only SalesX records whose IDs and exact question text match the precomputed `qwen3-embedding:4b` corpus.
+iRAG is an experimental human-in-the-loop decision-support system for settings
+where a Retrieval-Augmented Generation (RAG) knowledge base does not exist in
+advance. Instead, the knowledge base starts empty and grows from the final
+decisions made while the system is operating. Each new case can therefore use
+earlier, human-supervised decisions as precedents, and every final decision is
+stored for future retrieval.
 
-The runner implements insertion-decayed retrieval, independently decayed Fading Empirical Accuracy, the semantic gate, SO/SC/DS state machine, profile routing, acceptance regimes, chronological quarter processing, repeated seeded shuffles, and baselines. The paper's coupled-decay ablation is reproduced by setting both lambdas to the same value.
+The project studies two connected questions:
 
-The never-accept regime can enter SC but never DS: a simulated human who never accepts model suggestions does not grant the model autonomous control.
+1. How should decision-making authority move from a human to a language model
+   as evidence of the model's reliability accumulates?
+2. How should an incremental RAG memory adapt when previously valid knowledge
+   changes?
 
-At `LOG_LEVEL=INFO`, every repetition emits JSON events for its start, each processed ticket, and completion. Ticket events include the experiment and condition IDs, repetition and seed, global and quarterly progress, profile, state transition, retrieval count, model action, acceptance outcome, final-decision origin and correctness, FEA, and observation count. This keeps parallel-run logs attributable even when repetitions interleave.
+This repository contains the complete experimental service, the two SalesX
+concept-drift datasets, precomputed embeddings, analysis tools, independent
+baseline implementation, and checked-in paper results. It is a research
+prototype rather than a general-purpose RAG framework: experiment requests are
+restricted to SalesX records whose IDs and exact question text match the
+precomputed `qwen3-embedding:4b` corpus.
+
+## How iRAG works
+
+For each incoming ticket, iRAG retrieves up to $K$ earlier question--answer
+records, asks the language model to answer or abstain, determines who has final
+authority, and appends the resulting final decision to the knowledge base.
+Authority changes through three states:
+
+| State | Authority and model behaviour |
+|---|---|
+| **Silent Observer (SO)** | The human decides. A non-abstaining model answer is evaluated silently to build a reliability history. |
+| **Skeptical Contestator (SC)** | The human remains responsible, but a conflicting model proposal can be presented and accepted or rejected. |
+| **Deferring Surrogate (DS)** | The model normally finalizes the answer and defers to the human when it abstains; human intervention can return control to an earlier state. |
+
+Transitions are governed by Fading Empirical Accuracy (FEA), a recency-weighted
+measure of agreement between model proposals and final human decisions. The
+minimum evidence requirement $N$ and thresholds $\alpha$, $\beta$, and $\gamma$
+control entry into and exit from SC and DS.
+
+iRAG separates two kinds of temporal adaptation:
+
+- `lambda_rag` discounts older knowledge-base records when ranking semantically
+  relevant precedents. It governs the retrieval stability--plasticity
+  trade-off.
+- `lambda_fea` discounts older reliability observations. It governs how quickly
+  the authority controller reacts to recent model performance.
+
+Setting either value to `1` disables that form of decay. The paper's coupled
+decay condition sets both to `0.99861`, corresponding to a half-life of roughly
+500 insertions or reliability observations.
+
+## What the experiments test
+
+The main experiment processes 2,000 SalesX support tickets as four consecutive
+quarters of 500 tickets. Quarter order is preserved so that changed answers
+remain genuinely temporal, while tickets are shuffled within each quarter for
+every seeded repetition. Two dataset variants provide different amounts of
+concept drift:
+
+- `drift_10`: 10% of Q2--Q4 tickets use changed knowledge;
+- `drift_40`: 40% of Q2--Q4 tickets use changed knowledge.
+
+The paper evaluates a $2\times2$ factorial design. `lambda_rag` and
+`lambda_fea` are independently set to decay (`0.99861`) or no decay (`1`),
+giving four configurations per dataset. Each configuration uses ten matched
+seeds, for eight jobs and 80 nominal repetitions in total.
+
+All paper runs use the informed-mixture assignment. The CEO supplies every Q1
+decision to establish a trusted initial memory. In Q2--Q4, the first 100
+tickets form a CEO review window; the remaining tickets are assigned among the
+CEO, Domain Expert, and Intern according to the experimental profile policy.
+State transitions are suspended during trusted review. The paper's
+`gold_similarity` acceptance regime is an oracle experimental condition: in
+SC, a disputed proposal is accepted only when the auxiliary evaluation already
+finds it consistent with the gold answer.
+
+The primary comparison is an independently rolled-out **Controller-free
+RAG-with-defer** baseline. It follows the same CEO bootstrap, quarterly review,
+ticket order, human assignment, retrieval rule, and model-abstention behaviour,
+but has no SO/SC/DS controller or FEA. Its final decisions construct its own
+knowledge base, so it is an end-to-end baseline rather than a replay over an
+iRAG trajectory.
+
+The optional `Extra` split adds 50 post-Q4 questions designed to be impossible
+to answer from the available corpus. It tests whether the model still abstains
+after iRAG has reached later authority states and is excluded from the nominal
+2,000-ticket paper metrics.
+
+The complete eight-condition trajectory figure is included as
+[`paper-results/plots/all-eight-settings.pdf`](paper-results/plots/all-eight-settings.pdf), with a browsable PNG at
+[`paper-results/plots/all-eight-settings.png`](paper-results/plots/all-eight-settings.png).
+The checked-in [`paper-results/`](paper-results/) directory also contains
+per-run metrics, counts, paired tests, effect sizes, final-state frequencies,
+seeds, source-result manifests, and the temporal-retrieval benchmark.
+
+## Implementation scope
+
+The runner implements insertion-decayed retrieval, independently decayed FEA,
+the semantic gate, SO/SC/DS transitions, simulated profile routing, acceptance
+regimes, chronological quarter processing, seeded repetitions, checkpointed
+resume, and the independent baseline. The `always_refuse` regime can enter SC
+but never DS because a simulated human who never accepts a conflicting model
+proposal does not grant it autonomous control.
+
+At `LOG_LEVEL=INFO`, every repetition emits structured JSON events for its
+start, each processed ticket, and completion. Ticket events identify the job,
+condition, repetition, seed, progress, assigned profile, state transition,
+retrieval count, model action, acceptance outcome, final-decision origin and
+correctness, FEA, and reliability-observation count. This keeps concurrent
+repetitions attributable when their logs interleave.
 
 ## Project structure
 
 ```text
 src/irag/
-├── client/       # Base, Ollama, OpenRouter, and Bedrock model clients
-├── tools/        # Logger, plotting, sample-run, and smoke-test utilities
-├── api.py        # FastAPI routes and background jobs
-├── experiment.py # Experiment execution and state machine
-├── dataset.py    # SalesX metadata and embedding loading
-├── retrieval.py  # Exact vector retrieval and temporal scoring
-├── store.py      # Job status and output persistence
-└── main.py       # ASGI application entry point
+├── api/          # FastAPI composition and background jobs
+├── client/       # Model-provider and Qdrant adapters
+├── core/         # Configuration and shared models
+├── data/         # SalesX loading and result persistence
+├── engine/       # Experiment workflow, retrieval, and temporal pruning
+├── tools/        # Analysis, plotting, benchmark, and smoke-test CLIs
+├── __init__.py
+└── main.py       # Thin ASGI entry point
 tests/            # Deterministic test suite
 experiment data/ # Quarterly benchmark, post-Q4 abstention split, and embeddings
+paper-results/   # Checked-in paper statistics and benchmark measurements
 ```
 
 ## Model providers
@@ -79,8 +183,8 @@ The generated corpora live under `experiment data/drift_10` and
 Startup validation checks every record ID and question against the embedding
 source.
 
-Plot FEA and cumulative final-decision, human-only, and static
-RAG-with-defer error from any result with:
+Plot FEA and cumulative final-decision, human-only, and model-first replay
+error from any iRAG result with:
 
 ```sh
 make plot RESULT=outputs/<experiment-folder>/result.json
@@ -113,6 +217,39 @@ configured `run-NNN.json` file is present, and writes:
 
 Use `python -m irag.tools.analyze_experiment <job-id> --output-dir <directory>`
 when the experiment outputs are stored outside the configured output directory.
+
+## Temporal-retrieval benchmark
+
+The Qdrant benchmark compares the exhaustive weighted top-$K$ objective with
+an exact newest-to-oldest scan stopped by the temporal certificate, global
+HNSW candidate generation, a fixed recency filter, and the adaptive temporal
+window over filtered HNSW. It exports every per-query measurement plus a JSON
+summary, CSV table, LaTeX table, and four-panel plot. Start the pinned Qdrant
+1.19.1 service, run the benchmark, and stop the service with:
+
+```sh
+make vector-db-up
+make temporal-benchmark
+make vector-db-down
+```
+
+The default is a 20,000-vector development benchmark. Reproduce the exact
+50,000-vector paper workload, including service startup and shutdown, with:
+
+```sh
+make paper-temporal-benchmark
+```
+
+Set `OUTPUT=outputs/<directory>` to select a different result directory.
+
+The workload derives deterministic semantic clusters from the checked-in
+2,560-dimensional ticket embeddings; it does not call an embedding or language
+model. Important controls—including the lambda sweep, HNSW construction/search
+parameters, candidate count, certified-scan block size, fixed and initial
+windows, growth factor, concurrency, and seed—are CLI options shown by
+`python -m irag.tools.temporal_retrieval_benchmark --help`. Runtime output is
+written under `outputs/`. The exact paper run, including all 4,000 per-query
+measurements, is retained under `paper-results/temporal-retrieval/`.
 
 ## Start locally
 
@@ -153,6 +290,52 @@ The same run can be submitted without the browser:
 curl -X POST \
   'http://localhost:8000/v1/runs?dataset=drift_10&expert=informed_mixture&acceptance=randomize&repetitions=10&lambda_rag=0.99861&lambda_fea=0.99861&include_extra=true'
 ```
+
+### Independent Controller-free RAG-with-defer baseline
+
+`POST /v1/baselines/static-rag-with-defer` launches the fully independent
+controller-free rollout. It does not read, replay, or inherit tickets, model
+proposals, retrieval results, or KB contents from an iRAG job.
+
+The route retains its original `static-rag-with-defer` path for API backward
+compatibility; the paper and documentation call the method Controller-free
+RAG-with-defer because its KB grows from its own final decisions.
+
+The baseline follows the paper protocol:
+
+- all Q1 tickets are finalized by the CEO and appended to the baseline's empty
+  KB without calling the model;
+- the first 100 tickets of Q2, Q3, and Q4 are likewise finalized by the CEO as
+  periodic review windows;
+- on every remaining ticket, the model receives precedents retrieved from this
+  baseline's own KB using the same semantic gate, weighted top-K rule, and
+  `lambda_rag` parameter as iRAG;
+- a non-abstaining model answer is final, while an abstention defers to the
+  human selected by the informed-mixture assignment;
+- every baseline final decision—CEO, informed-mixture human, or model—is then
+  appended to the baseline KB and can affect later retrieval.
+
+Repetition `r` uses `seed + r - 1`, exactly like `/v1/runs`. With the paper's
+CEO-bootstrapped informed-mixture/gold-similarity iRAG condition, this produces
+the same within-quarter ticket permutation and informed-mixture assignment for
+the corresponding repetition. The endpoint deliberately has no
+`reuse_q1_from`, acceptance, expert, `lambda_fea`, or state-threshold parameter:
+there is no controller and no FEA in this baseline.
+
+For example, run the decaying 10% drift baseline ten times with:
+
+```sh
+curl -X POST \
+  'http://localhost:8000/v1/baselines/static-rag-with-defer?dataset=drift_10&repetitions=10&lambda_rag=0.99861&seed=20260717&domain_expert_category=billing&include_extra=false&checkpoint_interval=50'
+```
+
+Use `lambda_rag=1` for the non-decaying incremental-KB condition. The response,
+status, numbered run files, checkpoints, result download, and generic
+`POST /v1/runs/{job-id}/resume` recovery flow are the same as for `/v1/runs`.
+Each trace identifies `workflow=static_rag_with_defer` in metadata and records
+`baseline_phase` as `ceo_bootstrap`, `ceo_review`, or `rag_with_defer`.
+The average-results tool recognizes these controller-free traces and omits FEA,
+state thresholds, and the legacy model-first replay series from their plots.
 
 The RUN API processes Q1–Q4 by default. Set `include_extra=true`—or enable **Include extra** in the API documentation form—to append the separate 50-ticket post-Q4 abstention challenge. Every repetition has an independent seeded shuffle within each selected batch and fresh RAG state. Repetitions are submitted concurrently; for Bedrock, `BEDROCK_MAX_CONCURRENCY` limits simultaneous Runtime calls independently of the repetition count. Provider, generation model, auxiliary model, Ollama URL, Bedrock region, timeout, and retries can be selected for the job. Any empty model field falls back to `config.env`; OpenRouter and AWS credentials are always environment-only.
 

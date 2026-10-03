@@ -18,8 +18,10 @@ from irag.core.models import (
     Profile,
     Quarter,
     QuarterBatch,
+    StaticRagWithDeferRequest,
 )
 from irag.data.store import ExperimentStore
+from irag.engine.static_rag import StaticRagWithDeferRunner
 from tests.test_experiment import FakeClient, FakeDataset, make_ticket
 
 
@@ -216,6 +218,127 @@ def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
         "/DatasetVariant"
     )
     assert "reuse_q1_from" in parameters
+
+
+def test_static_rag_with_defer_endpoint_builds_an_independent_baseline_job(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(api, "store", ExperimentStore(tmp_path))
+    submitted = []
+    monkeypatch.setattr(
+        api,
+        "run_parallel_experiment",
+        lambda *arguments: submitted.append(arguments),
+    )
+
+    response = TestClient(api.app).post(
+        "/v1/baselines/static-rag-with-defer",
+        params={
+            "dataset": "drift_40",
+            "repetitions": 2,
+            "lambda_rag": 1.0,
+            "seed": 20260717,
+            "domain_expert_category": "billing",
+            "include_extra": False,
+        },
+    )
+
+    assert response.status_code == 202
+    experiment_id = response.json()["experiment_id"]
+    output_directory = TestClient(api.app).get(
+        f"/v1/experiments/{experiment_id}"
+    ).json()["output_directory"]
+    request = submitted[0][1]
+    condition = request.conditions[0]
+    assert "baseline-static-rag-with-defer__dataset-drift_40" in output_directory
+    assert condition.workflow.value == "static_rag_with_defer"
+    assert (
+        condition.assignment_strategy
+        == AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED
+    )
+    assert condition.repetitions == 2
+    assert condition.lambda_rag == 1.0
+    assert condition.lambda_fea == 1.0
+    assert condition.quarterly_ceo_tickets == 100
+    assert request.dataset == DatasetVariant.DRIFT_40
+    assert submitted[0][2] == 50
+
+
+def test_static_rag_request_does_not_expose_irag_controller_parameters():
+    parameters = {
+        parameter["name"]
+        for parameter in api.app.openapi()["paths"][
+            "/v1/baselines/static-rag-with-defer"
+        ]["post"]["parameters"]
+    }
+
+    assert "dataset" in parameters
+    assert "repetitions" in parameters
+    assert "lambda_rag" in parameters
+    assert "lambda_fea" not in parameters
+    assert "acceptance" not in parameters
+    assert "expert" not in parameters
+    assert "reuse_q1_from" not in parameters
+
+
+def test_static_rag_request_uses_the_paper_protocol_defaults():
+    built = api.build_static_rag_with_defer_request(
+        StaticRagWithDeferRequest()
+    )
+    condition = built.conditions[0]
+
+    assert condition.workflow.value == "static_rag_with_defer"
+    assert condition.seed == 20260717
+    assert condition.repetitions == 10
+    assert condition.quarterly_ceo_tickets == 100
+    assert condition.domain_expert_category.value == "billing"
+    assert [batch.quarter for batch in built.quarters] == [
+        Quarter.Q1,
+        Quarter.Q2,
+        Quarter.Q3,
+        Quarter.Q4,
+    ]
+
+
+def test_static_rag_workflow_selects_the_independent_runner(monkeypatch):
+    request = api.build_static_rag_with_defer_request(
+        StaticRagWithDeferRequest(repetitions=1)
+    )
+    monkeypatch.setattr(api, "dataset_for", lambda _: FakeDataset())
+
+    runner = api.runner_for(request, FakeClient())
+
+    assert isinstance(runner, StaticRagWithDeferRunner)
+
+
+def test_resume_reconstructs_static_rag_workflow():
+    original = api.build_static_rag_with_defer_request(
+        StaticRagWithDeferRequest(
+            dataset="drift_40",
+            repetitions=2,
+            lambda_rag=1.0,
+        )
+    )
+    metadata = {
+        "name": original.name,
+        "dataset_variant": "drift_40",
+        "configuration": original.conditions[0].model_dump(
+            mode="json", by_alias=True
+        ),
+        "models": {
+            "provider": "bedrock",
+            "generation": {"name": "generation"},
+            "auxiliary": {"name": "auxiliary"},
+        },
+        "records": {"SX-Q4-BIL-001": {"quarter": "Q4"}},
+    }
+
+    resumed = api.build_resume_request(metadata)
+
+    assert resumed.conditions[0].workflow.value == "static_rag_with_defer"
+    assert resumed.conditions[0].lambda_rag == 1.0
+    assert resumed.conditions[0].repetitions == 2
+    assert resumed.dataset == DatasetVariant.DRIFT_40
 
 
 def test_openapi_does_not_expose_obsolete_paper_suite_endpoints():

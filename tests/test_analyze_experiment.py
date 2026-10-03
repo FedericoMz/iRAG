@@ -82,6 +82,25 @@ def test_static_rag_defer_uses_human_answer_on_abstention():
     ) == [1.0, 0.5, pytest.approx(2 / 3)]
 
 
+def test_controller_free_plot_omits_fea_threshold_and_replay_series():
+    ticket = make_saved_ticket(1, "Q1", abstain=True)
+    ticket.update(
+        {
+            "state_before": "controller_free",
+            "state_after": "controller_free",
+            "fea_after": None,
+            "model_decision": None,
+        }
+    )
+
+    trajectories = averaged_trajectories([{"tickets": [ticket]}])
+
+    assert set(trajectories) == {
+        "Cumulative final-decision error rate",
+        "Cumulative human-only baseline error rate",
+    }
+
+
 def write_completed_job(tmp_path):
     job_id = "a" * 32
     job_directory = tmp_path / f"test__job-{job_id}"
@@ -217,7 +236,7 @@ def test_analyze_job_plots_average_and_writes_abstention_drift_stats(tmp_path):
     assert "EA (non-fading)" not in trajectories
     assert all("coverage" not in label.lower() for label in trajectories)
     assert all("Extra abstention" not in label for label in trajectories)
-    assert "Cumulative static RAG-with-defer error rate" in trajectories
+    assert "Cumulative model-first replay error rate" in trajectories
 
 
 def test_plot_drift_rate_excludes_baseline_and_extra():

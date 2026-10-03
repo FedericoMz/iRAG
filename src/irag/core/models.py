@@ -89,6 +89,11 @@ class DatasetVariant(str, Enum):
     DRIFT_40 = "drift_40"
 
 
+class ExperimentWorkflow(str, Enum):
+    IRAG = "irag"
+    STATIC_RAG_WITH_DEFER = "static_rag_with_defer"
+
+
 class ExpertSelection(str, Enum):
     CEO = "ceo"
     DOMAIN_EXPERT = "domain_expert"
@@ -167,6 +172,7 @@ class ModelSettings(StrictModel):
 
 class ExperimentCondition(StrictModel):
     name: str = Field(min_length=1, max_length=100)
+    workflow: ExperimentWorkflow = ExperimentWorkflow.IRAG
     assignment_strategy: AssignmentStrategy
     acceptance_regime: AcceptanceRegime = AcceptanceRegime.STOCHASTIC
     single_profile: Profile | None = None
@@ -372,6 +378,74 @@ class ParallelRunRequest(StrictModel):
             "Optional completed run ID whose compatible 500-ticket CEO Q1 "
             "bootstrap should be reused instead of calling the models again."
         ),
+    )
+
+
+class StaticRagWithDeferRequest(StrictModel):
+    dataset: DatasetVariant = Field(
+        default=DatasetVariant.DRIFT_10,
+        description="SalesX concept-drift dataset variant.",
+    )
+    repetitions: int = Field(
+        default=10,
+        ge=1,
+        le=100,
+        description="Independent matched-seed repetitions submitted concurrently.",
+    )
+    lambda_rag: float = Field(
+        default=0.99861,
+        gt=0,
+        le=1,
+        description="Insertion-based temporal decay used for RAG reranking.",
+    )
+    seed: int = Field(
+        default=20260717,
+        description=(
+            "Initial seed. Repetition r uses seed + r - 1, matching /v1/runs."
+        ),
+    )
+    domain_expert_category: Category = Category.BILLING
+    include_extra: bool = Field(
+        default=False,
+        description="Append the optional 50-ticket post-Q4 abstention challenge.",
+    )
+    provider: ModelProvider | None = Field(
+        default=None,
+        description="Model provider; leave empty to use config.env.",
+    )
+    generation_model: str | None = Field(
+        default=None,
+        description="Ticket-decision model; leave empty to use config.env.",
+    )
+    auxiliary_model: str | None = Field(
+        default=None,
+        description="Gold-coverage judge; leave empty to use config.env.",
+    )
+    ollama_base_url: str | None = Field(
+        default=None,
+        description="Ollama server URL; ignored by other providers.",
+    )
+    bedrock_region: str | None = Field(
+        default=None,
+        description="AWS region for Bedrock; leave empty to use config.env.",
+    )
+    timeout: int | None = Field(
+        default=None,
+        ge=1,
+        le=3600,
+        description="Per-request model timeout in seconds.",
+    )
+    retries: int | None = Field(
+        default=None,
+        ge=1,
+        le=10,
+        description="Model request attempts before failing the run.",
+    )
+    checkpoint_interval: int = Field(
+        default=50,
+        ge=1,
+        le=500,
+        description="Ticket traces written to disk per checkpoint batch.",
     )
 
 

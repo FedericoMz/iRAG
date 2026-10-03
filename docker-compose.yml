@@ -11,3 +11,13 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./outputs:/app/outputs
+
+  qdrant:
+    image: qdrant/qdrant:v1.19.1
+    profiles:
+      - benchmark
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./outputs/qdrant-storage:/qdrant/storage

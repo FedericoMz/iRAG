@@ -478,5 +478,25 @@ article.cls
 orcid.eps
 orcid.png
 
+# Local IEEE Access paper template and bundled assets
+/ieeeaccess.cls
+/IEEEtran.cls
+/IEEEtran.bst
+/spotcolor.sty
+/bullet.png
+/logo.png
+/notaglinelogo.png
+/author1.png
+/author2.png
+/author3.png
+/equation3.png
+/fig1.png
+/t1-*.pfb
+/t1-*.tfm
+/t1-*.map
+/t1*.fd
+/access.pdf
+/ACCESS_latex_template_*/
+
 # Local Cursor project instructions
 AGENTS.md

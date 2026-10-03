@@ -30,12 +30,14 @@ challenge tickets are excluded from the paper's nominal metrics.
 ## Complete trajectory plot
 
 [`plots/all-eight-settings.png`](plots/all-eight-settings.png) shows the mean
-FEA, cumulative final-decision error, cumulative human-only error, and
-cumulative static-RAG-with-defer error for every condition. Shaded regions are
-population standard deviations across the ten repetitions at each ticket
-position. Conditions with the same decay setting are arranged side by side for
-10% and 40% drift. The eight full-resolution panels and standalone legend are
-also retained in [`plots/`](plots/).
+FEA, cumulative final-decision error, cumulative human-only error, and the
+independently rolled-out Controller-free RAG-with-defer error for every
+condition. Shaded regions are population standard deviations across the ten
+repetitions at each ticket position. Conditions with the same decay setting
+are arranged side by side for 10% and 40% drift. The eight full-resolution
+panels, the two-panel IDA contrast, and the standalone legend are also retained
+in [`plots/`](plots/). Regenerate these publication figures with
+`make paper-figures`.
 
 ![All eight experimental settings](plots/all-eight-settings.png)
 
@@ -55,8 +57,8 @@ also retained in [`plots/`](plots/).
   RAG decay and FEA decay while holding the other factor fixed.
 - [`baseline-comparisons.csv`](baseline-comparisons.csv): matched iRAG
   final-error minus human-only-baseline comparisons for all conditions.
-- [`controller-comparisons.csv`](controller-comparisons.csv): matched static
-  RAG-with-defer error minus iRAG error on the same realised retrieval
+- [`controller-comparisons.csv`](controller-comparisons.csv): matched
+  model-first replay error minus iRAG error on the same realised retrieval
   trajectory, isolating the immediate SO/SC/DS controller contribution.
 - [`final-state-frequencies.csv`](final-state-frequencies.csv): SO/SC/DS final
   state counts across the ten repetitions of every condition.
@@ -73,9 +75,11 @@ standard deviation, two-sided 95% Student-*t* confidence interval, Cohen's
 points; FEA remains on its native 0--1 scale.
 
 The primary outcomes are final-decision error, stable-ticket error,
-drift-ticket error, and model-finalized proportion. Static RAG-with-defer lets
-the model finalize every non-abstaining proposal and uses the initially
-assigned human answer when the model abstains. Conditional LLM gold-answer
+drift-ticket error, and model-finalized proportion. The historical
+`static_rag_defer_*` columns are a model-first replay over iRAG's realised
+trajectory, not the independent Controller-free RAG-with-defer baseline. In that local
+ablation the model finalizes every non-abstaining proposal and uses the
+initially assigned human answer on abstention. Conditional LLM gold-answer
 error is retained as a model-quality diagnostic.
 
 ## Source-job artifacts
@@ -106,3 +110,12 @@ included here. The aggregate outputs retain the exact raw run filenames.
 Plotting and export code lives in [`src/irag/tools/`](../src/irag/tools/),
 principally `paper_statistics.py`, `analyze_experiment.py`,
 `compose_plot_grid.py`, and `plot_legend.py`.
+
+## Temporal-retrieval benchmark
+
+[`temporal-retrieval/`](temporal-retrieval/) contains the independent Qdrant
+benchmark for the certified temporal-pruning scheme. It includes the complete
+configuration and index/storage measurements (`result.json`), all 4,000
+per-query observations (`per-query.csv`), aggregated metrics (`summary.csv`),
+and the publication plot and LaTeX table. Its workload is separate from the 80
+decision-workflow repetitions described above.

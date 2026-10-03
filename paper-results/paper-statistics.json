@@ -15,8 +15,8 @@
     "paired_difference": "coupled decay minus no decay in percentage points",
     "paired_ci": "two-sided 95% Student-t confidence interval for the matched mean difference",
     "paired_test": "two-sided exact sign-flip randomization test on the matched mean difference",
-    "static_rag_defer": "the model finalizes every non-abstaining proposal and the initially assigned human answers on abstention",
-    "controller_comparison": "static RAG-with-defer error minus iRAG final-decision error on the same realised retrieval trajectory",
+    "static_rag_defer": "legacy field name for a model-first replay over iRAG's realised trajectory: the model finalizes every non-abstaining proposal and the initially assigned human answers on abstention",
+    "controller_comparison": "model-first replay error minus iRAG final-decision error on the same realised retrieval trajectory",
     "multiple_testing": "Holm adjustment across four primary metrics within each paired contrast; baseline and controller comparisons are adjusted across the eight paper conditions"
   },
   "condition_summaries": [

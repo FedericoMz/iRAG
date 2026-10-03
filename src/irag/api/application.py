@@ -18,6 +18,7 @@ from irag.core.models import (
     ExperimentCreated,
     ExperimentRequest,
     ExperimentStatus,
+    ExperimentWorkflow,
     ExpertSelection,
     JobStatus,
     ModelSettings,
@@ -27,10 +28,12 @@ from irag.core.models import (
     Quarter,
     QuarterBatch,
     RunAcceptance,
+    StaticRagWithDeferRequest,
 )
 from irag.data.dataset import SalesXDataset
 from irag.data.store import ExperimentStore
 from irag.engine.experiment import ExperimentRunner
+from irag.engine.static_rag import StaticRagWithDeferRunner
 from irag.tools.logger import logger
 
 
@@ -134,6 +137,36 @@ def create_parallel_run(
         reused_q1,
         None,
         request.reuse_q1_from,
+    )
+    return created_response(job)
+
+
+@app.post(
+    "/v1/baselines/static-rag-with-defer",
+    response_model=ExperimentCreated,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Run an independent controller-free RAG-with-defer baseline",
+)
+def create_static_rag_with_defer_run(
+    background_tasks: BackgroundTasks,
+    request: Annotated[StaticRagWithDeferRequest, Query()],
+) -> ExperimentCreated:
+    experiment_request = build_static_rag_with_defer_request(request)
+    job = store.create(
+        experiment_request,
+        folder_label=(
+            "baseline-static-rag-with-defer"
+            f"__dataset-{request.dataset.value}"
+            f"__repetitions-{request.repetitions}"
+            f"__lambda-rag-{request.lambda_rag:.8g}"
+            f"__extra-{str(request.include_extra).lower()}"
+        ),
+    )
+    background_tasks.add_task(
+        run_parallel_experiment,
+        job.experiment_id,
+        experiment_request,
+        request.checkpoint_interval,
     )
     return created_response(job)
 
@@ -369,12 +402,50 @@ def build_parallel_request(request: ParallelRunRequest) -> ExperimentRequest:
     )
 
 
+def build_static_rag_with_defer_request(
+    request: StaticRagWithDeferRequest,
+) -> ExperimentRequest:
+    condition = ExperimentCondition(
+        name="static_rag_with_defer",
+        workflow=ExperimentWorkflow.STATIC_RAG_WITH_DEFER,
+        assignment_strategy=AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED,
+        # ExperimentCondition retains this field for persistence compatibility,
+        # but the controller-free runner never consults an acceptance policy.
+        acceptance_regime=AcceptanceRegime.ALWAYS,
+        domain_expert_category=request.domain_expert_category,
+        repetitions=request.repetitions,
+        seed=request.seed,
+        quarterly_ceo_tickets=100,
+        lambda_rag=request.lambda_rag,
+        lambda_fea=1.0,
+    )
+    return ExperimentRequest(
+        name=f"Controller-free RAG-with-defer / {request.dataset.value}",
+        dataset=request.dataset,
+        quarters=dataset_for(request.dataset).load_all_quarters(
+            include_extra=request.include_extra
+        ),
+        conditions=[condition],
+        models={
+            "provider": request.provider,
+            "generation_model": request.generation_model,
+            "auxiliary_model": request.auxiliary_model,
+            "ollama_base_url": request.ollama_base_url,
+            "bedrock_region": request.bedrock_region,
+            "timeout": request.timeout,
+            "retries": request.retries,
+        },
+    )
+
+
 def reusable_q1_tickets(
     source_experiment_id: str,
     request: ExperimentRequest,
 ) -> dict[int, list[dict]]:
     """Load a compatible, completed CEO bootstrap as a resumable prefix."""
     condition = request.conditions[0]
+    if condition.workflow != ExperimentWorkflow.IRAG:
+        raise ValueError("Q1 reuse is only available for iRAG workflows")
     if (
         condition.assignment_strategy
         != AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED
@@ -567,7 +638,7 @@ def run_experiment(experiment_id: str, request: ExperimentRequest) -> None:
     store.start(experiment_id)
     try:
         client = make_model_client(request)
-        runner = ExperimentRunner(dataset_for(request.dataset), client)
+        runner = runner_for(request, client)
         result = runner.run(
             experiment_id,
             request,
@@ -645,7 +716,7 @@ def run_parallel_experiment(
 
     try:
         client = make_model_client(request)
-        runner = ExperimentRunner(dataset_for(request.dataset), client)
+        runner = runner_for(request, client)
         result = runner.run_parallel(
             experiment_id,
             request,
@@ -670,6 +741,19 @@ def run_parallel_experiment(
     except Exception as exc:
         logger.exception(f"Parallel experiment {experiment_id} failed")
         store.fail(experiment_id, str(exc))
+
+
+def runner_for(
+    request: ExperimentRequest,
+    client: BaseModelClient,
+) -> ExperimentRunner:
+    workflows = {condition.workflow for condition in request.conditions}
+    if len(workflows) != 1:
+        raise ValueError("One experiment cannot mix iRAG and baseline workflows")
+    workflow = next(iter(workflows))
+    if workflow == ExperimentWorkflow.STATIC_RAG_WITH_DEFER:
+        return StaticRagWithDeferRunner(dataset_for(request.dataset), client)
+    return ExperimentRunner(dataset_for(request.dataset), client)
 
 
 def make_model_client(request: ExperimentRequest) -> BaseModelClient:

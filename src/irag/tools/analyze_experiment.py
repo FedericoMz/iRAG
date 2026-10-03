@@ -155,16 +155,25 @@ def pointwise_mean_std(
 
 
 def averaged_trajectories(runs: list[dict]) -> dict[str, dict[str, list[float]]]:
+    controller_free = all(
+        ticket.get("state_before") == "controller_free"
+        for run in runs
+        for ticket in run["tickets"]
+    )
     calculators = {
-        "FEA": lambda tickets: [ticket["fea_after"] for ticket in tickets],
         "Cumulative final-decision error rate": cumulative_error_rate,
         "Cumulative human-only baseline error rate": (
             cumulative_human_baseline_error_rate
         ),
-        "Cumulative static RAG-with-defer error rate": (
-            cumulative_static_rag_defer_error_rate
-        ),
     }
+    if not controller_free:
+        calculators = {
+            "FEA": lambda tickets: [ticket["fea_after"] for ticket in tickets],
+            **calculators,
+            "Cumulative model-first replay error rate": (
+                cumulative_static_rag_defer_error_rate
+            ),
+        }
     trajectories = {}
     for label, calculate in calculators.items():
         mean, standard_deviation = pointwise_mean_std(
@@ -210,7 +219,7 @@ def plot_average_results(
         "FEA": 0,
         "Cumulative final-decision error rate": -2,
         "Cumulative human-only baseline error rate": 2,
-        "Cumulative static RAG-with-defer error rate": 0,
+        "Cumulative model-first replay error rate": 0,
     }
 
     figure, axis = plt.subplots(figsize=(14, 7))
@@ -244,23 +253,30 @@ def plot_average_results(
         ]
         axis.fill_between(positions, lower, upper, color=color, alpha=0.10)
 
-    for name, symbol, color in (
-        ("alpha", "α", "#15803d"),
-        ("beta", "β", "#f59e0b"),
-        ("gamma", "γ", "#7c3aed"),
-    ):
-        value = configuration[name]
-        axis.axhline(value, color=color, linestyle="--", linewidth=1, alpha=0.7)
-        axis.text(
-            0.94,
-            value + 0.006,
-            f"{symbol}={value:.2f}",
-            transform=axis.get_yaxis_transform(),
-            ha="right",
-            va="bottom",
-            fontsize=9,
-            color=color,
-        )
+    if "FEA" in trajectories:
+        for name, symbol, color in (
+            ("alpha", "α", "#15803d"),
+            ("beta", "β", "#f59e0b"),
+            ("gamma", "γ", "#7c3aed"),
+        ):
+            value = configuration[name]
+            axis.axhline(
+                value,
+                color=color,
+                linestyle="--",
+                linewidth=1,
+                alpha=0.7,
+            )
+            axis.text(
+                0.94,
+                value + 0.006,
+                f"{symbol}={value:.2f}",
+                transform=axis.get_yaxis_transform(),
+                ha="right",
+                va="bottom",
+                fontsize=9,
+                color=color,
+            )
 
     for index, (quarter, start, end) in enumerate(quarter_ranges(tickets)):
         if index:

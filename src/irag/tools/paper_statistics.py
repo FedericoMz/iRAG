@@ -872,12 +872,14 @@ def export_statistics(output_dir: Path, destination: Path) -> list[Path]:
                         "matched mean difference"
                     ),
                     "static_rag_defer": (
-                        "the model finalizes every non-abstaining proposal and "
-                        "the initially assigned human answers on abstention"
+                        "legacy field name for a model-first replay over iRAG's "
+                        "realised trajectory: the model finalizes every "
+                        "non-abstaining proposal and the initially assigned "
+                        "human answers on abstention"
                     ),
                     "controller_comparison": (
-                        "static RAG-with-defer error minus iRAG final-decision "
-                        "error on the same realised retrieval trajectory"
+                        "model-first replay error minus iRAG final-decision error "
+                        "on the same realised retrieval trajectory"
                     ),
                     "multiple_testing": (
                         "Holm adjustment across four primary metrics within each "

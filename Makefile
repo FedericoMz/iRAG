@@ -4,7 +4,7 @@ export PYTHONPATH := $(CURDIR)/src
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install run test lint validate validate-10 validate-40 smoke sample plot legend analyze paper-stats docker-build up down logs
+.PHONY: help install run test lint validate validate-10 validate-40 smoke sample plot legend analyze paper-stats paper-figures temporal-benchmark paper-temporal-benchmark vector-db-up vector-db-down docker-build up down logs
 
 help:
 	@echo "Available commands:"
@@ -21,6 +21,11 @@ help:
 	@echo "  make legend        Render the horizontal plot legend as a separate image"
 	@echo "  make analyze JOB=<job-id>  Plot repetition averages and export abstention/drift statistics"
 	@echo "  make paper-stats    Export statistics, source artifacts, and plots for the eight paper jobs"
+	@echo "  make paper-figures  Regenerate the ICDE and IDA trajectory figures"
+	@echo "  make vector-db-up   Start the Qdrant service used by retrieval benchmarks"
+	@echo "  make vector-db-down Stop the Qdrant benchmark service"
+	@echo "  make temporal-benchmark [ARGS='...']  Benchmark temporal retrieval in Qdrant"
+	@echo "  make paper-temporal-benchmark  Reproduce the exact 50k paper benchmark"
 	@echo "  make docker-build  Build the Docker image"
 	@echo "  make up            Build and start the app with Docker Compose"
 	@echo "  make down          Stop the Docker Compose services"
@@ -67,6 +72,29 @@ analyze:
 
 paper-stats:
 	$(PYTHON) -m irag.tools.paper_statistics
+	$(PYTHON) -m irag.tools.plot_paper_trajectories
+
+paper-figures:
+	$(PYTHON) -m irag.tools.plot_paper_trajectories
+
+vector-db-up:
+	docker compose --profile benchmark up -d qdrant
+
+vector-db-down:
+	docker compose --profile benchmark stop qdrant
+
+temporal-benchmark:
+	$(PYTHON) -m irag.tools.temporal_retrieval_benchmark $(ARGS)
+
+paper-temporal-benchmark:
+	@set -e; \
+		docker compose --profile benchmark up -d qdrant; \
+		trap 'docker compose --profile benchmark stop qdrant' EXIT; \
+		$(PYTHON) -m irag.tools.temporal_retrieval_benchmark \
+			--points 50000 \
+			--queries 200 \
+			--cluster-size 25 \
+			--output-dir "$(or $(OUTPUT),outputs/temporal-retrieval-qdrant-50k)"
 
 docker-build:
 	docker compose build
