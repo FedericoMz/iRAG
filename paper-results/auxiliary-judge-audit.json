@@ -1,0 +1,19 @@
+{
+  "counts": {
+    "recorded_ticket_traces": 160000,
+    "non_abstaining_gold_judgments": 151112,
+    "gold_judgments_rejected": 30102,
+    "explicit_sc_decisions": 16064,
+    "explicit_sc_rejections": 8159,
+    "exact_incorrect_human_matches": 1077,
+    "exact_incorrect_human_matches_rejected": 830,
+    "exact_gold_matches": 19062,
+    "exact_gold_matches_accepted": 19062
+  },
+  "rates_pct": {
+    "explicit_sc_rejection": 50.79058764940239,
+    "gold_judgment_rejection": 19.92032399809413,
+    "exact_incorrect_human_match_rejection": 77.06592386258124,
+    "exact_gold_match_acceptance": 100.0
+  }
+}

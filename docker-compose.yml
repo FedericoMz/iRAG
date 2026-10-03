@@ -1,0 +1,23 @@
+services:
+  api:
+    build: .
+    env_file:
+      - config.env
+    ports:
+      - "8000:8000"
+    environment:
+      OLLAMA_BASE_URL: "http://host.docker.internal:11434"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./outputs:/app/outputs
+
+  qdrant:
+    image: qdrant/qdrant:v1.19.1
+    profiles:
+      - benchmark
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./outputs/qdrant-storage:/qdrant/storage

@@ -1,0 +1,674 @@
+import json
+from dataclasses import replace
+from types import SimpleNamespace
+
+from fastapi.testclient import TestClient
+
+import irag.api.application as api
+from irag.client import OpenRouterClient
+from irag.core.models import (
+    AcceptanceRegime,
+    AssignmentStrategy,
+    DatasetVariant,
+    ExperimentCondition,
+    ExperimentRequest,
+    JobStatus,
+    ModelSettings,
+    ParallelRunRequest,
+    Profile,
+    Quarter,
+    QuarterBatch,
+    StaticRagWithDeferRequest,
+)
+from irag.data.store import ExperimentStore
+from irag.engine.static_rag import StaticRagWithDeferRunner
+from tests.test_experiment import FakeClient, FakeDataset, make_ticket
+
+
+def test_health_endpoint():
+    response = TestClient(api.app).get("/health")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
+
+
+def test_bundled_dataset_exposes_post_q4_abstention_split():
+    dataset = api.dataset_for(DatasetVariant.DRIFT_10)
+    batch = dataset.load_quarter(Quarter.EXTRA)
+
+    assert batch.quarter == Quarter.EXTRA
+    assert len(batch.records) == 50
+    assert all(record.requires_model_abstention for record in batch.records)
+    assert dataset.vector(batch.records[0].id).shape == (2560,)
+
+
+def test_experiment_endpoint_accepts_complete_ticket_metadata(monkeypatch):
+    monkeypatch.setattr(api, "run_experiment", lambda *_: None)
+    record = api.dataset_for(DatasetVariant.DRIFT_10).load_quarter(
+        Quarter.Q1
+    ).records[0]
+    payload = {
+        "name": "contract test",
+        "models": {"provider": "ollama"},
+        "quarters": [
+            {
+                "quarter": "Q1",
+                "records": [record.model_dump(mode="json")],
+            }
+        ],
+        "conditions": [
+            {
+                "name": "baseline",
+                "assignment_strategy": "single_profile",
+                "single_profile": "ceo",
+                "acceptance_regime": "never_accept",
+                "repetitions": 1,
+                "system_enabled": False,
+            }
+        ],
+    }
+
+    response = TestClient(api.app).post("/v1/experiments", json=payload)
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "queued"
+
+
+def test_model_factory_selects_openrouter_without_putting_key_in_request(monkeypatch):
+    monkeypatch.setattr(
+        api,
+        "settings",
+        replace(api.settings, openrouter_api_key="environment-key"),
+    )
+    request = SimpleNamespace(
+        models=ModelSettings(
+            provider="openrouter",
+            generation_model="vendor/generation",
+            auxiliary_model="vendor/judge",
+        )
+    )
+
+    client = api.make_model_client(request)
+
+    assert isinstance(client, OpenRouterClient)
+    assert client.api_key == "environment-key"
+
+
+def test_model_factory_selects_bedrock_without_api_credentials(monkeypatch):
+    captured = {}
+
+    def fake_bedrock_client(**arguments):
+        captured.update(arguments)
+        return SimpleNamespace(provider="bedrock")
+
+    monkeypatch.setattr(api, "BedrockClient", fake_bedrock_client)
+    request = SimpleNamespace(
+        models=ModelSettings(
+            provider="bedrock",
+            generation_model="eu.vendor/generation",
+            auxiliary_model="eu.vendor/judge",
+            bedrock_region="eu-west-1",
+        )
+    )
+
+    client = api.make_model_client(request)
+
+    assert client.provider == "bedrock"
+    assert captured["region"] == "eu-west-1"
+    assert captured["profile"] == api.settings.bedrock_profile
+    assert captured["generation_model"] == "eu.vendor/generation"
+    assert captured["auxiliary_model"] == "eu.vendor/judge"
+
+
+def test_parallel_run_endpoint_uses_dropdown_values_and_parameter_folder(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(api, "store", ExperimentStore(tmp_path))
+    submitted = []
+    monkeypatch.setattr(
+        api,
+        "run_parallel_experiment",
+        lambda _, request, *args: submitted.append(request),
+    )
+
+    response = TestClient(api.app).post(
+        "/v1/runs",
+        params={
+            "dataset": "drift_40",
+            "expert": "informed_mixture",
+            "acceptance": "randomize",
+            "repetitions": 2,
+            "lambda_rag": 0.99,
+            "lambda_fea": 0.97,
+            "provider": "openrouter",
+            "generation_model": "vendor/decision-model",
+            "auxiliary_model": "vendor/judge-model",
+            "timeout": 120,
+            "retries": 2,
+        },
+    )
+
+    assert response.status_code == 202
+    experiment_id = response.json()["experiment_id"]
+    status_response = TestClient(api.app).get(f"/v1/experiments/{experiment_id}")
+    output_directory = status_response.json()["output_directory"]
+    assert (
+        "dataset-drift_40__expert-informed_mixture__acceptance-randomize"
+        "__repetitions-2__lambda-rag-0.99__lambda-fea-0.97"
+        "__extra-false__job-"
+    ) in output_directory
+    assert submitted[0].models.provider.value == "openrouter"
+    assert submitted[0].models.generation_model == "vendor/decision-model"
+    assert submitted[0].models.auxiliary_model == "vendor/judge-model"
+    assert submitted[0].models.timeout == 120
+    assert submitted[0].models.retries == 2
+    assert submitted[0].conditions[0].lambda_rag == 0.99
+    assert submitted[0].conditions[0].lambda_fea == 0.97
+    assert submitted[0].dataset == DatasetVariant.DRIFT_40
+    assert sum(
+        record.is_changed_answer_near_duplicate
+        for record in submitted[0].quarters[1].records
+    ) == 200
+
+
+def test_parallel_run_schema_exposes_expert_and_acceptance_enums():
+    schema = api.app.openapi()
+    schemas = schema["components"]["schemas"]
+
+    assert schemas["ExpertSelection"]["enum"] == [
+        "ceo",
+        "domain_expert",
+        "intern",
+        "random_mixture",
+        "informed_mixture",
+        "ceo_bootstrapped_informed_mixture",
+    ]
+    assert schemas["RunAcceptance"]["enum"] == [
+        "always_refuse",
+        "always_accept",
+        "randomize",
+        "gold_similarity",
+    ]
+    assert schemas["ModelProvider"]["enum"] == [
+        "ollama",
+        "openrouter",
+        "bedrock",
+    ]
+    run_parameters = {
+        parameter["name"]
+        for parameter in schema["paths"]["/v1/runs"]["post"]["parameters"]
+    }
+    assert "lambda_rag" in run_parameters
+    assert "lambda_fea" in run_parameters
+    assert "decay" not in run_parameters
+    assert schemas["DatasetVariant"]["enum"] == ["drift_10", "drift_40"]
+    parameters = {
+        parameter["name"]: parameter
+        for parameter in api.app.openapi()["paths"]["/v1/runs"]["post"]["parameters"]
+    }
+    assert parameters["provider"]["schema"]["anyOf"][0]["$ref"].endswith(
+        "/ModelProvider"
+    )
+    assert "generation_model" in parameters
+    assert "auxiliary_model" in parameters
+    assert "bedrock_region" in parameters
+    assert parameters["checkpoint_interval"]["schema"]["default"] == 50
+    assert parameters["include_extra"]["schema"]["default"] is False
+    assert parameters["dataset"]["schema"]["$ref"].endswith(
+        "/DatasetVariant"
+    )
+    assert "reuse_q1_from" in parameters
+
+
+def test_static_rag_with_defer_endpoint_builds_an_independent_baseline_job(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(api, "store", ExperimentStore(tmp_path))
+    submitted = []
+    monkeypatch.setattr(
+        api,
+        "run_parallel_experiment",
+        lambda *arguments: submitted.append(arguments),
+    )
+
+    response = TestClient(api.app).post(
+        "/v1/baselines/static-rag-with-defer",
+        params={
+            "dataset": "drift_40",
+            "repetitions": 2,
+            "lambda_rag": 1.0,
+            "seed": 20260717,
+            "domain_expert_category": "billing",
+            "include_extra": False,
+        },
+    )
+
+    assert response.status_code == 202
+    experiment_id = response.json()["experiment_id"]
+    output_directory = TestClient(api.app).get(
+        f"/v1/experiments/{experiment_id}"
+    ).json()["output_directory"]
+    request = submitted[0][1]
+    condition = request.conditions[0]
+    assert "baseline-static-rag-with-defer__dataset-drift_40" in output_directory
+    assert condition.workflow.value == "static_rag_with_defer"
+    assert (
+        condition.assignment_strategy
+        == AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED
+    )
+    assert condition.repetitions == 2
+    assert condition.lambda_rag == 1.0
+    assert condition.lambda_fea == 1.0
+    assert condition.quarterly_ceo_tickets == 100
+    assert request.dataset == DatasetVariant.DRIFT_40
+    assert submitted[0][2] == 50
+
+
+def test_static_rag_request_does_not_expose_irag_controller_parameters():
+    parameters = {
+        parameter["name"]
+        for parameter in api.app.openapi()["paths"][
+            "/v1/baselines/static-rag-with-defer"
+        ]["post"]["parameters"]
+    }
+
+    assert "dataset" in parameters
+    assert "repetitions" in parameters
+    assert "lambda_rag" in parameters
+    assert "lambda_fea" not in parameters
+    assert "acceptance" not in parameters
+    assert "expert" not in parameters
+    assert "reuse_q1_from" not in parameters
+
+
+def test_static_rag_request_uses_the_paper_protocol_defaults():
+    built = api.build_static_rag_with_defer_request(
+        StaticRagWithDeferRequest()
+    )
+    condition = built.conditions[0]
+
+    assert condition.workflow.value == "static_rag_with_defer"
+    assert condition.seed == 20260717
+    assert condition.repetitions == 10
+    assert condition.quarterly_ceo_tickets == 100
+    assert condition.domain_expert_category.value == "billing"
+    assert [batch.quarter for batch in built.quarters] == [
+        Quarter.Q1,
+        Quarter.Q2,
+        Quarter.Q3,
+        Quarter.Q4,
+    ]
+
+
+def test_static_rag_workflow_selects_the_independent_runner(monkeypatch):
+    request = api.build_static_rag_with_defer_request(
+        StaticRagWithDeferRequest(repetitions=1)
+    )
+    monkeypatch.setattr(api, "dataset_for", lambda _: FakeDataset())
+
+    runner = api.runner_for(request, FakeClient())
+
+    assert isinstance(runner, StaticRagWithDeferRunner)
+
+
+def test_resume_reconstructs_static_rag_workflow():
+    original = api.build_static_rag_with_defer_request(
+        StaticRagWithDeferRequest(
+            dataset="drift_40",
+            repetitions=2,
+            lambda_rag=1.0,
+        )
+    )
+    metadata = {
+        "name": original.name,
+        "dataset_variant": "drift_40",
+        "configuration": original.conditions[0].model_dump(
+            mode="json", by_alias=True
+        ),
+        "models": {
+            "provider": "bedrock",
+            "generation": {"name": "generation"},
+            "auxiliary": {"name": "auxiliary"},
+        },
+        "records": {"SX-Q4-BIL-001": {"quarter": "Q4"}},
+    }
+
+    resumed = api.build_resume_request(metadata)
+
+    assert resumed.conditions[0].workflow.value == "static_rag_with_defer"
+    assert resumed.conditions[0].lambda_rag == 1.0
+    assert resumed.conditions[0].repetitions == 2
+    assert resumed.dataset == DatasetVariant.DRIFT_40
+
+
+def test_openapi_does_not_expose_obsolete_paper_suite_endpoints():
+    paths = api.app.openapi()["paths"]
+
+    assert "/v1/experiments/paper-suite" not in paths
+    assert "/v1/experiments/paper-suite/bundled" not in paths
+
+
+def test_parallel_request_supports_ceo_bootstrapped_informed_mixture():
+    request = ParallelRunRequest(
+        expert="ceo_bootstrapped_informed_mixture",
+        acceptance="gold_similarity",
+        repetitions=1,
+    )
+
+    built = api.build_parallel_request(request)
+    condition = built.conditions[0]
+
+    assert (
+        condition.assignment_strategy
+        == AssignmentStrategy.CEO_BOOTSTRAPPED_INFORMED
+    )
+    assert condition.alpha == 0.7
+    assert condition.gamma == 0.8
+    assert condition.quarterly_ceo_tickets == 100
+    assert condition.acceptance_regime == AcceptanceRegime.GOLD_SIMILARITY
+    assert [batch.quarter for batch in built.quarters] == [
+        Quarter.Q1,
+        Quarter.Q2,
+        Quarter.Q3,
+        Quarter.Q4,
+    ]
+
+
+def test_parallel_request_includes_extra_only_when_requested():
+    request = ParallelRunRequest(
+        expert="informed_mixture",
+        acceptance="gold_similarity",
+        repetitions=1,
+        include_extra=True,
+    )
+
+    built = api.build_parallel_request(request)
+
+    assert [batch.quarter for batch in built.quarters] == [
+        Quarter.Q1,
+        Quarter.Q2,
+        Quarter.Q3,
+        Quarter.Q4,
+        Quarter.EXTRA,
+    ]
+
+
+def test_dataset_quarter_endpoint_selects_the_requested_variant():
+    client = TestClient(api.app)
+
+    nominal = client.get(
+        "/v1/dataset/quarters/Q2",
+        params={"dataset": "drift_10"},
+    )
+    high_drift = client.get(
+        "/v1/dataset/quarters/Q2",
+        params={"dataset": "drift_40"},
+    )
+
+    assert nominal.status_code == 200
+    assert high_drift.status_code == 200
+    assert sum(
+        record["is_changed_answer_near_duplicate"]
+        for record in nominal.json()["records"]
+    ) == 50
+    assert sum(
+        record["is_changed_answer_near_duplicate"]
+        for record in high_drift.json()["records"]
+    ) == 200
+
+
+def test_resume_reconstructs_extra_scope_from_saved_records():
+    condition = api.build_parallel_request(
+        ParallelRunRequest(
+            expert="informed_mixture",
+            acceptance="gold_similarity",
+            repetitions=1,
+        )
+    ).conditions[0]
+    metadata = {
+        "name": "resume scope",
+        "configuration": condition.model_dump(mode="json", by_alias=True),
+        "models": {
+            "provider": "bedrock",
+            "generation": {"name": "generation"},
+            "auxiliary": {"name": "auxiliary"},
+        },
+        "records": {"SX-Q4-BIL-001": {"quarter": "Q4"}},
+    }
+
+    nominal = api.build_resume_request(metadata)
+    metadata["records"]["SX-EXTRA-001"] = {"quarter": "Extra"}
+    with_extra = api.build_resume_request(metadata)
+
+    assert nominal.quarters[-1].quarter == Quarter.Q4
+    assert with_extra.quarters[-1].quarter == Quarter.EXTRA
+
+
+def test_resume_reconstructs_the_original_dataset_variant():
+    condition = api.build_parallel_request(
+        ParallelRunRequest(
+            dataset="drift_40",
+            expert="informed_mixture",
+            acceptance="gold_similarity",
+            repetitions=1,
+        )
+    ).conditions[0]
+    metadata = {
+        "name": "resume high drift",
+        "dataset_variant": "drift_40",
+        "configuration": condition.model_dump(mode="json", by_alias=True),
+        "models": {
+            "provider": "bedrock",
+            "generation": {"name": "generation"},
+            "auxiliary": {"name": "auxiliary"},
+        },
+        "records": {"SX-Q4-BIL-001": {"quarter": "Q4"}},
+    }
+
+    resumed = api.build_resume_request(metadata)
+
+    assert resumed.dataset == DatasetVariant.DRIFT_40
+    assert sum(
+        record.is_changed_answer_near_duplicate
+        for record in resumed.quarters[1].records
+    ) == 200
+
+
+def test_parallel_run_can_reuse_a_compatible_completed_q1(
+    monkeypatch, tmp_path
+):
+    experiment_store = ExperimentStore(tmp_path)
+    monkeypatch.setattr(api, "store", experiment_store)
+    submitted = []
+    monkeypatch.setattr(
+        api,
+        "run_parallel_experiment",
+        lambda *arguments: submitted.append(arguments),
+    )
+    source_request = api.build_parallel_request(
+        ParallelRunRequest(
+            dataset="drift_10",
+            expert="ceo_bootstrapped_informed_mixture",
+            acceptance="gold_similarity",
+            repetitions=1,
+            lambda_rag=0.99861,
+            lambda_fea=0.99861,
+        )
+    )
+    source = experiment_store.create(source_request, "source")
+    experiment_store.start(source.experiment_id)
+    identity = api.effective_model_identity(source_request.models)
+    q1_records = {
+        record.id: record.model_dump(mode="json")
+        for record in source_request.quarters[0].records
+    }
+    experiment_store.write_metadata(
+        source.experiment_id,
+        {
+            "name": source_request.name,
+            "configuration": source_request.conditions[0].model_dump(
+                mode="json", by_alias=True
+            ),
+            "models": {
+                "provider": identity["provider"],
+                "generation": {
+                    "name": identity["generation"],
+                    "region": identity["region"],
+                },
+                "auxiliary": {
+                    "name": identity["auxiliary"],
+                    "region": identity["region"],
+                },
+            },
+            "records": q1_records,
+        },
+    )
+    experiment_store.write_run(
+        source.experiment_id,
+        1,
+        {
+            "seed": 20260717,
+            "tickets": [
+                {
+                    "quarter": "Q1",
+                    "global_position": position,
+                }
+                for position in range(1, 501)
+            ],
+        },
+    )
+    experiment_store.complete(source.experiment_id, {"status": "complete"})
+
+    response = TestClient(api.app).post(
+        "/v1/runs",
+        params={
+            "dataset": "drift_40",
+            "expert": "ceo_bootstrapped_informed_mixture",
+            "acceptance": "gold_similarity",
+            "repetitions": 1,
+            "lambda_rag": 0.99861,
+            "lambda_fea": 0.99861,
+            "reuse_q1_from": source.experiment_id,
+        },
+    )
+
+    assert response.status_code == 202
+    new_id = response.json()["experiment_id"]
+    assert len(experiment_store.read_partial_tickets(new_id, 1)) == 500
+    assert submitted[0][3][1][0]["quarter"] == "Q1"
+    assert submitted[0][5] == source.experiment_id
+
+
+def test_parallel_background_job_persists_each_repetition(monkeypatch, tmp_path):
+    experiment_store = ExperimentStore(tmp_path)
+    monkeypatch.setattr(api, "store", experiment_store)
+    monkeypatch.setattr(api, "dataset_for", lambda _: FakeDataset())
+    monkeypatch.setattr(api, "make_model_client", lambda _: FakeClient())
+    request = ExperimentRequest(
+        name="parallel persistence",
+        quarters=[
+            QuarterBatch(
+                quarter=Quarter.Q1,
+                records=[make_ticket(number) for number in range(1, 4)],
+            )
+        ],
+        conditions=[
+            ExperimentCondition(
+                name="parallel-persistence",
+                assignment_strategy=AssignmentStrategy.SINGLE,
+                single_profile=Profile.CEO,
+                acceptance_regime=AcceptanceRegime.NEVER,
+                repetitions=2,
+            )
+        ],
+    )
+    job = experiment_store.create(request, "parallel-persistence")
+
+    api.run_parallel_experiment(job.experiment_id, request)
+
+    completed = experiment_store.get(job.experiment_id)
+    assert completed.status == JobStatus.COMPLETED
+    assert experiment_store.metadata_path(job.experiment_id).is_file()
+    assert experiment_store.result_path(job.experiment_id).is_file()
+    assert [path.name for path in experiment_store.list_runs(job.experiment_id)] == [
+        "run-001.json",
+        "run-002.json",
+    ]
+    first_run = json.loads(
+        experiment_store.run_path(job.experiment_id, 1).read_text(encoding="utf-8")
+    )
+    assert len(first_run["tickets"]) == 3
+    assert not experiment_store.partial_run_path(job.experiment_id, 1).exists()
+
+
+def test_resume_endpoint_recovers_job_after_process_restart(monkeypatch, tmp_path):
+    request = ExperimentRequest(
+        name="resumable run",
+        quarters=[QuarterBatch(quarter=Quarter.Q1, records=[make_ticket(1)])],
+        conditions=[
+            ExperimentCondition(
+                name="resumable",
+                assignment_strategy=AssignmentStrategy.SINGLE,
+                single_profile=Profile.CEO,
+                acceptance_regime=AcceptanceRegime.NEVER,
+                repetitions=2,
+            )
+        ],
+    )
+    old_store = ExperimentStore(tmp_path)
+    old_job = old_store.create(request, "resumable")
+    old_store.write_metadata(
+        old_job.experiment_id,
+        {
+            "name": request.name,
+            "started_at": old_job.created_at.isoformat(),
+        },
+    )
+    old_store.append_run_tickets(
+        old_job.experiment_id,
+        1,
+        [{"global_position": 1}],
+    )
+    old_store.write_run(
+        old_job.experiment_id,
+        2,
+        {
+            "repetition": 2,
+            "seed": 20260718,
+            "summary": {"overall": {"tickets": 1, "errors": 0, "error_rate": 0}},
+            "transitions": [],
+        },
+    )
+
+    restarted_store = ExperimentStore(tmp_path)
+    submitted = []
+    monkeypatch.setattr(api, "store", restarted_store)
+    monkeypatch.setattr(api, "build_resume_request", lambda _: request)
+    monkeypatch.setattr(
+        api,
+        "run_parallel_experiment",
+        lambda *arguments: submitted.append(arguments),
+    )
+
+    response = TestClient(api.app).post(
+        f"/v1/runs/{old_job.experiment_id}/resume"
+    )
+
+    assert response.status_code == 202
+    assert response.json()["experiment_id"] == old_job.experiment_id
+    assert response.json()["status"] == "queued"
+    assert submitted[0][0] == old_job.experiment_id
+    assert submitted[0][3] == {1: [{"global_position": 1}]}
+    assert submitted[0][4] == {
+        2: {
+            "seed": 20260718,
+            "output_file": "run-002.json",
+            "summary": {
+                "overall": {"tickets": 1, "errors": 0, "error_rate": 0}
+            },
+            "transitions": [],
+        }
+    }
+    recovered = restarted_store.get(old_job.experiment_id)
+    assert recovered is not None
+    assert recovered.output_directory == old_job.output_directory

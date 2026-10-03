@@ -1,0 +1,2252 @@
+[
+  {
+    "id": "SX-EXTRA-037",
+    "quarter": "Extra",
+    "sequence_in_quarter": 37,
+    "difficulty": "hard",
+    "category": "integrations",
+    "policy_key": "extra.abstention_037",
+    "article_title": "Abstention challenge: mortgage underwriting",
+    "question": "Can SalesX calculate a regulated mortgage affordability decision from verified income, debts, and property valuation?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about mortgage underwriting. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about mortgage underwriting. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about mortgage underwriting. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about mortgage underwriting. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 1
+  },
+  {
+    "id": "SX-EXTRA-008",
+    "quarter": "Extra",
+    "sequence_in_quarter": 8,
+    "difficulty": "hard",
+    "category": "permissions",
+    "policy_key": "extra.abstention_008",
+    "article_title": "Abstention challenge: clinical dosage calculation",
+    "question": "A clinician wants SalesX to recommend a medication dose from a patient's weight and renal function. How is that configured?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about clinical dosage calculation. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about clinical dosage calculation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about clinical dosage calculation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about clinical dosage calculation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 2
+  },
+  {
+    "id": "SX-EXTRA-028",
+    "quarter": "Extra",
+    "sequence_in_quarter": 28,
+    "difficulty": "hard",
+    "category": "permissions",
+    "policy_key": "extra.abstention_028",
+    "article_title": "Abstention challenge: athlete biometric coaching",
+    "question": "How does SalesX combine lactate, heart-rate variability, and training load to prescribe an athlete's recovery session?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about athlete biometric coaching. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about athlete biometric coaching. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about athlete biometric coaching. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about athlete biometric coaching. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 3
+  },
+  {
+    "id": "SX-EXTRA-002",
+    "quarter": "Extra",
+    "sequence_in_quarter": 2,
+    "difficulty": "hard",
+    "category": "integrations",
+    "policy_key": "extra.abstention_002",
+    "article_title": "Abstention challenge: genomic sequence alignment",
+    "question": "Our laboratory needs to align raw genome reads and call novel variants. Which SalesX workflow performs that analysis?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about genomic sequence alignment. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about genomic sequence alignment. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about genomic sequence alignment. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about genomic sequence alignment. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 4
+  },
+  {
+    "id": "SX-EXTRA-021",
+    "quarter": "Extra",
+    "sequence_in_quarter": 21,
+    "difficulty": "hard",
+    "category": "billing",
+    "policy_key": "extra.abstention_021",
+    "article_title": "Abstention challenge: food cold-chain monitoring",
+    "question": "Can SalesX evaluate refrigerated-container temperature probes and release or quarantine a food shipment?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about food cold-chain monitoring. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about food cold-chain monitoring. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about food cold-chain monitoring. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about food cold-chain monitoring. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 5
+  },
+  {
+    "id": "SX-EXTRA-004",
+    "quarter": "Extra",
+    "sequence_in_quarter": 4,
+    "difficulty": "hard",
+    "category": "reporting",
+    "policy_key": "extra.abstention_004",
+    "article_title": "Abstention challenge: radiocarbon calibration",
+    "question": "Can SalesX calibrate a radiocarbon measurement against archaeological dating curves and estimate a specimen's age interval?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about radiocarbon calibration. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about radiocarbon calibration. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about radiocarbon calibration. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about radiocarbon calibration. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 6
+  },
+  {
+    "id": "SX-EXTRA-050",
+    "quarter": "Extra",
+    "sequence_in_quarter": 50,
+    "difficulty": "hard",
+    "category": "onboarding",
+    "policy_key": "extra.abstention_050",
+    "article_title": "Abstention challenge: quantum-circuit compilation",
+    "question": "Which SalesX component maps a quantum circuit onto physical qubits while minimizing gate and readout errors?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about quantum-circuit compilation. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about quantum-circuit compilation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about quantum-circuit compilation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about quantum-circuit compilation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 7
+  },
+  {
+    "id": "SX-EXTRA-044",
+    "quarter": "Extra",
+    "sequence_in_quarter": 44,
+    "difficulty": "hard",
+    "category": "reporting",
+    "policy_key": "extra.abstention_044",
+    "article_title": "Abstention challenge: pipe-organ tuning",
+    "question": "A pipe-organ builder needs beat-frequency measurements converted into temperament offsets for each rank. Can SalesX produce the tuning schedule?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about pipe-organ tuning. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about pipe-organ tuning. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about pipe-organ tuning. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about pipe-organ tuning. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 8
+  },
+  {
+    "id": "SX-EXTRA-010",
+    "quarter": "Extra",
+    "sequence_in_quarter": 10,
+    "difficulty": "hard",
+    "category": "onboarding",
+    "policy_key": "extra.abstention_010",
+    "article_title": "Abstention challenge: cryptocurrency custody",
+    "question": "What procedure does SalesX use to generate and custody private keys for an institutional cryptocurrency wallet?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about cryptocurrency custody. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about cryptocurrency custody. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about cryptocurrency custody. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about cryptocurrency custody. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 9
+  },
+  {
+    "id": "SX-EXTRA-022",
+    "quarter": "Extra",
+    "sequence_in_quarter": 22,
+    "difficulty": "hard",
+    "category": "integrations",
+    "policy_key": "extra.abstention_022",
+    "article_title": "Abstention challenge: telescope observation scheduling",
+    "question": "Which SalesX feature schedules telescope targets according to celestial visibility, seeing, and lunar illumination?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about telescope observation scheduling. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about telescope observation scheduling. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about telescope observation scheduling. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about telescope observation scheduling. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 10
+  },
+  {
+    "id": "SX-EXTRA-015",
+    "quarter": "Extra",
+    "sequence_in_quarter": 15,
+    "difficulty": "hard",
+    "category": "onboarding",
+    "policy_key": "extra.abstention_015",
+    "article_title": "Abstention challenge: online exam proctoring",
+    "question": "How does SalesX detect prohibited materials and identity substitution during a remotely proctored university examination?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about online exam proctoring. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about online exam proctoring. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about online exam proctoring. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about online exam proctoring. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 11
+  },
+  {
+    "id": "SX-EXTRA-020",
+    "quarter": "Extra",
+    "sequence_in_quarter": 20,
+    "difficulty": "hard",
+    "category": "onboarding",
+    "policy_key": "extra.abstention_020",
+    "article_title": "Abstention challenge: electricity smart-meter settlement",
+    "question": "How does SalesX validate interval readings and settle electricity consumption from residential smart meters?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about electricity smart-meter settlement. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about electricity smart-meter settlement. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about electricity smart-meter settlement. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about electricity smart-meter settlement. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 12
+  },
+  {
+    "id": "SX-EXTRA-031",
+    "quarter": "Extra",
+    "sequence_in_quarter": 31,
+    "difficulty": "hard",
+    "category": "billing",
+    "policy_key": "extra.abstention_031",
+    "article_title": "Abstention challenge: laboratory reagent preparation",
+    "question": "Does SalesX calculate reagent dilutions and print preparation labels for a molecular-biology protocol?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about laboratory reagent preparation. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about laboratory reagent preparation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about laboratory reagent preparation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about laboratory reagent preparation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 13
+  },
+  {
+    "id": "SX-EXTRA-035",
+    "quarter": "Extra",
+    "sequence_in_quarter": 35,
+    "difficulty": "hard",
+    "category": "onboarding",
+    "policy_key": "extra.abstention_035",
+    "article_title": "Abstention challenge: textile dye formulation",
+    "question": "Which SalesX tool derives a dye recipe from a target spectrophotometer reading and fabric composition?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about textile dye formulation. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about textile dye formulation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about textile dye formulation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about textile dye formulation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 14
+  },
+  {
+    "id": "SX-EXTRA-005",
+    "quarter": "Extra",
+    "sequence_in_quarter": 5,
+    "difficulty": "hard",
+    "category": "onboarding",
+    "policy_key": "extra.abstention_005",
+    "article_title": "Abstention challenge: recipe allergen analysis",
+    "question": "Can a restaurant use SalesX to derive allergen declarations from ingredient quantities in a new recipe?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about recipe allergen analysis. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about recipe allergen analysis. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about recipe allergen analysis. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about recipe allergen analysis. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 15
+  },
+  {
+    "id": "SX-EXTRA-045",
+    "quarter": "Extra",
+    "sequence_in_quarter": 45,
+    "difficulty": "hard",
+    "category": "onboarding",
+    "policy_key": "extra.abstention_045",
+    "article_title": "Abstention challenge: restaurant tip distribution",
+    "question": "Can SalesX allocate a restaurant's pooled tips according to hours, roles, and local wage regulations?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about restaurant tip distribution. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about restaurant tip distribution. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about restaurant tip distribution. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about restaurant tip distribution. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 16
+  },
+  {
+    "id": "SX-EXTRA-011",
+    "quarter": "Extra",
+    "sequence_in_quarter": 11,
+    "difficulty": "hard",
+    "category": "billing",
+    "policy_key": "extra.abstention_011",
+    "article_title": "Abstention challenge: warehouse robot navigation",
+    "question": "How should we upload a warehouse map so SalesX can plan collision-free routes for picking robots?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about warehouse robot navigation. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about warehouse robot navigation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about warehouse robot navigation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about warehouse robot navigation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 17
+  },
+  {
+    "id": "SX-EXTRA-034",
+    "quarter": "Extra",
+    "sequence_in_quarter": 34,
+    "difficulty": "hard",
+    "category": "reporting",
+    "policy_key": "extra.abstention_034",
+    "article_title": "Abstention challenge: traffic-signal optimization",
+    "question": "Can SalesX optimize traffic-light phases from induction-loop counts and pedestrian crossing demand?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about traffic-signal optimization. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about traffic-signal optimization. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about traffic-signal optimization. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about traffic-signal optimization. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 18
+  },
+  {
+    "id": "SX-EXTRA-043",
+    "quarter": "Extra",
+    "sequence_in_quarter": 43,
+    "difficulty": "hard",
+    "category": "permissions",
+    "policy_key": "extra.abstention_043",
+    "article_title": "Abstention challenge: chess tournament pairing",
+    "question": "Can SalesX construct Swiss-system chess pairings while respecting score groups, colour history, and prior opponents?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about chess tournament pairing. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about chess tournament pairing. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about chess tournament pairing. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about chess tournament pairing. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 19
+  },
+  {
+    "id": "SX-EXTRA-041",
+    "quarter": "Extra",
+    "sequence_in_quarter": 41,
+    "difficulty": "hard",
+    "category": "billing",
+    "policy_key": "extra.abstention_041",
+    "article_title": "Abstention challenge: cinema colour grading",
+    "question": "Can SalesX apply a scene-referred colour transform and generate a theatrical digital-cinema mastering package?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about cinema colour grading. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about cinema colour grading. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about cinema colour grading. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about cinema colour grading. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 20
+  },
+  {
+    "id": "SX-EXTRA-013",
+    "quarter": "Extra",
+    "sequence_in_quarter": 13,
+    "difficulty": "hard",
+    "category": "permissions",
+    "policy_key": "extra.abstention_013",
+    "article_title": "Abstention challenge: ship ballast control",
+    "question": "Where does a vessel operator set ballast-tank transfer sequences and stability limits inside SalesX?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about ship ballast control. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about ship ballast control. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about ship ballast control. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about ship ballast control. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 21
+  },
+  {
+    "id": "SX-EXTRA-033",
+    "quarter": "Extra",
+    "sequence_in_quarter": 33,
+    "difficulty": "hard",
+    "category": "permissions",
+    "policy_key": "extra.abstention_033",
+    "article_title": "Abstention challenge: building fire-alarm programming",
+    "question": "Where can a technician configure detector zones and evacuation cause-and-effect logic for a fire-alarm panel in SalesX?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about building fire-alarm programming. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about building fire-alarm programming. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about building fire-alarm programming. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about building fire-alarm programming. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 22
+  },
+  {
+    "id": "SX-EXTRA-003",
+    "quarter": "Extra",
+    "sequence_in_quarter": 3,
+    "difficulty": "hard",
+    "category": "permissions",
+    "policy_key": "extra.abstention_003",
+    "article_title": "Abstention challenge: aircraft maintenance certification",
+    "question": "Does SalesX issue airworthiness sign-offs after tracking the inspection history of a passenger aircraft?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about aircraft maintenance certification. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about aircraft maintenance certification. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about aircraft maintenance certification. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about aircraft maintenance certification. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 23
+  },
+  {
+    "id": "SX-EXTRA-027",
+    "quarter": "Extra",
+    "sequence_in_quarter": 27,
+    "difficulty": "hard",
+    "category": "integrations",
+    "policy_key": "extra.abstention_027",
+    "article_title": "Abstention challenge: mining blast design",
+    "question": "Can SalesX determine borehole spacing, explosive charge weights, and safe exclusion zones for an open-pit blast?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about mining blast design. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about mining blast design. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about mining blast design. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about mining blast design. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 24
+  },
+  {
+    "id": "SX-EXTRA-039",
+    "quarter": "Extra",
+    "sequence_in_quarter": 39,
+    "difficulty": "hard",
+    "category": "reporting",
+    "policy_key": "extra.abstention_039",
+    "article_title": "Abstention challenge: airline crew rostering",
+    "question": "Does SalesX build flight-crew rosters while enforcing aviation duty-time and mandatory-rest regulations?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about airline crew rostering. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about airline crew rostering. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about airline crew rostering. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about airline crew rostering. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 25
+  },
+  {
+    "id": "SX-EXTRA-032",
+    "quarter": "Extra",
+    "sequence_in_quarter": 32,
+    "difficulty": "hard",
+    "category": "integrations",
+    "policy_key": "extra.abstention_032",
+    "article_title": "Abstention challenge: election ballot tabulation",
+    "question": "How does SalesX validate ranked-choice ballots and calculate elimination rounds for a public election?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about election ballot tabulation. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about election ballot tabulation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about election ballot tabulation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about election ballot tabulation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 26
+  },
+  {
+    "id": "SX-EXTRA-006",
+    "quarter": "Extra",
+    "sequence_in_quarter": 6,
+    "difficulty": "hard",
+    "category": "billing",
+    "policy_key": "extra.abstention_006",
+    "article_title": "Abstention challenge: autonomous drone geofencing",
+    "question": "Where do we configure flight corridors and collision-avoidance geofences for an autonomous delivery-drone fleet in SalesX?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about autonomous drone geofencing. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about autonomous drone geofencing. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about autonomous drone geofencing. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about autonomous drone geofencing. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 27
+  },
+  {
+    "id": "SX-EXTRA-023",
+    "quarter": "Extra",
+    "sequence_in_quarter": 23,
+    "difficulty": "hard",
+    "category": "permissions",
+    "policy_key": "extra.abstention_023",
+    "article_title": "Abstention challenge: actuarial reserve calculation",
+    "question": "Can an insurer calculate claim-development triangles and statutory loss reserves directly in SalesX?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about actuarial reserve calculation. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about actuarial reserve calculation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about actuarial reserve calculation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about actuarial reserve calculation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 28
+  },
+  {
+    "id": "SX-EXTRA-017",
+    "quarter": "Extra",
+    "sequence_in_quarter": 17,
+    "difficulty": "hard",
+    "category": "integrations",
+    "policy_key": "extra.abstention_017",
+    "article_title": "Abstention challenge: 3D-printer toolpath slicing",
+    "question": "Can SalesX slice a stereolithography model into printer layers and generate support structures automatically?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about 3D-printer toolpath slicing. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about 3D-printer toolpath slicing. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about 3D-printer toolpath slicing. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about 3D-printer toolpath slicing. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 29
+  },
+  {
+    "id": "SX-EXTRA-042",
+    "quarter": "Extra",
+    "sequence_in_quarter": 42,
+    "difficulty": "hard",
+    "category": "integrations",
+    "policy_key": "extra.abstention_042",
+    "article_title": "Abstention challenge: veterinary vaccination schedule",
+    "question": "How does SalesX calculate species-specific vaccine intervals and withdrawal periods for livestock?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about veterinary vaccination schedule. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about veterinary vaccination schedule. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about veterinary vaccination schedule. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about veterinary vaccination schedule. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 30
+  },
+  {
+    "id": "SX-EXTRA-036",
+    "quarter": "Extra",
+    "sequence_in_quarter": 36,
+    "difficulty": "hard",
+    "category": "billing",
+    "policy_key": "extra.abstention_036",
+    "article_title": "Abstention challenge: aquaculture feeding control",
+    "question": "Does SalesX calculate feed rates from fish biomass, water temperature, and dissolved oxygen in an aquaculture pen?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about aquaculture feeding control. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about aquaculture feeding control. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about aquaculture feeding control. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about aquaculture feeding control. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 31
+  },
+  {
+    "id": "SX-EXTRA-019",
+    "quarter": "Extra",
+    "sequence_in_quarter": 19,
+    "difficulty": "hard",
+    "category": "reporting",
+    "policy_key": "extra.abstention_019",
+    "article_title": "Abstention challenge: legal discovery review",
+    "question": "Does SalesX perform litigation e-discovery by deduplicating custodial mailboxes and assigning privilege-review batches?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about legal discovery review. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about legal discovery review. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about legal discovery review. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about legal discovery review. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 32
+  },
+  {
+    "id": "SX-EXTRA-024",
+    "quarter": "Extra",
+    "sequence_in_quarter": 24,
+    "difficulty": "hard",
+    "category": "reporting",
+    "policy_key": "extra.abstention_024",
+    "article_title": "Abstention challenge: railway signalling",
+    "question": "How do we define block occupancy and interlocking rules so SalesX can authorize a train movement?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about railway signalling. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about railway signalling. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about railway signalling. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about railway signalling. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 33
+  },
+  {
+    "id": "SX-EXTRA-007",
+    "quarter": "Extra",
+    "sequence_in_quarter": 7,
+    "difficulty": "hard",
+    "category": "integrations",
+    "policy_key": "extra.abstention_007",
+    "article_title": "Abstention challenge: finite-element simulation",
+    "question": "Which SalesX module converts a CAD assembly into a finite-element mesh and solves structural stress under load?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about finite-element simulation. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about finite-element simulation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about finite-element simulation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about finite-element simulation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 34
+  },
+  {
+    "id": "SX-EXTRA-048",
+    "quarter": "Extra",
+    "sequence_in_quarter": 48,
+    "difficulty": "hard",
+    "category": "permissions",
+    "policy_key": "extra.abstention_048",
+    "article_title": "Abstention challenge: carbon-credit verification",
+    "question": "Where does SalesX quantify forest carbon additionality and issue verified carbon credits to a project registry?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about carbon-credit verification. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about carbon-credit verification. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about carbon-credit verification. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about carbon-credit verification. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 35
+  },
+  {
+    "id": "SX-EXTRA-016",
+    "quarter": "Extra",
+    "sequence_in_quarter": 16,
+    "difficulty": "hard",
+    "category": "billing",
+    "policy_key": "extra.abstention_016",
+    "article_title": "Abstention challenge: music royalty allocation",
+    "question": "Which SalesX process splits streaming royalties among composers, performers, publishers, and collecting societies?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about music royalty allocation. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about music royalty allocation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about music royalty allocation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about music royalty allocation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 36
+  },
+  {
+    "id": "SX-EXTRA-049",
+    "quarter": "Extra",
+    "sequence_in_quarter": 49,
+    "difficulty": "hard",
+    "category": "reporting",
+    "policy_key": "extra.abstention_049",
+    "article_title": "Abstention challenge: patent claim analysis",
+    "question": "Can SalesX compare a proposed patent claim against prior art and produce a legal novelty opinion?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about patent claim analysis. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about patent claim analysis. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about patent claim analysis. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about patent claim analysis. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 37
+  },
+  {
+    "id": "SX-EXTRA-009",
+    "quarter": "Extra",
+    "sequence_in_quarter": 9,
+    "difficulty": "hard",
+    "category": "reporting",
+    "policy_key": "extra.abstention_009",
+    "article_title": "Abstention challenge: hotel keycard encoding",
+    "question": "Can SalesX encode a physical hotel keycard with room access and a checkout expiry time?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about hotel keycard encoding. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about hotel keycard encoding. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about hotel keycard encoding. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about hotel keycard encoding. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 38
+  },
+  {
+    "id": "SX-EXTRA-038",
+    "quarter": "Extra",
+    "sequence_in_quarter": 38,
+    "difficulty": "hard",
+    "category": "permissions",
+    "policy_key": "extra.abstention_038",
+    "article_title": "Abstention challenge: museum climate conservation",
+    "question": "How should a conservator configure humidity and light-exposure limits for fragile artworks in SalesX?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about museum climate conservation. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about museum climate conservation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about museum climate conservation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about museum climate conservation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 39
+  },
+  {
+    "id": "SX-EXTRA-029",
+    "quarter": "Extra",
+    "sequence_in_quarter": 29,
+    "difficulty": "hard",
+    "category": "reporting",
+    "policy_key": "extra.abstention_029",
+    "article_title": "Abstention challenge: translation-memory alignment",
+    "question": "Can translators import bilingual corpora into SalesX and align sentence pairs into a terminology-aware translation memory?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about translation-memory alignment. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about translation-memory alignment. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about translation-memory alignment. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about translation-memory alignment. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 40
+  },
+  {
+    "id": "SX-EXTRA-014",
+    "quarter": "Extra",
+    "sequence_in_quarter": 14,
+    "difficulty": "hard",
+    "category": "reporting",
+    "policy_key": "extra.abstention_014",
+    "article_title": "Abstention challenge: braille embossing layout",
+    "question": "Which SalesX tool paginates contracted braille and prepares interpoint embossing instructions for a tactile book?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about braille embossing layout. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about braille embossing layout. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about braille embossing layout. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about braille embossing layout. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 41
+  },
+  {
+    "id": "SX-EXTRA-001",
+    "quarter": "Extra",
+    "sequence_in_quarter": 1,
+    "difficulty": "hard",
+    "category": "billing",
+    "policy_key": "extra.abstention_001",
+    "article_title": "Abstention challenge: agricultural irrigation",
+    "question": "Can SalesX calculate soil-moisture targets and directly actuate irrigation valves for a commercial orchard?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about agricultural irrigation. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about agricultural irrigation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about agricultural irrigation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about agricultural irrigation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 42
+  },
+  {
+    "id": "SX-EXTRA-030",
+    "quarter": "Extra",
+    "sequence_in_quarter": 30,
+    "difficulty": "hard",
+    "category": "onboarding",
+    "policy_key": "extra.abstention_030",
+    "article_title": "Abstention challenge: video-game anti-cheat",
+    "question": "Which SalesX service analyzes player telemetry to identify aim automation or unauthorized game-client modifications?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about video-game anti-cheat. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about video-game anti-cheat. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about video-game anti-cheat. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about video-game anti-cheat. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 43
+  },
+  {
+    "id": "SX-EXTRA-018",
+    "quarter": "Extra",
+    "sequence_in_quarter": 18,
+    "difficulty": "hard",
+    "category": "permissions",
+    "policy_key": "extra.abstention_018",
+    "article_title": "Abstention challenge: vehicle emissions diagnostics",
+    "question": "Where can a mechanic decode live OBD emissions data and command a diesel particulate-filter regeneration in SalesX?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about vehicle emissions diagnostics. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about vehicle emissions diagnostics. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about vehicle emissions diagnostics. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about vehicle emissions diagnostics. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 44
+  },
+  {
+    "id": "SX-EXTRA-047",
+    "quarter": "Extra",
+    "sequence_in_quarter": 47,
+    "difficulty": "hard",
+    "category": "integrations",
+    "policy_key": "extra.abstention_047",
+    "article_title": "Abstention challenge: emergency dispatch prioritization",
+    "question": "Does SalesX triage emergency calls and recommend which ambulance unit should be dispatched to an incident?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about emergency dispatch prioritization. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about emergency dispatch prioritization. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about emergency dispatch prioritization. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about emergency dispatch prioritization. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 45
+  },
+  {
+    "id": "SX-EXTRA-026",
+    "quarter": "Extra",
+    "sequence_in_quarter": 26,
+    "difficulty": "hard",
+    "category": "billing",
+    "policy_key": "extra.abstention_026",
+    "article_title": "Abstention challenge: satellite orbital manoeuvres",
+    "question": "Where does SalesX propagate an orbit and calculate the thruster burn required for a satellite station-keeping manoeuvre?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about satellite orbital manoeuvres. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about satellite orbital manoeuvres. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about satellite orbital manoeuvres. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about satellite orbital manoeuvres. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 46
+  },
+  {
+    "id": "SX-EXTRA-046",
+    "quarter": "Extra",
+    "sequence_in_quarter": 46,
+    "difficulty": "hard",
+    "category": "billing",
+    "policy_key": "extra.abstention_046",
+    "article_title": "Abstention challenge: public-transit fare capping",
+    "question": "How does SalesX calculate daily fare caps across buses, metro journeys, and contactless payment tokens?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about public-transit fare capping. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about public-transit fare capping. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about public-transit fare capping. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about public-transit fare capping. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 47
+  },
+  {
+    "id": "SX-EXTRA-025",
+    "quarter": "Extra",
+    "sequence_in_quarter": 25,
+    "difficulty": "hard",
+    "category": "onboarding",
+    "policy_key": "extra.abstention_025",
+    "article_title": "Abstention challenge: controlled-substance dispensing",
+    "question": "Does SalesX verify prescriptions against controlled-substance registers before a pharmacy dispenses medication?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about controlled-substance dispensing. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about controlled-substance dispensing. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about controlled-substance dispensing. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about controlled-substance dispensing. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 48
+  },
+  {
+    "id": "SX-EXTRA-012",
+    "quarter": "Extra",
+    "sequence_in_quarter": 12,
+    "difficulty": "hard",
+    "category": "integrations",
+    "policy_key": "extra.abstention_012",
+    "article_title": "Abstention challenge: weather-radar interpretation",
+    "question": "Does SalesX ingest Doppler radar volumes and classify storm-cell rotation for meteorological forecasting?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about weather-radar interpretation. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about weather-radar interpretation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about weather-radar interpretation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about weather-radar interpretation. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 49
+  },
+  {
+    "id": "SX-EXTRA-040",
+    "quarter": "Extra",
+    "sequence_in_quarter": 40,
+    "difficulty": "hard",
+    "category": "onboarding",
+    "policy_key": "extra.abstention_040",
+    "article_title": "Abstention challenge: radiation dosimetry",
+    "question": "Where does a nuclear facility import personal dosimeter readings and calculate a worker's cumulative radiation exposure?",
+    "gold_answer": "The available SalesX knowledge contains no authoritative information about radiation dosimetry. The model must abstain rather than infer a policy or procedure.",
+    "profile_answers": {
+      "ceo": {
+        "answer": "The available SalesX knowledge contains no authoritative information about radiation dosimetry. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "domain_expert_out_of_domain": {
+        "answer": "The available SalesX knowledge contains no authoritative information about radiation dosimetry. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      },
+      "intern": {
+        "answer": "The available SalesX knowledge contains no authoritative information about radiation dosimetry. The model must abstain rather than infer a policy or procedure.",
+        "is_correct": true,
+        "behavior": "unsupported_scope_escalation"
+      }
+    },
+    "documentation_anchor": "Extra.md#abstention-challenge",
+    "is_changed_answer_near_duplicate": false,
+    "near_duplicate_of": null,
+    "similar_question_ids": [],
+    "drift": null,
+    "generation": {
+      "seed": 20260717,
+      "knowledge_status": "intentionally_absent",
+      "answer_format": "required_abstention"
+    },
+    "evaluation": {
+      "gold_source": "abstention_challenge_design",
+      "expected_model_action": "abstain",
+      "semantic_isolation_threshold": 0.7
+    },
+    "requires_model_abstention": true,
+    "shuffled_order": 50
+  }
+]

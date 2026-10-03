@@ -1,6 +1,6 @@
 {
   "format_version": 1,
-  "generated_at_utc": "2026-07-17T19:06:33.896768+00:00",
+  "generated_at_utc": "2026-07-24T15:00:08.733416+00:00",
   "model": "qwen3-embedding:4b",
   "ollama_model_digest": "df5bd2e3c74cd8d069d21dc038f1b359fcdc9458fce1c99bd43c9eb1518ff907",
   "embedded_field": "question",
@@ -14,26 +14,32 @@
     "Q1.npz": {
       "records": 500,
       "sha256": "2e2605a7b008e655c6672d190f92dcea63817d91c958f81e1e64480655111df7",
-      "source": "Q1_qa.json",
+      "source": "shared/Q1_qa.json",
       "source_sha256": "3cd68c7bd767087f232e9aab14c7014ed6570622ffbbed065fad63a5139939e2"
     },
     "Q2.npz": {
       "records": 500,
       "sha256": "cbd3ad1cc01ed724a784daa6fca669616fad641eb2f8656e356ac942b0594570",
-      "source": "Q2_qa.json",
+      "source": "drift_10/Q2_qa.json",
       "source_sha256": "88661786e1da2b8efabdff603149929e9f59ce5a5fc676bc13fd37194ce99d1d"
     },
     "Q3.npz": {
       "records": 500,
       "sha256": "d61eb5490df6220bae07f6e4850f7e6da372f9949002c50f1d7a4ed4e90f142a",
-      "source": "Q3_qa.json",
+      "source": "drift_10/Q3_qa.json",
       "source_sha256": "13fc0e1604fe000a7ba45289ec5640a51baf6c77e9cb9aa96ba4dcf28ccd3cc9"
     },
     "Q4.npz": {
       "records": 500,
       "sha256": "1d21d1bc466640d5b0407efb55368c3a72b394e1f3d2f2a4b74ec990ba51ae03",
-      "source": "Q4_qa.json",
+      "source": "drift_10/Q4_qa.json",
       "source_sha256": "67172b366aec49b940fb455402d8e0158cdc7ff82f4641dd8fb7c6d8411a1f43"
+    },
+    "Extra.npz": {
+      "records": 50,
+      "sha256": "12721ea6751339c34129f39743b7e81b99d1b88e3be8173c3097e1cc5d50a82d",
+      "source": "shared/Extra_qa.json",
+      "source_sha256": "e5be9889ef03d8df9313e0b21baa674f4cdb4254f08e576ef43d951e71b19bcf"
     }
   }
 }

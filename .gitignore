@@ -353,6 +353,26 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 **/__pycache__/
 *.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+config.env
+outputs/
+logs/
+figures/
+drift-comparison.png
+.claude/
+demo/
+*.log
+.DS_Store
+
+# Keep compressed benchmark embeddings; ignore accidental uncompressed exports.
+experiment data/embeddings/**/*.npy
+experiment data/embeddings/**/*.bin
 
 # Cake - Uncomment if you are using it
 #tools/**
@@ -428,4 +448,56 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+# Local paper source and publisher templates
+main.tex
+IOS-Book-Article.cls
+vancouver.bst
+retrieval-systems.bib
 *.tex
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.bst
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.xdv
+main.pdf
+
+# Local SCITEPRESS paper template and bundled assets
+SCITEPRESS.sty
+apalike.sty
+article.cls
+orcid.eps
+orcid.png
+
+# Local IEEE Access paper template and bundled assets
+/ieeeaccess.cls
+/IEEEtran.cls
+/IEEEtran.bst
+/spotcolor.sty
+/bullet.png
+/logo.png
+/notaglinelogo.png
+/author1.png
+/author2.png
+/author3.png
+/equation3.png
+/fig1.png
+/t1-*.pfb
+/t1-*.tfm
+/t1-*.map
+/t1*.fd
+/access.pdf
+/ACCESS_latex_template_*/
+
+# Local Cursor project instructions
+AGENTS.md

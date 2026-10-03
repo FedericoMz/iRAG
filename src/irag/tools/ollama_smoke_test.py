@@ -3,8 +3,8 @@
 
 The test builds a small chronological KB from SalesX records, embeds only its
 questions, applies the paper's semantic gate and temporal ranking, retrieves
-complete question--final-answer records, generates a decision, checks semantic
-equivalence only when the generator does not abstain, updates FEA, and appends
+complete question--final-answer records, generates a decision, checks reference
+coverage only when the generator does not abstain, updates FEA, and appends
 the current question/final-answer pair directly to the KB.
 
 No third-party Python packages are required. Ollama must be running and the
@@ -24,8 +24,8 @@ from pathlib import Path
 from typing import Any
 
 
-ROOT = Path(__file__).resolve().parent
-DATA_DIR = ROOT / "experiment data"
+ROOT = Path(__file__).resolve().parents[3]
+DATA_DIR = ROOT / "experiment data" / "drift_10"
 DEFAULT_MODEL = "qwen3.5:9b"
 DEFAULT_AUXILIARY_MODEL = "qwen3.5:4b"
 DEFAULT_EMBEDDING_MODEL = "qwen3-embedding:4b"
@@ -211,21 +211,21 @@ def retrieve(
     query_vector: list[float],
     top_k: int,
     semantic_threshold: float,
-    decay: float,
+    lambda_rag: float,
 ) -> list[dict[str, Any]]:
-    """Apply the paper's normalized cosine gate and insertion-based decay."""
+    """Apply the paper's raw cosine gate and insertion-based decay."""
     m = len(kb)
     ranked: list[dict[str, Any]] = []
     for index, (record, vector) in enumerate(zip(kb, vectors), start=1):
-        cosine = dot(query_vector, vector)
-        normalized_similarity = (1.0 + cosine) / 2.0
-        temporal_score = normalized_similarity * decay ** (m - index)
-        if normalized_similarity >= semantic_threshold:
+        cosine = max(-1.0, min(1.0, dot(query_vector, vector)))
+        rectified_similarity = max(0.0, cosine)
+        temporal_score = rectified_similarity * lambda_rag ** (m - index)
+        if cosine > 0.0 and cosine >= semantic_threshold:
             ranked.append(
                 {
                     "record": record,
                     "cosine": cosine,
-                    "normalized_similarity": normalized_similarity,
+                    "rectified_similarity": rectified_similarity,
                     "temporal_score": temporal_score,
                 }
             )
@@ -251,7 +251,8 @@ def run_tests(
     client: OllamaClient,
     top_k: int,
     semantic_threshold: float,
-    decay: float,
+    lambda_rag: float,
+    lambda_fea: float,
 ) -> bool:
     installed = {item["name"] for item in client.tags().get("models", [])}
     for model in (client.model, client.auxiliary_model, client.embedding_model):
@@ -277,24 +278,26 @@ def run_tests(
         query_vector,
         top_k,
         semantic_threshold,
-        decay,
+        lambda_rag,
     )
     print(f"\n[retrieval] {elapsed:.2f}s")
     for rank, item in enumerate(retrieved, start=1):
         print(
             f"{rank}. {item['record']['id']}  cosine={item['cosine']:.4f}  "
-            f"normalized={item['normalized_similarity']:.4f}  "
+            f"rectified={item['rectified_similarity']:.4f}  "
             f"decayed={item['temporal_score']:.4f}"
         )
 
     answer, elapsed = client.chat(
-        "Answer the current SalesX support ticket using only the retrieved prior "
-        "question--final-answer records. Evidence is sufficient when a record's "
-        "stated policy and procedure resolve the current ticket even if wording "
-        "differs. If no record supports an answer, set abstain=true and answer to "
-        "an empty string. Otherwise synthesize a complete answer: preserve every "
-        "material outcome, condition, responsibility, procedural step, and exception "
-        "needed by the ticket, and cite record IDs.",
+        "Answer only the issue or issues raised in the current SalesX support ticket. "
+        "Use only retrieved records that directly support the answer, and ignore "
+        "details that address a different issue. From the supporting records you "
+        "select, preserve every condition, responsibility, procedure, or exception "
+        "that materially changes the answer. Do not combine requirements from "
+        "unrelated records. The records are ordered from highest to lowest relevance "
+        "after semantic and temporal reranking. If the records are insufficient or "
+        "contain a conflict that cannot be resolved from the available evidence, set "
+        "abstain=true and answer to an empty string. Cite only record IDs actually used.",
         f"CURRENT TICKET:\n{ticket['question']}\n\n"
         f"RETRIEVED RECORDS:\n{format_context(retrieved)}",
         ANSWER_SCHEMA,
@@ -302,27 +305,31 @@ def run_tests(
     )
     print_result("model_decision", answer, elapsed)
 
-    equivalent = None
+    covered = None
     if not answer["abstain"]:
-        equivalent, elapsed = client.chat(
-            "Judge semantic equivalence. Return true only if both answers prescribe "
-            "the same outcome, conditions, responsibilities, and material exceptions. "
-            "Explain the verdict in one concise sentence.",
-            f"ANSWER A:\n{answer['answer']}\n\nANSWER B:\n{ticket['gold_answer']}",
+        covered, elapsed = client.chat(
+            "Assess whether the candidate answer faithfully covers the gold reference. "
+            "Return verdict=true only when every material outcome, condition, "
+            "responsibility, procedure, and exception in the reference is explicit or "
+            "clearly entailed by the candidate. Wording need not be identical and "
+            "relevant elaboration is allowed, but omissions, contradictions, and "
+            "additional decision-changing claims require verdict=false.",
+            f"CANDIDATE ANSWER:\n{answer['answer']}\n\n"
+            f"GOLD REFERENCE:\n{ticket['gold_answer']}",
             JUDGMENT_SCHEMA,
             model=client.auxiliary_model,
             max_tokens=250,
         )
-        print_result("equivalence_judgment", equivalent, elapsed)
+        print_result("reference_coverage_judgment", covered, elapsed)
 
     # Silent Observer: the human answer remains final. A reliability observation
-    # exists only when the generator did not abstain and equivalence was checked.
+    # exists only when the generator did not abstain and coverage was checked.
     A = W = 0.0
     observations = 0
-    if equivalent is not None:
-        delta = int(bool(equivalent["verdict"]))
-        A = decay * A + delta
-        W = decay * W + 1
+    if covered is not None:
+        delta = int(bool(covered["verdict"]))
+        A = lambda_fea * A + delta
+        W = lambda_fea * W + 1
         observations += 1
     fea = A / W if W else 0.0
     print(f"\n[reliability] observations={observations}, FEA={fea:.4f}")
@@ -355,9 +362,9 @@ def run_tests(
         "retrieval returned at most top-K records": 0 < len(retrieved) <= top_k,
         "a current-quarter precedent was retrieved": current_precedent_retrieved,
         "grounded decision did not abstain": not answer["abstain"],
-        "non-abstaining decision was checked": equivalent is not None,
-        "decision matches the final human answer": equivalent is not None
-        and equivalent["verdict"],
+        "non-abstaining decision was checked": covered is not None,
+        "decision covers the final human answer": covered is not None
+        and covered["verdict"],
         "FEA observation was recorded": observations == 1,
         "KB stored the original question": kb[-1]["question"] == ticket["question"],
         "KB stored the final answer": kb[-1]["final_answer"] == ticket["gold_answer"],
@@ -379,8 +386,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--url", default=DEFAULT_URL)
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--top-k", type=int, default=5)
-    parser.add_argument("--semantic-threshold", type=float, default=0.6)
-    parser.add_argument("--decay", type=float, default=0.99861)
+    parser.add_argument("--semantic-threshold", type=float, default=0.7)
+    parser.add_argument("--lambda-rag", type=float, default=0.99861)
+    parser.add_argument("--lambda-fea", type=float, default=0.99861)
     return parser.parse_args()
 
 
@@ -397,7 +405,8 @@ def main() -> int:
             ),
             args.top_k,
             args.semantic_threshold,
-            args.decay,
+            args.lambda_rag,
+            args.lambda_fea,
         )
     except (KeyError, StopIteration, ValueError, RuntimeError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

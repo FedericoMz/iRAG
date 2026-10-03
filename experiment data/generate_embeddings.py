@@ -24,6 +24,14 @@ except ImportError:
 ROOT = Path(__file__).resolve().parent
 DEFAULT_MODEL = "qwen3-embedding:4b"
 DEFAULT_OUTPUT = ROOT / "embeddings" / "qwen3-embedding-4b"
+PERIODS = ("Q1", "Q2", "Q3", "Q4", "Extra")
+SOURCE_FILES = {
+    "Q1": ROOT / "shared" / "Q1_qa.json",
+    "Q2": ROOT / "drift_10" / "Q2_qa.json",
+    "Q3": ROOT / "drift_10" / "Q3_qa.json",
+    "Q4": ROOT / "drift_10" / "Q4_qa.json",
+    "Extra": ROOT / "shared" / "Extra_qa.json",
+}
 
 
 def sha256(path: Path) -> str:
@@ -111,6 +119,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--force", action="store_true", help="replace an existing embedding set"
     )
+    parser.add_argument(
+        "--only",
+        choices=PERIODS,
+        help="embed one period and update an existing compatible manifest",
+    )
     return parser.parse_args()
 
 
@@ -120,8 +133,8 @@ def main() -> None:
         raise ValueError("--batch-size must be positive")
     output_dir = args.output_dir.resolve()
     manifest_path = output_dir / "manifest.json"
-    existing_outputs = list(output_dir.glob("Q*.npz")) if output_dir.exists() else []
-    if (manifest_path.exists() or existing_outputs) and not args.force:
+    existing_outputs = list(output_dir.glob("*.npz")) if output_dir.exists() else []
+    if not args.only and (manifest_path.exists() or existing_outputs) and not args.force:
         raise FileExistsError(
             f"{output_dir} already contains embeddings; pass --force to replace them"
         )
@@ -129,12 +142,31 @@ def main() -> None:
 
     base_url = args.url.rstrip("/")
     digest = model_digest(base_url, args.model, args.timeout)
-    source_files = sorted(ROOT.glob("Q[1-4]_qa.json"))
-    if len(source_files) != 4:
-        raise RuntimeError("Expected Q1_qa.json through Q4_qa.json")
+    periods = (args.only,) if args.only else PERIODS
+    source_files = [SOURCE_FILES[period] for period in periods]
+    missing_sources = [path.name for path in source_files if not path.exists()]
+    if missing_sources:
+        raise RuntimeError(
+            f"Missing embedding source files: {', '.join(missing_sources)}"
+        )
 
-    files: dict[str, dict] = {}
-    dimension: int | None = None
+    existing_manifest = (
+        json.loads(manifest_path.read_text(encoding="utf-8"))
+        if args.only and manifest_path.exists()
+        else None
+    )
+    if args.only and existing_manifest is None:
+        raise RuntimeError("--only requires an existing embedding manifest")
+    if existing_manifest is not None:
+        if existing_manifest["model"] != args.model:
+            raise RuntimeError("Existing manifest uses a different embedding model")
+        if existing_manifest["ollama_model_digest"] != digest:
+            raise RuntimeError("Existing manifest uses a different model digest")
+        files = dict(existing_manifest["files"])
+        dimension: int | None = int(existing_manifest["dimension"])
+    else:
+        files = {}
+        dimension = None
     for source in source_files:
         records = json.loads(source.read_text(encoding="utf-8"))
         ids = [record["id"] for record in records]
@@ -157,11 +189,15 @@ def main() -> None:
             raise RuntimeError("Embedding dimension changed between quarters")
 
         output = output_dir / f"{source.stem.removesuffix('_qa')}.npz"
+        if output.exists() and not args.force:
+            raise FileExistsError(
+                f"{output} already exists; pass --force to replace it"
+            )
         np.savez_compressed(output, ids=np.asarray(ids), embeddings=vectors)
         files[output.name] = {
             "records": len(ids),
             "sha256": sha256(output),
-            "source": source.name,
+            "source": str(source.relative_to(ROOT)),
             "source_sha256": sha256(source),
         }
 

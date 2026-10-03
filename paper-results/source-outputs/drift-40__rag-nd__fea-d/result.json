@@ -1,0 +1,3194 @@
+{
+  "experiment_id": "bb5b89fed1e84bd5bd4108b9e3d3e9a9",
+  "name": "ceo_bootstrapped_informed_mixture / gold_similarity / drift_40",
+  "dataset_variant": "drift_40",
+  "started_at": "2026-08-13T06:35:45.989083+00:00",
+  "paper_defaults": {
+    "semantic_threshold": 0.7,
+    "top_k": 5,
+    "alpha": 0.7,
+    "beta": 0.55,
+    "gamma": 0.8,
+    "minimum_observations": 30,
+    "quarterly_ceo_tickets": 100,
+    "lambda_rag": 0.99861,
+    "lambda_fea": 0.99861,
+    "autonomous_review": "Every nominal quarter routes its first 100 tickets to the CEO; a quarter beginning in DS first returns to SC",
+    "post_q4_abstention_challenge": "50 semantically isolated Extra tickets inherit the Q4 state; the expected model action is abstention",
+    "manual_ds_authorisation": "not exercised by the simulated profiles"
+  },
+  "models": {
+    "provider": "bedrock",
+    "generation": {
+      "name": "eu.amazon.nova-2-lite-v1:0",
+      "region": "eu-north-1",
+      "resource_type": "inference_profile",
+      "retry_mode": "adaptive",
+      "max_attempts": 10,
+      "throttle_retries": 100,
+      "throttle_max_delay": 60.0,
+      "service_retries": 100,
+      "service_max_delay": 60.0,
+      "connection_retries": 100,
+      "connection_max_delay": 60.0,
+      "response_retries": 10,
+      "response_max_delay": 10.0,
+      "decision_response_retries": 3,
+      "tool_max_tokens": 3000,
+      "max_concurrency": 3
+    },
+    "auxiliary": {
+      "name": "eu.amazon.nova-2-lite-v1:0",
+      "region": "eu-north-1",
+      "resource_type": "inference_profile",
+      "retry_mode": "adaptive",
+      "max_attempts": 10,
+      "throttle_retries": 100,
+      "throttle_max_delay": 60.0,
+      "service_retries": 100,
+      "service_max_delay": 60.0,
+      "connection_retries": 100,
+      "connection_max_delay": 60.0,
+      "response_retries": 10,
+      "response_max_delay": 10.0,
+      "decision_response_retries": 3,
+      "tool_max_tokens": 3000,
+      "max_concurrency": 3
+    },
+    "embedding": {
+      "format_version": 1,
+      "generated_at_utc": "2026-07-24T15:00:08.733416+00:00",
+      "model": "qwen3-embedding:4b",
+      "ollama_model_digest": "df5bd2e3c74cd8d069d21dc038f1b359fcdc9458fce1c99bd43c9eb1518ff907",
+      "embedded_field": "question",
+      "preprocessing": "none",
+      "dtype": "float32",
+      "dimension": 2560,
+      "normalization": "L2",
+      "similarity": "cosine (equivalent to dot product after L2 normalization)",
+      "record_key": "id",
+      "files": {
+        "Q1.npz": {
+          "records": 500,
+          "sha256": "2e2605a7b008e655c6672d190f92dcea63817d91c958f81e1e64480655111df7",
+          "source": "shared/Q1_qa.json",
+          "source_sha256": "3cd68c7bd767087f232e9aab14c7014ed6570622ffbbed065fad63a5139939e2"
+        },
+        "Q2.npz": {
+          "records": 500,
+          "sha256": "cbd3ad1cc01ed724a784daa6fca669616fad641eb2f8656e356ac942b0594570",
+          "source": "drift_10/Q2_qa.json",
+          "source_sha256": "88661786e1da2b8efabdff603149929e9f59ce5a5fc676bc13fd37194ce99d1d"
+        },
+        "Q3.npz": {
+          "records": 500,
+          "sha256": "d61eb5490df6220bae07f6e4850f7e6da372f9949002c50f1d7a4ed4e90f142a",
+          "source": "drift_10/Q3_qa.json",
+          "source_sha256": "13fc0e1604fe000a7ba45289ec5640a51baf6c77e9cb9aa96ba4dcf28ccd3cc9"
+        },
+        "Q4.npz": {
+          "records": 500,
+          "sha256": "1d21d1bc466640d5b0407efb55368c3a72b394e1f3d2f2a4b74ec990ba51ae03",
+          "source": "drift_10/Q4_qa.json",
+          "source_sha256": "67172b366aec49b940fb455402d8e0158cdc7ff82f4641dd8fb7c6d8411a1f43"
+        },
+        "Extra.npz": {
+          "records": 50,
+          "sha256": "12721ea6751339c34129f39743b7e81b99d1b88e3be8173c3097e1cc5d50a82d",
+          "source": "shared/Extra_qa.json",
+          "source_sha256": "e5be9889ef03d8df9313e0b21baa674f4cdb4254f08e576ef43d951e71b19bcf"
+        }
+      }
+    }
+  },
+  "dataset_manifest": {
+    "dataset": "SalesX Quarterly Support QA — 40% Drift",
+    "variant": "drift_40",
+    "schema_version": "2.1.0",
+    "generator_seed": 20260717,
+    "embedding_data_dir": "..",
+    "embedding_reuse_basis": "Record IDs and question text are identical to the base benchmark.",
+    "knowledge_articles": 100,
+    "questions_per_article": 5,
+    "categories": [
+      "billing",
+      "integrations",
+      "permissions",
+      "reporting",
+      "onboarding"
+    ],
+    "quarters": {
+      "Q1": {
+        "documentation": "../shared/Q1.md",
+        "questions": "../shared/Q1_qa.json",
+        "record_count": 500,
+        "article_count": 100,
+        "category_counts": {
+          "billing": 100,
+          "onboarding": 100,
+          "reporting": 100,
+          "integrations": 100,
+          "permissions": 100
+        },
+        "difficulty_counts": {
+          "normal": 200,
+          "easy": 200,
+          "hard": 100
+        },
+        "drift_count": 0,
+        "drift_rate": 0.0,
+        "changed_articles": [],
+        "sha256": "3cd68c7bd767087f232e9aab14c7014ed6570622ffbbed065fad63a5139939e2"
+      },
+      "Q2": {
+        "documentation": "Q2.md",
+        "questions": "Q2_qa.json",
+        "record_count": 500,
+        "article_count": 100,
+        "category_counts": {
+          "integrations": 100,
+          "permissions": 100,
+          "onboarding": 100,
+          "reporting": 100,
+          "billing": 100
+        },
+        "difficulty_counts": {
+          "normal": 200,
+          "easy": 200,
+          "hard": 100
+        },
+        "drift_count": 200,
+        "drift_rate": 0.4,
+        "changed_articles": [
+          "billing.failed_payments",
+          "billing.payment_methods",
+          "billing.plans",
+          "billing.proration",
+          "billing.refunds",
+          "billing.seat_billing",
+          "billing.tax",
+          "billing.trial_conversion",
+          "integrations.api_limits",
+          "integrations.bulk_api",
+          "integrations.conflict_resolution",
+          "integrations.connected_apps",
+          "integrations.rate_handling",
+          "integrations.webhook_config",
+          "integrations.webhook_retries",
+          "integrations.webhook_security",
+          "onboarding.csv_preparation",
+          "onboarding.deduplication",
+          "onboarding.discovery",
+          "onboarding.implementation_roles",
+          "onboarding.imports",
+          "onboarding.invitations",
+          "onboarding.trial",
+          "onboarding.workspace_creation",
+          "permissions.custom_roles",
+          "permissions.explicit_denies",
+          "permissions.field_access",
+          "permissions.hierarchy",
+          "permissions.owner_admin",
+          "permissions.permission_sets",
+          "permissions.record_access",
+          "permissions.role_model",
+          "reporting.builder_access",
+          "reporting.dashboards",
+          "reporting.exports",
+          "reporting.filters",
+          "reporting.formulas",
+          "reporting.joined_reports",
+          "reporting.report_types",
+          "reporting.subscriptions"
+        ],
+        "sha256": "fe42724a42dd80a5fb4e639212aef90c3759df80d5dd520782b37b098d9a600b"
+      },
+      "Q3": {
+        "documentation": "Q3.md",
+        "questions": "Q3_qa.json",
+        "record_count": 500,
+        "article_count": 100,
+        "category_counts": {
+          "reporting": 100,
+          "permissions": 100,
+          "billing": 100,
+          "integrations": 100,
+          "onboarding": 100
+        },
+        "difficulty_counts": {
+          "easy": 200,
+          "normal": 200,
+          "hard": 100
+        },
+        "drift_count": 200,
+        "drift_rate": 0.4,
+        "changed_articles": [
+          "billing.amendments",
+          "billing.billing_access",
+          "billing.cancellation",
+          "billing.credits",
+          "billing.currency",
+          "billing.downgrades",
+          "billing.overages",
+          "billing.purchase_orders",
+          "integrations.connector_sync",
+          "integrations.field_mapping",
+          "integrations.idempotency",
+          "integrations.logs",
+          "integrations.network",
+          "integrations.oauth",
+          "integrations.sandboxes",
+          "integrations.service_accounts",
+          "onboarding.academy",
+          "onboarding.domain_verification",
+          "onboarding.external_ids",
+          "onboarding.guided_sessions",
+          "onboarding.identity_setup",
+          "onboarding.import_order",
+          "onboarding.sandbox_rehearsal",
+          "onboarding.validation_rules",
+          "permissions.approvals",
+          "permissions.audit",
+          "permissions.delegated_admin",
+          "permissions.mfa",
+          "permissions.scim",
+          "permissions.sessions",
+          "permissions.sso",
+          "permissions.teams",
+          "reporting.currency",
+          "reporting.fiscal_calendar",
+          "reporting.history",
+          "reporting.large_data",
+          "reporting.recipients",
+          "reporting.row_visibility",
+          "reporting.snapshots",
+          "reporting.timezone"
+        ],
+        "sha256": "044d18223da945de4c8cb42f4779182c5a66a63b00e2eb615366c559e78d812a"
+      },
+      "Q4": {
+        "documentation": "Q4.md",
+        "questions": "Q4_qa.json",
+        "record_count": 500,
+        "article_count": 100,
+        "category_counts": {
+          "permissions": 100,
+          "billing": 100,
+          "onboarding": 100,
+          "reporting": 100,
+          "integrations": 100
+        },
+        "difficulty_counts": {
+          "easy": 200,
+          "normal": 200,
+          "hard": 100
+        },
+        "drift_count": 200,
+        "drift_rate": 0.4,
+        "changed_articles": [
+          "billing.disputes",
+          "billing.expiry_data",
+          "billing.invoices",
+          "billing.payment_methods",
+          "billing.plans",
+          "billing.proration",
+          "billing.renewals",
+          "billing.trial_conversion",
+          "integrations.api_limits",
+          "integrations.api_versions",
+          "integrations.bulk_api",
+          "integrations.deprecation",
+          "integrations.event_streaming",
+          "integrations.rate_handling",
+          "integrations.secret_rotation",
+          "integrations.webhook_config",
+          "onboarding.assisted_migration",
+          "onboarding.discovery",
+          "onboarding.go_live",
+          "onboarding.implementation_roles",
+          "onboarding.rollback",
+          "onboarding.sample_data",
+          "onboarding.trial",
+          "onboarding.workspace_creation",
+          "permissions.access_reviews",
+          "permissions.break_glass",
+          "permissions.custom_roles",
+          "permissions.guest_access",
+          "permissions.owner_admin",
+          "permissions.ownership_transfer",
+          "permissions.record_access",
+          "permissions.role_model",
+          "reporting.builder_access",
+          "reporting.dashboard_refresh",
+          "reporting.filters",
+          "reporting.formulas",
+          "reporting.report_types",
+          "reporting.schedules",
+          "reporting.trash",
+          "reporting.troubleshooting"
+        ],
+        "sha256": "f98f349ee16684099be3b7ee93ac61c6ac5991a6db957503b7b2d3ea9c4a2b4d"
+      }
+    },
+    "notes": [
+      "Q1 is the shared canonical baseline and has no possible prior-quarter drift subset.",
+      "Q2-Q4 each change forty articles and contain exactly 200 changed-answer near-duplicates (40%).",
+      "All 120 quarter/article changes have individually authored rules and change dimensions; every one of the 100 articles changes in at least one post-baseline quarter.",
+      "Questions and record IDs exactly match the base 10% benchmark, so its precomputed question embeddings are reused.",
+      "The shared post-Q4 Extra split contains 50 mutually isolated questions whose expected model action is abstention.",
+      "Drift changes policy or workflow semantics rather than only scalar limits.",
+      "Generated files are deterministic outputs of generate_drift_40_dataset.py and salesx_knowledge_drift_40.py."
+    ],
+    "extra": {
+      "documentation": "../shared/Extra.md",
+      "questions": "../shared/Extra_qa.json",
+      "record_count": 50,
+      "expected_model_action": "abstain",
+      "sha256": "e5be9889ef03d8df9313e0b21baa674f4cdb4254f08e576ef43d951e71b19bcf"
+    }
+  },
+  "conditions": [
+    {
+      "configuration": {
+        "name": "ceo_bootstrapped_informed_mixture__gold_similarity",
+        "assignment_strategy": "ceo_bootstrapped_informed_mixture",
+        "acceptance_regime": "gold_similarity",
+        "single_profile": null,
+        "domain_expert_category": "billing",
+        "repetitions": 10,
+        "seed": 20260717,
+        "alpha": 0.7,
+        "beta": 0.55,
+        "gamma": 0.8,
+        "minimum_observations": 30,
+        "quarterly_ceo_tickets": 100,
+        "top_k": 5,
+        "semantic_threshold": 0.7,
+        "lambda_rag": 1.0,
+        "lambda_fea": 0.99861,
+        "recent_gold_window": 30,
+        "system_enabled": true
+      },
+      "runs": [
+        {
+          "repetition": 1,
+          "seed": 20260717,
+          "output_file": "run-001.json",
+          "summary": {
+            "overall": {
+              "tickets": 2000,
+              "errors": 220,
+              "error_rate": 0.11
+            },
+            "quarter": {
+              "Q1": {
+                "tickets": 500,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "Q2": {
+                "tickets": 500,
+                "errors": 55,
+                "error_rate": 0.11
+              },
+              "Q3": {
+                "tickets": 500,
+                "errors": 104,
+                "error_rate": 0.208
+              },
+              "Q4": {
+                "tickets": 500,
+                "errors": 61,
+                "error_rate": 0.122
+              }
+            },
+            "profile": {
+              "ceo": {
+                "tickets": 1243,
+                "errors": 13,
+                "error_rate": 0.010458567980691875
+              },
+              "domain_expert": {
+                "tickets": 366,
+                "errors": 51,
+                "error_rate": 0.13934426229508196
+              },
+              "intern": {
+                "tickets": 391,
+                "errors": 156,
+                "error_rate": 0.3989769820971867
+              }
+            },
+            "state": {
+              "deferring_surrogate": {
+                "tickets": 700,
+                "errors": 146,
+                "error_rate": 0.20857142857142857
+              },
+              "silent_observer": {
+                "tickets": 600,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "skeptical_contestator": {
+                "tickets": 700,
+                "errors": 74,
+                "error_rate": 0.10571428571428572
+              }
+            },
+            "category": {
+              "billing": {
+                "tickets": 400,
+                "errors": 36,
+                "error_rate": 0.09
+              },
+              "integrations": {
+                "tickets": 400,
+                "errors": 54,
+                "error_rate": 0.135
+              },
+              "onboarding": {
+                "tickets": 400,
+                "errors": 46,
+                "error_rate": 0.115
+              },
+              "permissions": {
+                "tickets": 400,
+                "errors": 46,
+                "error_rate": 0.115
+              },
+              "reporting": {
+                "tickets": 400,
+                "errors": 38,
+                "error_rate": 0.095
+              }
+            },
+            "difficulty": {
+              "easy": {
+                "tickets": 800,
+                "errors": 184,
+                "error_rate": 0.23
+              },
+              "hard": {
+                "tickets": 400,
+                "errors": 4,
+                "error_rate": 0.01
+              },
+              "normal": {
+                "tickets": 800,
+                "errors": 32,
+                "error_rate": 0.04
+              }
+            },
+            "metric_component": {
+              "assisted": {
+                "tickets": 1300,
+                "errors": 74,
+                "error_rate": 0.05692307692307692
+              },
+              "autonomous_model": {
+                "tickets": 700,
+                "errors": 146,
+                "error_rate": 0.20857142857142857
+              }
+            },
+            "drift": {
+              "drift": {
+                "tickets": 600,
+                "errors": 164,
+                "error_rate": 0.2733333333333333
+              },
+              "stable": {
+                "tickets": 1400,
+                "errors": 56,
+                "error_rate": 0.04
+              }
+            },
+            "profile_drift": {
+              "ceo.drift": {
+                "tickets": 298,
+                "errors": 8,
+                "error_rate": 0.026845637583892617
+              },
+              "ceo.stable": {
+                "tickets": 945,
+                "errors": 5,
+                "error_rate": 0.005291005291005291
+              },
+              "domain_expert.drift": {
+                "tickets": 147,
+                "errors": 34,
+                "error_rate": 0.23129251700680273
+              },
+              "domain_expert.stable": {
+                "tickets": 219,
+                "errors": 17,
+                "error_rate": 0.0776255707762557
+              },
+              "intern.drift": {
+                "tickets": 155,
+                "errors": 122,
+                "error_rate": 0.7870967741935484
+              },
+              "intern.stable": {
+                "tickets": 236,
+                "errors": 34,
+                "error_rate": 0.1440677966101695
+              }
+            },
+            "metric_component_drift": {
+              "assisted.drift": {
+                "tickets": 328,
+                "errors": 72,
+                "error_rate": 0.21951219512195122
+              },
+              "assisted.stable": {
+                "tickets": 972,
+                "errors": 2,
+                "error_rate": 0.00205761316872428
+              },
+              "autonomous_model.drift": {
+                "tickets": 272,
+                "errors": 92,
+                "error_rate": 0.3382352941176471
+              },
+              "autonomous_model.stable": {
+                "tickets": 428,
+                "errors": 54,
+                "error_rate": 0.1261682242990654
+              }
+            },
+            "abstention_challenge": {}
+          }
+        },
+        {
+          "repetition": 2,
+          "seed": 20260718,
+          "output_file": "run-002.json",
+          "summary": {
+            "overall": {
+              "tickets": 2000,
+              "errors": 228,
+              "error_rate": 0.114
+            },
+            "quarter": {
+              "Q1": {
+                "tickets": 500,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "Q2": {
+                "tickets": 500,
+                "errors": 58,
+                "error_rate": 0.116
+              },
+              "Q3": {
+                "tickets": 500,
+                "errors": 105,
+                "error_rate": 0.21
+              },
+              "Q4": {
+                "tickets": 500,
+                "errors": 65,
+                "error_rate": 0.13
+              }
+            },
+            "profile": {
+              "ceo": {
+                "tickets": 1216,
+                "errors": 15,
+                "error_rate": 0.012335526315789474
+              },
+              "domain_expert": {
+                "tickets": 402,
+                "errors": 60,
+                "error_rate": 0.14925373134328357
+              },
+              "intern": {
+                "tickets": 382,
+                "errors": 153,
+                "error_rate": 0.4005235602094241
+              }
+            },
+            "state": {
+              "deferring_surrogate": {
+                "tickets": 720,
+                "errors": 154,
+                "error_rate": 0.21388888888888888
+              },
+              "silent_observer": {
+                "tickets": 600,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "skeptical_contestator": {
+                "tickets": 680,
+                "errors": 74,
+                "error_rate": 0.10882352941176471
+              }
+            },
+            "category": {
+              "billing": {
+                "tickets": 400,
+                "errors": 39,
+                "error_rate": 0.0975
+              },
+              "integrations": {
+                "tickets": 400,
+                "errors": 52,
+                "error_rate": 0.13
+              },
+              "onboarding": {
+                "tickets": 400,
+                "errors": 45,
+                "error_rate": 0.1125
+              },
+              "permissions": {
+                "tickets": 400,
+                "errors": 42,
+                "error_rate": 0.105
+              },
+              "reporting": {
+                "tickets": 400,
+                "errors": 50,
+                "error_rate": 0.125
+              }
+            },
+            "difficulty": {
+              "easy": {
+                "tickets": 800,
+                "errors": 181,
+                "error_rate": 0.22625
+              },
+              "hard": {
+                "tickets": 400,
+                "errors": 4,
+                "error_rate": 0.01
+              },
+              "normal": {
+                "tickets": 800,
+                "errors": 43,
+                "error_rate": 0.05375
+              }
+            },
+            "metric_component": {
+              "assisted": {
+                "tickets": 1280,
+                "errors": 74,
+                "error_rate": 0.0578125
+              },
+              "autonomous_model": {
+                "tickets": 720,
+                "errors": 154,
+                "error_rate": 0.21388888888888888
+              }
+            },
+            "drift": {
+              "drift": {
+                "tickets": 600,
+                "errors": 171,
+                "error_rate": 0.285
+              },
+              "stable": {
+                "tickets": 1400,
+                "errors": 57,
+                "error_rate": 0.04071428571428572
+              }
+            },
+            "profile_drift": {
+              "ceo.drift": {
+                "tickets": 279,
+                "errors": 9,
+                "error_rate": 0.03225806451612903
+              },
+              "ceo.stable": {
+                "tickets": 937,
+                "errors": 6,
+                "error_rate": 0.0064034151547491995
+              },
+              "domain_expert.drift": {
+                "tickets": 166,
+                "errors": 46,
+                "error_rate": 0.27710843373493976
+              },
+              "domain_expert.stable": {
+                "tickets": 236,
+                "errors": 14,
+                "error_rate": 0.059322033898305086
+              },
+              "intern.drift": {
+                "tickets": 155,
+                "errors": 116,
+                "error_rate": 0.7483870967741936
+              },
+              "intern.stable": {
+                "tickets": 227,
+                "errors": 37,
+                "error_rate": 0.16299559471365638
+              }
+            },
+            "metric_component_drift": {
+              "assisted.drift": {
+                "tickets": 312,
+                "errors": 71,
+                "error_rate": 0.22756410256410256
+              },
+              "assisted.stable": {
+                "tickets": 968,
+                "errors": 3,
+                "error_rate": 0.0030991735537190084
+              },
+              "autonomous_model.drift": {
+                "tickets": 288,
+                "errors": 100,
+                "error_rate": 0.3472222222222222
+              },
+              "autonomous_model.stable": {
+                "tickets": 432,
+                "errors": 54,
+                "error_rate": 0.125
+              }
+            },
+            "abstention_challenge": {}
+          }
+        },
+        {
+          "repetition": 3,
+          "seed": 20260719,
+          "output_file": "run-003.json",
+          "summary": {
+            "overall": {
+              "tickets": 2000,
+              "errors": 176,
+              "error_rate": 0.088
+            },
+            "quarter": {
+              "Q1": {
+                "tickets": 500,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "Q2": {
+                "tickets": 500,
+                "errors": 45,
+                "error_rate": 0.09
+              },
+              "Q3": {
+                "tickets": 500,
+                "errors": 72,
+                "error_rate": 0.144
+              },
+              "Q4": {
+                "tickets": 500,
+                "errors": 59,
+                "error_rate": 0.118
+              }
+            },
+            "profile": {
+              "ceo": {
+                "tickets": 1256,
+                "errors": 13,
+                "error_rate": 0.010350318471337579
+              },
+              "domain_expert": {
+                "tickets": 372,
+                "errors": 34,
+                "error_rate": 0.0913978494623656
+              },
+              "intern": {
+                "tickets": 372,
+                "errors": 129,
+                "error_rate": 0.3467741935483871
+              }
+            },
+            "state": {
+              "deferring_surrogate": {
+                "tickets": 568,
+                "errors": 87,
+                "error_rate": 0.15316901408450703
+              },
+              "silent_observer": {
+                "tickets": 600,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "skeptical_contestator": {
+                "tickets": 832,
+                "errors": 89,
+                "error_rate": 0.10697115384615384
+              }
+            },
+            "category": {
+              "billing": {
+                "tickets": 400,
+                "errors": 19,
+                "error_rate": 0.0475
+              },
+              "integrations": {
+                "tickets": 400,
+                "errors": 43,
+                "error_rate": 0.1075
+              },
+              "onboarding": {
+                "tickets": 400,
+                "errors": 38,
+                "error_rate": 0.095
+              },
+              "permissions": {
+                "tickets": 400,
+                "errors": 37,
+                "error_rate": 0.0925
+              },
+              "reporting": {
+                "tickets": 400,
+                "errors": 39,
+                "error_rate": 0.0975
+              }
+            },
+            "difficulty": {
+              "easy": {
+                "tickets": 800,
+                "errors": 143,
+                "error_rate": 0.17875
+              },
+              "hard": {
+                "tickets": 400,
+                "errors": 3,
+                "error_rate": 0.0075
+              },
+              "normal": {
+                "tickets": 800,
+                "errors": 30,
+                "error_rate": 0.0375
+              }
+            },
+            "metric_component": {
+              "assisted": {
+                "tickets": 1432,
+                "errors": 89,
+                "error_rate": 0.06215083798882681
+              },
+              "autonomous_model": {
+                "tickets": 568,
+                "errors": 87,
+                "error_rate": 0.15316901408450703
+              }
+            },
+            "drift": {
+              "drift": {
+                "tickets": 600,
+                "errors": 148,
+                "error_rate": 0.24666666666666667
+              },
+              "stable": {
+                "tickets": 1400,
+                "errors": 28,
+                "error_rate": 0.02
+              }
+            },
+            "profile_drift": {
+              "ceo.drift": {
+                "tickets": 308,
+                "errors": 9,
+                "error_rate": 0.02922077922077922
+              },
+              "ceo.stable": {
+                "tickets": 948,
+                "errors": 4,
+                "error_rate": 0.004219409282700422
+              },
+              "domain_expert.drift": {
+                "tickets": 144,
+                "errors": 22,
+                "error_rate": 0.1527777777777778
+              },
+              "domain_expert.stable": {
+                "tickets": 228,
+                "errors": 12,
+                "error_rate": 0.05263157894736842
+              },
+              "intern.drift": {
+                "tickets": 148,
+                "errors": 117,
+                "error_rate": 0.7905405405405406
+              },
+              "intern.stable": {
+                "tickets": 224,
+                "errors": 12,
+                "error_rate": 0.05357142857142857
+              }
+            },
+            "metric_component_drift": {
+              "assisted.drift": {
+                "tickets": 373,
+                "errors": 83,
+                "error_rate": 0.2225201072386059
+              },
+              "assisted.stable": {
+                "tickets": 1059,
+                "errors": 6,
+                "error_rate": 0.0056657223796034
+              },
+              "autonomous_model.drift": {
+                "tickets": 227,
+                "errors": 65,
+                "error_rate": 0.28634361233480177
+              },
+              "autonomous_model.stable": {
+                "tickets": 341,
+                "errors": 22,
+                "error_rate": 0.06451612903225806
+              }
+            },
+            "abstention_challenge": {}
+          }
+        },
+        {
+          "repetition": 4,
+          "seed": 20260720,
+          "output_file": "run-004.json",
+          "summary": {
+            "overall": {
+              "tickets": 2000,
+              "errors": 203,
+              "error_rate": 0.1015
+            },
+            "quarter": {
+              "Q1": {
+                "tickets": 500,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "Q2": {
+                "tickets": 500,
+                "errors": 46,
+                "error_rate": 0.092
+              },
+              "Q3": {
+                "tickets": 500,
+                "errors": 63,
+                "error_rate": 0.126
+              },
+              "Q4": {
+                "tickets": 500,
+                "errors": 94,
+                "error_rate": 0.188
+              }
+            },
+            "profile": {
+              "ceo": {
+                "tickets": 1254,
+                "errors": 17,
+                "error_rate": 0.013556618819776715
+              },
+              "domain_expert": {
+                "tickets": 373,
+                "errors": 49,
+                "error_rate": 0.13136729222520108
+              },
+              "intern": {
+                "tickets": 373,
+                "errors": 137,
+                "error_rate": 0.3672922252010724
+              }
+            },
+            "state": {
+              "deferring_surrogate": {
+                "tickets": 730,
+                "errors": 144,
+                "error_rate": 0.19726027397260273
+              },
+              "silent_observer": {
+                "tickets": 600,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "skeptical_contestator": {
+                "tickets": 670,
+                "errors": 59,
+                "error_rate": 0.0880597014925373
+              }
+            },
+            "category": {
+              "billing": {
+                "tickets": 400,
+                "errors": 32,
+                "error_rate": 0.08
+              },
+              "integrations": {
+                "tickets": 400,
+                "errors": 45,
+                "error_rate": 0.1125
+              },
+              "onboarding": {
+                "tickets": 400,
+                "errors": 37,
+                "error_rate": 0.0925
+              },
+              "permissions": {
+                "tickets": 400,
+                "errors": 55,
+                "error_rate": 0.1375
+              },
+              "reporting": {
+                "tickets": 400,
+                "errors": 34,
+                "error_rate": 0.085
+              }
+            },
+            "difficulty": {
+              "easy": {
+                "tickets": 800,
+                "errors": 154,
+                "error_rate": 0.1925
+              },
+              "hard": {
+                "tickets": 400,
+                "errors": 9,
+                "error_rate": 0.0225
+              },
+              "normal": {
+                "tickets": 800,
+                "errors": 40,
+                "error_rate": 0.05
+              }
+            },
+            "metric_component": {
+              "assisted": {
+                "tickets": 1270,
+                "errors": 59,
+                "error_rate": 0.046456692913385826
+              },
+              "autonomous_model": {
+                "tickets": 730,
+                "errors": 144,
+                "error_rate": 0.19726027397260273
+              }
+            },
+            "drift": {
+              "drift": {
+                "tickets": 600,
+                "errors": 150,
+                "error_rate": 0.25
+              },
+              "stable": {
+                "tickets": 1400,
+                "errors": 53,
+                "error_rate": 0.03785714285714286
+              }
+            },
+            "profile_drift": {
+              "ceo.drift": {
+                "tickets": 304,
+                "errors": 12,
+                "error_rate": 0.039473684210526314
+              },
+              "ceo.stable": {
+                "tickets": 950,
+                "errors": 5,
+                "error_rate": 0.005263157894736842
+              },
+              "domain_expert.drift": {
+                "tickets": 153,
+                "errors": 35,
+                "error_rate": 0.22875816993464052
+              },
+              "domain_expert.stable": {
+                "tickets": 220,
+                "errors": 14,
+                "error_rate": 0.06363636363636363
+              },
+              "intern.drift": {
+                "tickets": 143,
+                "errors": 103,
+                "error_rate": 0.7202797202797203
+              },
+              "intern.stable": {
+                "tickets": 230,
+                "errors": 34,
+                "error_rate": 0.14782608695652175
+              }
+            },
+            "metric_component_drift": {
+              "assisted.drift": {
+                "tickets": 298,
+                "errors": 58,
+                "error_rate": 0.19463087248322147
+              },
+              "assisted.stable": {
+                "tickets": 972,
+                "errors": 1,
+                "error_rate": 0.00102880658436214
+              },
+              "autonomous_model.drift": {
+                "tickets": 302,
+                "errors": 92,
+                "error_rate": 0.304635761589404
+              },
+              "autonomous_model.stable": {
+                "tickets": 428,
+                "errors": 52,
+                "error_rate": 0.12149532710280374
+              }
+            },
+            "abstention_challenge": {}
+          }
+        },
+        {
+          "repetition": 5,
+          "seed": 20260721,
+          "output_file": "run-005.json",
+          "summary": {
+            "overall": {
+              "tickets": 2000,
+              "errors": 223,
+              "error_rate": 0.1115
+            },
+            "quarter": {
+              "Q1": {
+                "tickets": 500,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "Q2": {
+                "tickets": 500,
+                "errors": 58,
+                "error_rate": 0.116
+              },
+              "Q3": {
+                "tickets": 500,
+                "errors": 100,
+                "error_rate": 0.2
+              },
+              "Q4": {
+                "tickets": 500,
+                "errors": 65,
+                "error_rate": 0.13
+              }
+            },
+            "profile": {
+              "ceo": {
+                "tickets": 1232,
+                "errors": 15,
+                "error_rate": 0.012175324675324676
+              },
+              "domain_expert": {
+                "tickets": 384,
+                "errors": 51,
+                "error_rate": 0.1328125
+              },
+              "intern": {
+                "tickets": 384,
+                "errors": 157,
+                "error_rate": 0.4088541666666667
+              }
+            },
+            "state": {
+              "deferring_surrogate": {
+                "tickets": 683,
+                "errors": 141,
+                "error_rate": 0.20644216691068815
+              },
+              "silent_observer": {
+                "tickets": 600,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "skeptical_contestator": {
+                "tickets": 717,
+                "errors": 82,
+                "error_rate": 0.11436541143654114
+              }
+            },
+            "category": {
+              "billing": {
+                "tickets": 400,
+                "errors": 24,
+                "error_rate": 0.06
+              },
+              "integrations": {
+                "tickets": 400,
+                "errors": 55,
+                "error_rate": 0.1375
+              },
+              "onboarding": {
+                "tickets": 400,
+                "errors": 40,
+                "error_rate": 0.1
+              },
+              "permissions": {
+                "tickets": 400,
+                "errors": 53,
+                "error_rate": 0.1325
+              },
+              "reporting": {
+                "tickets": 400,
+                "errors": 51,
+                "error_rate": 0.1275
+              }
+            },
+            "difficulty": {
+              "easy": {
+                "tickets": 800,
+                "errors": 173,
+                "error_rate": 0.21625
+              },
+              "hard": {
+                "tickets": 400,
+                "errors": 4,
+                "error_rate": 0.01
+              },
+              "normal": {
+                "tickets": 800,
+                "errors": 46,
+                "error_rate": 0.0575
+              }
+            },
+            "metric_component": {
+              "assisted": {
+                "tickets": 1317,
+                "errors": 82,
+                "error_rate": 0.06226271829916477
+              },
+              "autonomous_model": {
+                "tickets": 683,
+                "errors": 141,
+                "error_rate": 0.20644216691068815
+              }
+            },
+            "drift": {
+              "drift": {
+                "tickets": 600,
+                "errors": 181,
+                "error_rate": 0.3016666666666667
+              },
+              "stable": {
+                "tickets": 1400,
+                "errors": 42,
+                "error_rate": 0.03
+              }
+            },
+            "profile_drift": {
+              "ceo.drift": {
+                "tickets": 289,
+                "errors": 12,
+                "error_rate": 0.04152249134948097
+              },
+              "ceo.stable": {
+                "tickets": 943,
+                "errors": 3,
+                "error_rate": 0.003181336161187699
+              },
+              "domain_expert.drift": {
+                "tickets": 155,
+                "errors": 38,
+                "error_rate": 0.24516129032258063
+              },
+              "domain_expert.stable": {
+                "tickets": 229,
+                "errors": 13,
+                "error_rate": 0.056768558951965066
+              },
+              "intern.drift": {
+                "tickets": 156,
+                "errors": 131,
+                "error_rate": 0.8397435897435898
+              },
+              "intern.stable": {
+                "tickets": 228,
+                "errors": 26,
+                "error_rate": 0.11403508771929824
+              }
+            },
+            "metric_component_drift": {
+              "assisted.drift": {
+                "tickets": 329,
+                "errors": 79,
+                "error_rate": 0.24012158054711247
+              },
+              "assisted.stable": {
+                "tickets": 988,
+                "errors": 3,
+                "error_rate": 0.003036437246963563
+              },
+              "autonomous_model.drift": {
+                "tickets": 271,
+                "errors": 102,
+                "error_rate": 0.3763837638376384
+              },
+              "autonomous_model.stable": {
+                "tickets": 412,
+                "errors": 39,
+                "error_rate": 0.09466019417475728
+              }
+            },
+            "abstention_challenge": {}
+          }
+        },
+        {
+          "repetition": 6,
+          "seed": 20260722,
+          "output_file": "run-006.json",
+          "summary": {
+            "overall": {
+              "tickets": 2000,
+              "errors": 220,
+              "error_rate": 0.11
+            },
+            "quarter": {
+              "Q1": {
+                "tickets": 500,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "Q2": {
+                "tickets": 500,
+                "errors": 64,
+                "error_rate": 0.128
+              },
+              "Q3": {
+                "tickets": 500,
+                "errors": 94,
+                "error_rate": 0.188
+              },
+              "Q4": {
+                "tickets": 500,
+                "errors": 62,
+                "error_rate": 0.124
+              }
+            },
+            "profile": {
+              "ceo": {
+                "tickets": 1214,
+                "errors": 15,
+                "error_rate": 0.012355848434925865
+              },
+              "domain_expert": {
+                "tickets": 397,
+                "errors": 61,
+                "error_rate": 0.15365239294710328
+              },
+              "intern": {
+                "tickets": 389,
+                "errors": 144,
+                "error_rate": 0.37017994858611825
+              }
+            },
+            "state": {
+              "deferring_surrogate": {
+                "tickets": 648,
+                "errors": 136,
+                "error_rate": 0.20987654320987653
+              },
+              "silent_observer": {
+                "tickets": 600,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "skeptical_contestator": {
+                "tickets": 752,
+                "errors": 84,
+                "error_rate": 0.11170212765957446
+              }
+            },
+            "category": {
+              "billing": {
+                "tickets": 400,
+                "errors": 38,
+                "error_rate": 0.095
+              },
+              "integrations": {
+                "tickets": 400,
+                "errors": 47,
+                "error_rate": 0.1175
+              },
+              "onboarding": {
+                "tickets": 400,
+                "errors": 38,
+                "error_rate": 0.095
+              },
+              "permissions": {
+                "tickets": 400,
+                "errors": 46,
+                "error_rate": 0.115
+              },
+              "reporting": {
+                "tickets": 400,
+                "errors": 51,
+                "error_rate": 0.1275
+              }
+            },
+            "difficulty": {
+              "easy": {
+                "tickets": 800,
+                "errors": 170,
+                "error_rate": 0.2125
+              },
+              "hard": {
+                "tickets": 400,
+                "errors": 6,
+                "error_rate": 0.015
+              },
+              "normal": {
+                "tickets": 800,
+                "errors": 44,
+                "error_rate": 0.055
+              }
+            },
+            "metric_component": {
+              "assisted": {
+                "tickets": 1352,
+                "errors": 84,
+                "error_rate": 0.0621301775147929
+              },
+              "autonomous_model": {
+                "tickets": 648,
+                "errors": 136,
+                "error_rate": 0.20987654320987653
+              }
+            },
+            "drift": {
+              "drift": {
+                "tickets": 600,
+                "errors": 175,
+                "error_rate": 0.2916666666666667
+              },
+              "stable": {
+                "tickets": 1400,
+                "errors": 45,
+                "error_rate": 0.03214285714285714
+              }
+            },
+            "profile_drift": {
+              "ceo.drift": {
+                "tickets": 283,
+                "errors": 8,
+                "error_rate": 0.028268551236749116
+              },
+              "ceo.stable": {
+                "tickets": 931,
+                "errors": 7,
+                "error_rate": 0.007518796992481203
+              },
+              "domain_expert.drift": {
+                "tickets": 164,
+                "errors": 44,
+                "error_rate": 0.2682926829268293
+              },
+              "domain_expert.stable": {
+                "tickets": 233,
+                "errors": 17,
+                "error_rate": 0.07296137339055794
+              },
+              "intern.drift": {
+                "tickets": 153,
+                "errors": 123,
+                "error_rate": 0.803921568627451
+              },
+              "intern.stable": {
+                "tickets": 236,
+                "errors": 21,
+                "error_rate": 0.08898305084745763
+              }
+            },
+            "metric_component_drift": {
+              "assisted.drift": {
+                "tickets": 335,
+                "errors": 82,
+                "error_rate": 0.24477611940298508
+              },
+              "assisted.stable": {
+                "tickets": 1017,
+                "errors": 2,
+                "error_rate": 0.0019665683382497543
+              },
+              "autonomous_model.drift": {
+                "tickets": 265,
+                "errors": 93,
+                "error_rate": 0.35094339622641507
+              },
+              "autonomous_model.stable": {
+                "tickets": 383,
+                "errors": 43,
+                "error_rate": 0.1122715404699739
+              }
+            },
+            "abstention_challenge": {}
+          }
+        },
+        {
+          "repetition": 7,
+          "seed": 20260723,
+          "output_file": "run-007.json",
+          "summary": {
+            "overall": {
+              "tickets": 2000,
+              "errors": 216,
+              "error_rate": 0.108
+            },
+            "quarter": {
+              "Q1": {
+                "tickets": 500,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "Q2": {
+                "tickets": 500,
+                "errors": 52,
+                "error_rate": 0.104
+              },
+              "Q3": {
+                "tickets": 500,
+                "errors": 108,
+                "error_rate": 0.216
+              },
+              "Q4": {
+                "tickets": 500,
+                "errors": 56,
+                "error_rate": 0.112
+              }
+            },
+            "profile": {
+              "ceo": {
+                "tickets": 1226,
+                "errors": 13,
+                "error_rate": 0.010603588907014683
+              },
+              "domain_expert": {
+                "tickets": 387,
+                "errors": 51,
+                "error_rate": 0.13178294573643412
+              },
+              "intern": {
+                "tickets": 387,
+                "errors": 152,
+                "error_rate": 0.39276485788113696
+              }
+            },
+            "state": {
+              "deferring_surrogate": {
+                "tickets": 670,
+                "errors": 148,
+                "error_rate": 0.2208955223880597
+              },
+              "silent_observer": {
+                "tickets": 600,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "skeptical_contestator": {
+                "tickets": 730,
+                "errors": 68,
+                "error_rate": 0.09315068493150686
+              }
+            },
+            "category": {
+              "billing": {
+                "tickets": 400,
+                "errors": 33,
+                "error_rate": 0.0825
+              },
+              "integrations": {
+                "tickets": 400,
+                "errors": 47,
+                "error_rate": 0.1175
+              },
+              "onboarding": {
+                "tickets": 400,
+                "errors": 48,
+                "error_rate": 0.12
+              },
+              "permissions": {
+                "tickets": 400,
+                "errors": 49,
+                "error_rate": 0.1225
+              },
+              "reporting": {
+                "tickets": 400,
+                "errors": 39,
+                "error_rate": 0.0975
+              }
+            },
+            "difficulty": {
+              "easy": {
+                "tickets": 800,
+                "errors": 172,
+                "error_rate": 0.215
+              },
+              "hard": {
+                "tickets": 400,
+                "errors": 4,
+                "error_rate": 0.01
+              },
+              "normal": {
+                "tickets": 800,
+                "errors": 40,
+                "error_rate": 0.05
+              }
+            },
+            "metric_component": {
+              "assisted": {
+                "tickets": 1330,
+                "errors": 68,
+                "error_rate": 0.05112781954887218
+              },
+              "autonomous_model": {
+                "tickets": 670,
+                "errors": 148,
+                "error_rate": 0.2208955223880597
+              }
+            },
+            "drift": {
+              "drift": {
+                "tickets": 600,
+                "errors": 160,
+                "error_rate": 0.26666666666666666
+              },
+              "stable": {
+                "tickets": 1400,
+                "errors": 56,
+                "error_rate": 0.04
+              }
+            },
+            "profile_drift": {
+              "ceo.drift": {
+                "tickets": 294,
+                "errors": 10,
+                "error_rate": 0.034013605442176874
+              },
+              "ceo.stable": {
+                "tickets": 932,
+                "errors": 3,
+                "error_rate": 0.003218884120171674
+              },
+              "domain_expert.drift": {
+                "tickets": 151,
+                "errors": 37,
+                "error_rate": 0.24503311258278146
+              },
+              "domain_expert.stable": {
+                "tickets": 236,
+                "errors": 14,
+                "error_rate": 0.059322033898305086
+              },
+              "intern.drift": {
+                "tickets": 155,
+                "errors": 113,
+                "error_rate": 0.7290322580645161
+              },
+              "intern.stable": {
+                "tickets": 232,
+                "errors": 39,
+                "error_rate": 0.16810344827586207
+              }
+            },
+            "metric_component_drift": {
+              "assisted.drift": {
+                "tickets": 330,
+                "errors": 65,
+                "error_rate": 0.19696969696969696
+              },
+              "assisted.stable": {
+                "tickets": 1000,
+                "errors": 3,
+                "error_rate": 0.003
+              },
+              "autonomous_model.drift": {
+                "tickets": 270,
+                "errors": 95,
+                "error_rate": 0.35185185185185186
+              },
+              "autonomous_model.stable": {
+                "tickets": 400,
+                "errors": 53,
+                "error_rate": 0.1325
+              }
+            },
+            "abstention_challenge": {}
+          }
+        },
+        {
+          "repetition": 8,
+          "seed": 20260724,
+          "output_file": "run-008.json",
+          "summary": {
+            "overall": {
+              "tickets": 2000,
+              "errors": 205,
+              "error_rate": 0.1025
+            },
+            "quarter": {
+              "Q1": {
+                "tickets": 500,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "Q2": {
+                "tickets": 500,
+                "errors": 57,
+                "error_rate": 0.114
+              },
+              "Q3": {
+                "tickets": 500,
+                "errors": 83,
+                "error_rate": 0.166
+              },
+              "Q4": {
+                "tickets": 500,
+                "errors": 65,
+                "error_rate": 0.13
+              }
+            },
+            "profile": {
+              "ceo": {
+                "tickets": 1243,
+                "errors": 11,
+                "error_rate": 0.008849557522123894
+              },
+              "domain_expert": {
+                "tickets": 371,
+                "errors": 36,
+                "error_rate": 0.09703504043126684
+              },
+              "intern": {
+                "tickets": 386,
+                "errors": 158,
+                "error_rate": 0.40932642487046633
+              }
+            },
+            "state": {
+              "deferring_surrogate": {
+                "tickets": 532,
+                "errors": 103,
+                "error_rate": 0.19360902255639098
+              },
+              "silent_observer": {
+                "tickets": 600,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "skeptical_contestator": {
+                "tickets": 868,
+                "errors": 102,
+                "error_rate": 0.1175115207373272
+              }
+            },
+            "category": {
+              "billing": {
+                "tickets": 400,
+                "errors": 19,
+                "error_rate": 0.0475
+              },
+              "integrations": {
+                "tickets": 400,
+                "errors": 54,
+                "error_rate": 0.135
+              },
+              "onboarding": {
+                "tickets": 400,
+                "errors": 41,
+                "error_rate": 0.1025
+              },
+              "permissions": {
+                "tickets": 400,
+                "errors": 44,
+                "error_rate": 0.11
+              },
+              "reporting": {
+                "tickets": 400,
+                "errors": 47,
+                "error_rate": 0.1175
+              }
+            },
+            "difficulty": {
+              "easy": {
+                "tickets": 800,
+                "errors": 170,
+                "error_rate": 0.2125
+              },
+              "hard": {
+                "tickets": 400,
+                "errors": 5,
+                "error_rate": 0.0125
+              },
+              "normal": {
+                "tickets": 800,
+                "errors": 30,
+                "error_rate": 0.0375
+              }
+            },
+            "metric_component": {
+              "assisted": {
+                "tickets": 1468,
+                "errors": 102,
+                "error_rate": 0.06948228882833787
+              },
+              "autonomous_model": {
+                "tickets": 532,
+                "errors": 103,
+                "error_rate": 0.19360902255639098
+              }
+            },
+            "drift": {
+              "drift": {
+                "tickets": 600,
+                "errors": 164,
+                "error_rate": 0.2733333333333333
+              },
+              "stable": {
+                "tickets": 1400,
+                "errors": 41,
+                "error_rate": 0.029285714285714286
+              }
+            },
+            "profile_drift": {
+              "ceo.drift": {
+                "tickets": 299,
+                "errors": 7,
+                "error_rate": 0.023411371237458192
+              },
+              "ceo.stable": {
+                "tickets": 944,
+                "errors": 4,
+                "error_rate": 0.00423728813559322
+              },
+              "domain_expert.drift": {
+                "tickets": 143,
+                "errors": 28,
+                "error_rate": 0.1958041958041958
+              },
+              "domain_expert.stable": {
+                "tickets": 228,
+                "errors": 8,
+                "error_rate": 0.03508771929824561
+              },
+              "intern.drift": {
+                "tickets": 158,
+                "errors": 129,
+                "error_rate": 0.8164556962025317
+              },
+              "intern.stable": {
+                "tickets": 228,
+                "errors": 29,
+                "error_rate": 0.12719298245614036
+              }
+            },
+            "metric_component_drift": {
+              "assisted.drift": {
+                "tickets": 388,
+                "errors": 100,
+                "error_rate": 0.25773195876288657
+              },
+              "assisted.stable": {
+                "tickets": 1080,
+                "errors": 2,
+                "error_rate": 0.001851851851851852
+              },
+              "autonomous_model.drift": {
+                "tickets": 212,
+                "errors": 64,
+                "error_rate": 0.3018867924528302
+              },
+              "autonomous_model.stable": {
+                "tickets": 320,
+                "errors": 39,
+                "error_rate": 0.121875
+              }
+            },
+            "abstention_challenge": {}
+          }
+        },
+        {
+          "repetition": 9,
+          "seed": 20260725,
+          "output_file": "run-009.json",
+          "summary": {
+            "overall": {
+              "tickets": 2000,
+              "errors": 194,
+              "error_rate": 0.097
+            },
+            "quarter": {
+              "Q1": {
+                "tickets": 500,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "Q2": {
+                "tickets": 500,
+                "errors": 60,
+                "error_rate": 0.12
+              },
+              "Q3": {
+                "tickets": 500,
+                "errors": 70,
+                "error_rate": 0.14
+              },
+              "Q4": {
+                "tickets": 500,
+                "errors": 64,
+                "error_rate": 0.128
+              }
+            },
+            "profile": {
+              "ceo": {
+                "tickets": 1220,
+                "errors": 13,
+                "error_rate": 0.010655737704918032
+              },
+              "domain_expert": {
+                "tickets": 394,
+                "errors": 47,
+                "error_rate": 0.11928934010152284
+              },
+              "intern": {
+                "tickets": 386,
+                "errors": 134,
+                "error_rate": 0.3471502590673575
+              }
+            },
+            "state": {
+              "deferring_surrogate": {
+                "tickets": 588,
+                "errors": 107,
+                "error_rate": 0.18197278911564627
+              },
+              "silent_observer": {
+                "tickets": 600,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "skeptical_contestator": {
+                "tickets": 812,
+                "errors": 87,
+                "error_rate": 0.10714285714285714
+              }
+            },
+            "category": {
+              "billing": {
+                "tickets": 400,
+                "errors": 24,
+                "error_rate": 0.06
+              },
+              "integrations": {
+                "tickets": 400,
+                "errors": 36,
+                "error_rate": 0.09
+              },
+              "onboarding": {
+                "tickets": 400,
+                "errors": 43,
+                "error_rate": 0.1075
+              },
+              "permissions": {
+                "tickets": 400,
+                "errors": 53,
+                "error_rate": 0.1325
+              },
+              "reporting": {
+                "tickets": 400,
+                "errors": 38,
+                "error_rate": 0.095
+              }
+            },
+            "difficulty": {
+              "easy": {
+                "tickets": 800,
+                "errors": 151,
+                "error_rate": 0.18875
+              },
+              "hard": {
+                "tickets": 400,
+                "errors": 5,
+                "error_rate": 0.0125
+              },
+              "normal": {
+                "tickets": 800,
+                "errors": 38,
+                "error_rate": 0.0475
+              }
+            },
+            "metric_component": {
+              "assisted": {
+                "tickets": 1412,
+                "errors": 87,
+                "error_rate": 0.06161473087818697
+              },
+              "autonomous_model": {
+                "tickets": 588,
+                "errors": 107,
+                "error_rate": 0.18197278911564627
+              }
+            },
+            "drift": {
+              "drift": {
+                "tickets": 600,
+                "errors": 162,
+                "error_rate": 0.27
+              },
+              "stable": {
+                "tickets": 1400,
+                "errors": 32,
+                "error_rate": 0.022857142857142857
+              }
+            },
+            "profile_drift": {
+              "ceo.drift": {
+                "tickets": 278,
+                "errors": 11,
+                "error_rate": 0.039568345323741004
+              },
+              "ceo.stable": {
+                "tickets": 942,
+                "errors": 2,
+                "error_rate": 0.0021231422505307855
+              },
+              "domain_expert.drift": {
+                "tickets": 163,
+                "errors": 34,
+                "error_rate": 0.2085889570552147
+              },
+              "domain_expert.stable": {
+                "tickets": 231,
+                "errors": 13,
+                "error_rate": 0.05627705627705628
+              },
+              "intern.drift": {
+                "tickets": 159,
+                "errors": 117,
+                "error_rate": 0.7358490566037735
+              },
+              "intern.stable": {
+                "tickets": 227,
+                "errors": 17,
+                "error_rate": 0.07488986784140969
+              }
+            },
+            "metric_component_drift": {
+              "assisted.drift": {
+                "tickets": 357,
+                "errors": 82,
+                "error_rate": 0.22969187675070027
+              },
+              "assisted.stable": {
+                "tickets": 1055,
+                "errors": 5,
+                "error_rate": 0.004739336492890996
+              },
+              "autonomous_model.drift": {
+                "tickets": 243,
+                "errors": 80,
+                "error_rate": 0.3292181069958848
+              },
+              "autonomous_model.stable": {
+                "tickets": 345,
+                "errors": 27,
+                "error_rate": 0.0782608695652174
+              }
+            },
+            "abstention_challenge": {}
+          }
+        },
+        {
+          "repetition": 10,
+          "seed": 20260726,
+          "output_file": "run-010.json",
+          "summary": {
+            "overall": {
+              "tickets": 2000,
+              "errors": 186,
+              "error_rate": 0.093
+            },
+            "quarter": {
+              "Q1": {
+                "tickets": 500,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "Q2": {
+                "tickets": 500,
+                "errors": 58,
+                "error_rate": 0.116
+              },
+              "Q3": {
+                "tickets": 500,
+                "errors": 69,
+                "error_rate": 0.138
+              },
+              "Q4": {
+                "tickets": 500,
+                "errors": 59,
+                "error_rate": 0.118
+              }
+            },
+            "profile": {
+              "ceo": {
+                "tickets": 1231,
+                "errors": 13,
+                "error_rate": 0.010560519902518278
+              },
+              "domain_expert": {
+                "tickets": 387,
+                "errors": 48,
+                "error_rate": 0.12403100775193798
+              },
+              "intern": {
+                "tickets": 382,
+                "errors": 125,
+                "error_rate": 0.32722513089005234
+              }
+            },
+            "state": {
+              "deferring_surrogate": {
+                "tickets": 579,
+                "errors": 104,
+                "error_rate": 0.17962003454231434
+              },
+              "silent_observer": {
+                "tickets": 600,
+                "errors": 0,
+                "error_rate": 0.0
+              },
+              "skeptical_contestator": {
+                "tickets": 821,
+                "errors": 82,
+                "error_rate": 0.09987819732034105
+              }
+            },
+            "category": {
+              "billing": {
+                "tickets": 400,
+                "errors": 25,
+                "error_rate": 0.0625
+              },
+              "integrations": {
+                "tickets": 400,
+                "errors": 45,
+                "error_rate": 0.1125
+              },
+              "onboarding": {
+                "tickets": 400,
+                "errors": 43,
+                "error_rate": 0.1075
+              },
+              "permissions": {
+                "tickets": 400,
+                "errors": 34,
+                "error_rate": 0.085
+              },
+              "reporting": {
+                "tickets": 400,
+                "errors": 39,
+                "error_rate": 0.0975
+              }
+            },
+            "difficulty": {
+              "easy": {
+                "tickets": 800,
+                "errors": 143,
+                "error_rate": 0.17875
+              },
+              "hard": {
+                "tickets": 400,
+                "errors": 3,
+                "error_rate": 0.0075
+              },
+              "normal": {
+                "tickets": 800,
+                "errors": 40,
+                "error_rate": 0.05
+              }
+            },
+            "metric_component": {
+              "assisted": {
+                "tickets": 1421,
+                "errors": 82,
+                "error_rate": 0.057705840957072485
+              },
+              "autonomous_model": {
+                "tickets": 579,
+                "errors": 104,
+                "error_rate": 0.17962003454231434
+              }
+            },
+            "drift": {
+              "drift": {
+                "tickets": 600,
+                "errors": 152,
+                "error_rate": 0.25333333333333335
+              },
+              "stable": {
+                "tickets": 1400,
+                "errors": 34,
+                "error_rate": 0.024285714285714285
+              }
+            },
+            "profile_drift": {
+              "ceo.drift": {
+                "tickets": 294,
+                "errors": 8,
+                "error_rate": 0.027210884353741496
+              },
+              "ceo.stable": {
+                "tickets": 937,
+                "errors": 5,
+                "error_rate": 0.005336179295624333
+              },
+              "domain_expert.drift": {
+                "tickets": 159,
+                "errors": 34,
+                "error_rate": 0.2138364779874214
+              },
+              "domain_expert.stable": {
+                "tickets": 228,
+                "errors": 14,
+                "error_rate": 0.06140350877192982
+              },
+              "intern.drift": {
+                "tickets": 147,
+                "errors": 110,
+                "error_rate": 0.7482993197278912
+              },
+              "intern.stable": {
+                "tickets": 235,
+                "errors": 15,
+                "error_rate": 0.06382978723404255
+              }
+            },
+            "metric_component_drift": {
+              "assisted.drift": {
+                "tickets": 359,
+                "errors": 78,
+                "error_rate": 0.21727019498607242
+              },
+              "assisted.stable": {
+                "tickets": 1062,
+                "errors": 4,
+                "error_rate": 0.003766478342749529
+              },
+              "autonomous_model.drift": {
+                "tickets": 241,
+                "errors": 74,
+                "error_rate": 0.3070539419087137
+              },
+              "autonomous_model.stable": {
+                "tickets": 338,
+                "errors": 30,
+                "error_rate": 0.08875739644970414
+              }
+            },
+            "abstention_challenge": {}
+          }
+        }
+      ],
+      "aggregate": {
+        "category.billing": {
+          "repetitions": 10,
+          "mean_error_rate": 0.07225000000000001,
+          "standard_deviation": 0.018043350575766132,
+          "pooled_tickets": 4000,
+          "pooled_errors": 289,
+          "pooled_error_rate": 0.07225
+        },
+        "category.integrations": {
+          "repetitions": 10,
+          "mean_error_rate": 0.11950000000000001,
+          "standard_deviation": 0.01426534261768711,
+          "pooled_tickets": 4000,
+          "pooled_errors": 478,
+          "pooled_error_rate": 0.1195
+        },
+        "category.onboarding": {
+          "repetitions": 10,
+          "mean_error_rate": 0.10475000000000001,
+          "standard_deviation": 0.008835298523536145,
+          "pooled_tickets": 4000,
+          "pooled_errors": 419,
+          "pooled_error_rate": 0.10475
+        },
+        "category.permissions": {
+          "repetitions": 10,
+          "mean_error_rate": 0.11474999999999999,
+          "standard_deviation": 0.016448784149595982,
+          "pooled_tickets": 4000,
+          "pooled_errors": 459,
+          "pooled_error_rate": 0.11475
+        },
+        "category.reporting": {
+          "repetitions": 10,
+          "mean_error_rate": 0.1065,
+          "standard_deviation": 0.015215124054702937,
+          "pooled_tickets": 4000,
+          "pooled_errors": 426,
+          "pooled_error_rate": 0.1065
+        },
+        "difficulty.easy": {
+          "repetitions": 10,
+          "mean_error_rate": 0.205125,
+          "standard_deviation": 0.01792737083344906,
+          "pooled_tickets": 8000,
+          "pooled_errors": 1641,
+          "pooled_error_rate": 0.205125
+        },
+        "difficulty.hard": {
+          "repetitions": 10,
+          "mean_error_rate": 0.01175,
+          "standard_deviation": 0.0041907636535600526,
+          "pooled_tickets": 4000,
+          "pooled_errors": 47,
+          "pooled_error_rate": 0.01175
+        },
+        "difficulty.normal": {
+          "repetitions": 10,
+          "mean_error_rate": 0.047875,
+          "standard_deviation": 0.00684767296240117,
+          "pooled_tickets": 8000,
+          "pooled_errors": 383,
+          "pooled_error_rate": 0.047875
+        },
+        "drift.drift": {
+          "repetitions": 10,
+          "mean_error_rate": 0.27116666666666667,
+          "standard_deviation": 0.017143997977912467,
+          "pooled_tickets": 6000,
+          "pooled_errors": 1627,
+          "pooled_error_rate": 0.27116666666666667
+        },
+        "drift.stable": {
+          "repetitions": 10,
+          "mean_error_rate": 0.031714285714285716,
+          "standard_deviation": 0.0073206445573251195,
+          "pooled_tickets": 14000,
+          "pooled_errors": 444,
+          "pooled_error_rate": 0.031714285714285716
+        },
+        "metric_component.assisted": {
+          "repetitions": 10,
+          "mean_error_rate": 0.05876666838517167,
+          "standard_deviation": 0.006109388457914444,
+          "pooled_tickets": 13582,
+          "pooled_errors": 801,
+          "pooled_error_rate": 0.05897511412163157
+        },
+        "metric_component.autonomous_model": {
+          "repetitions": 10,
+          "mean_error_rate": 0.19653056842404032,
+          "standard_deviation": 0.019244445436032733,
+          "pooled_tickets": 6418,
+          "pooled_errors": 1270,
+          "pooled_error_rate": 0.19788095980056092
+        },
+        "metric_component_drift.assisted.drift": {
+          "repetitions": 10,
+          "mean_error_rate": 0.22507887048273348,
+          "standard_deviation": 0.018771419486425724,
+          "pooled_tickets": 3409,
+          "pooled_errors": 770,
+          "pooled_error_rate": 0.22587268993839835
+        },
+        "metric_component_drift.assisted.stable": {
+          "repetitions": 10,
+          "mean_error_rate": 0.0030211987959114523,
+          "standard_deviation": 0.001337364836497029,
+          "pooled_tickets": 10173,
+          "pooled_errors": 31,
+          "pooled_error_rate": 0.0030472820210360758
+        },
+        "metric_component_drift.autonomous_model.drift": {
+          "repetitions": 10,
+          "mean_error_rate": 0.3293774743537409,
+          "standard_deviation": 0.027008966288222518,
+          "pooled_tickets": 2591,
+          "pooled_errors": 857,
+          "pooled_error_rate": 0.3307603241991509
+        },
+        "metric_component_drift.autonomous_model.stable": {
+          "repetitions": 10,
+          "mean_error_rate": 0.10655046810937799,
+          "standard_deviation": 0.022169121786767793,
+          "pooled_tickets": 3827,
+          "pooled_errors": 413,
+          "pooled_error_rate": 0.1079174287954011
+        },
+        "overall": {
+          "repetitions": 10,
+          "mean_error_rate": 0.10355,
+          "standard_deviation": 0.008226329679753907,
+          "pooled_tickets": 20000,
+          "pooled_errors": 2071,
+          "pooled_error_rate": 0.10355
+        },
+        "profile.ceo": {
+          "repetitions": 10,
+          "mean_error_rate": 0.011190160873442106,
+          "standard_deviation": 0.001303321542530799,
+          "pooled_tickets": 12335,
+          "pooled_errors": 138,
+          "pooled_error_rate": 0.011187677340899878
+        },
+        "profile.domain_expert": {
+          "repetitions": 10,
+          "mean_error_rate": 0.12699663622941973,
+          "standard_deviation": 0.019150392660238862,
+          "pooled_tickets": 3833,
+          "pooled_errors": 488,
+          "pooled_error_rate": 0.12731541873206365
+        },
+        "profile.intern": {
+          "repetitions": 10,
+          "mean_error_rate": 0.3769067749017868,
+          "standard_deviation": 0.02787000742362041,
+          "pooled_tickets": 3832,
+          "pooled_errors": 1445,
+          "pooled_error_rate": 0.3770876826722338
+        },
+        "profile_drift.ceo.drift": {
+          "repetitions": 10,
+          "mean_error_rate": 0.03217934144746749,
+          "standard_deviation": 0.00593741207400541,
+          "pooled_tickets": 2926,
+          "pooled_errors": 94,
+          "pooled_error_rate": 0.03212576896787423
+        },
+        "profile_drift.ceo.stable": {
+          "repetitions": 10,
+          "mean_error_rate": 0.004679261457878067,
+          "standard_deviation": 0.0015329516182956086,
+          "pooled_tickets": 9409,
+          "pooled_errors": 44,
+          "pooled_error_rate": 0.0046763736847699015
+        },
+        "profile_drift.domain_expert.drift": {
+          "repetitions": 10,
+          "mean_error_rate": 0.22666536151331843,
+          "standard_deviation": 0.034475679442169345,
+          "pooled_tickets": 1545,
+          "pooled_errors": 352,
+          "pooled_error_rate": 0.227831715210356
+        },
+        "profile_drift.domain_expert.stable": {
+          "repetitions": 10,
+          "mean_error_rate": 0.05950357978463526,
+          "standard_deviation": 0.010915693969133987,
+          "pooled_tickets": 2288,
+          "pooled_errors": 136,
+          "pooled_error_rate": 0.05944055944055944
+        },
+        "profile_drift.intern.drift": {
+          "repetitions": 10,
+          "mean_error_rate": 0.7719605620757756,
+          "standard_deviation": 0.03886326599097393,
+          "pooled_tickets": 1529,
+          "pooled_errors": 1181,
+          "pooled_error_rate": 0.7724002616088947
+        },
+        "profile_drift.intern.stable": {
+          "repetitions": 10,
+          "mean_error_rate": 0.11454951312259867,
+          "standard_deviation": 0.03983864582942564,
+          "pooled_tickets": 2303,
+          "pooled_errors": 264,
+          "pooled_error_rate": 0.11463308727746417
+        },
+        "quarter.Q1": {
+          "repetitions": 10,
+          "mean_error_rate": 0.0,
+          "standard_deviation": 0.0,
+          "pooled_tickets": 5000,
+          "pooled_errors": 0,
+          "pooled_error_rate": 0.0
+        },
+        "quarter.Q2": {
+          "repetitions": 10,
+          "mean_error_rate": 0.1106,
+          "standard_deviation": 0.01142103322821539,
+          "pooled_tickets": 5000,
+          "pooled_errors": 553,
+          "pooled_error_rate": 0.1106
+        },
+        "quarter.Q3": {
+          "repetitions": 10,
+          "mean_error_rate": 0.1736,
+          "standard_deviation": 0.032873089298086966,
+          "pooled_tickets": 5000,
+          "pooled_errors": 868,
+          "pooled_error_rate": 0.1736
+        },
+        "quarter.Q4": {
+          "repetitions": 10,
+          "mean_error_rate": 0.13,
+          "standard_deviation": 0.020199009876724155,
+          "pooled_tickets": 5000,
+          "pooled_errors": 650,
+          "pooled_error_rate": 0.13
+        },
+        "state.deferring_surrogate": {
+          "repetitions": 10,
+          "mean_error_rate": 0.19653056842404032,
+          "standard_deviation": 0.019244445436032733,
+          "pooled_tickets": 6418,
+          "pooled_errors": 1270,
+          "pooled_error_rate": 0.19788095980056092
+        },
+        "state.silent_observer": {
+          "repetitions": 10,
+          "mean_error_rate": 0.0,
+          "standard_deviation": 0.0,
+          "pooled_tickets": 6000,
+          "pooled_errors": 0,
+          "pooled_error_rate": 0.0
+        },
+        "state.skeptical_contestator": {
+          "repetitions": 10,
+          "mean_error_rate": 0.10533194696928894,
+          "standard_deviation": 0.00874805932230219,
+          "pooled_tickets": 7582,
+          "pooled_errors": 801,
+          "pooled_error_rate": 0.1056449485623846
+        },
+        "transitions": [
+          {
+            "ticket_id": "SX-Q2-PER-080",
+            "global_position": 600,
+            "observation": 511,
+            "from": "silent_observer",
+            "to": "skeptical_contestator",
+            "fea": 0.7557207969658026,
+            "recent_model_gold_accuracy": 0.8,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review_completion"
+          },
+          {
+            "ticket_id": "SX-Q2-REP-064",
+            "global_position": 700,
+            "observation": 611,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8000223981554162,
+            "recent_model_gold_accuracy": 0.8333333333333334,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": -0.03331093517791717,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q3-REP-039",
+            "global_position": 1001,
+            "observation": 611,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8000223981554162,
+            "recent_model_gold_accuracy": 0.8333333333333334,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q3-BIL-039",
+            "global_position": 1100,
+            "observation": 711,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8026304964570756,
+            "recent_model_gold_accuracy": 0.9666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": -0.16403617020959105,
+            "trigger": "quarterly_ceo_review_completion"
+          },
+          {
+            "ticket_id": "SX-Q4-ONB-046",
+            "global_position": 1501,
+            "observation": 711,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8026304964570756,
+            "recent_model_gold_accuracy": 0.9666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q2-PER-064",
+            "global_position": 600,
+            "observation": 511,
+            "from": "silent_observer",
+            "to": "skeptical_contestator",
+            "fea": 0.7438267020873159,
+            "recent_model_gold_accuracy": 0.8,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review_completion"
+          },
+          {
+            "ticket_id": "SX-Q2-ONB-054",
+            "global_position": 730,
+            "observation": 641,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8002565237370163,
+            "recent_model_gold_accuracy": 0.8333333333333334,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": -0.03307680959631709,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q3-BIL-039",
+            "global_position": 1001,
+            "observation": 641,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8002565237370163,
+            "recent_model_gold_accuracy": 0.8333333333333334,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q3-INT-062",
+            "global_position": 1100,
+            "observation": 741,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8016063685086324,
+            "recent_model_gold_accuracy": 0.7,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": 0.10160636850863247,
+            "trigger": "quarterly_ceo_review_completion"
+          },
+          {
+            "ticket_id": "SX-Q4-PER-001",
+            "global_position": 1501,
+            "observation": 741,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8016063685086324,
+            "recent_model_gold_accuracy": 0.7,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q2-BIL-065",
+            "global_position": 600,
+            "observation": 511,
+            "from": "silent_observer",
+            "to": "skeptical_contestator",
+            "fea": 0.7673583140008952,
+            "recent_model_gold_accuracy": 0.7666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review_completion"
+          },
+          {
+            "ticket_id": "SX-Q2-ONB-005",
+            "global_position": 711,
+            "observation": 622,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.800137705453875,
+            "recent_model_gold_accuracy": 0.8666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": -0.06652896121279173,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q3-INT-067",
+            "global_position": 1001,
+            "observation": 622,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.800137705453875,
+            "recent_model_gold_accuracy": 0.8666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q3-INT-070",
+            "global_position": 1201,
+            "observation": 823,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8001334952729998,
+            "recent_model_gold_accuracy": 0.7666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": 0.0334668286063331,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q4-PER-045",
+            "global_position": 1501,
+            "observation": 823,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8001334952729998,
+            "recent_model_gold_accuracy": 0.7666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q2-PER-059",
+            "global_position": 600,
+            "observation": 509,
+            "from": "silent_observer",
+            "to": "skeptical_contestator",
+            "fea": 0.7626897568944181,
+            "recent_model_gold_accuracy": 0.7666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review_completion"
+          },
+          {
+            "ticket_id": "SX-Q2-ONB-006",
+            "global_position": 685,
+            "observation": 594,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8002677314602634,
+            "recent_model_gold_accuracy": 0.8,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": 0.00026773146026337624,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q3-REP-028",
+            "global_position": 1001,
+            "observation": 594,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8002677314602634,
+            "recent_model_gold_accuracy": 0.8,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q3-REP-099",
+            "global_position": 1236,
+            "observation": 830,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8001105943067152,
+            "recent_model_gold_accuracy": 0.8666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": -0.06655607235995153,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q4-INT-060",
+            "global_position": 1501,
+            "observation": 830,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8001105943067152,
+            "recent_model_gold_accuracy": 0.8666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q2-ONB-083",
+            "global_position": 600,
+            "observation": 508,
+            "from": "silent_observer",
+            "to": "skeptical_contestator",
+            "fea": 0.7469262366525641,
+            "recent_model_gold_accuracy": 0.7333333333333333,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review_completion"
+          },
+          {
+            "ticket_id": "SX-Q2-PER-061",
+            "global_position": 719,
+            "observation": 627,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8004502591211435,
+            "recent_model_gold_accuracy": 0.8666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": -0.06621640754552316,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q3-REP-050",
+            "global_position": 1001,
+            "observation": 627,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8004502591211435,
+            "recent_model_gold_accuracy": 0.8666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q3-ONB-090",
+            "global_position": 1133,
+            "observation": 760,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8003471565762812,
+            "recent_model_gold_accuracy": 0.8666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": -0.0663195100903855,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q4-INT-006",
+            "global_position": 1501,
+            "observation": 760,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8003471565762812,
+            "recent_model_gold_accuracy": 0.8666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q2-ONB-031",
+            "global_position": 600,
+            "observation": 512,
+            "from": "silent_observer",
+            "to": "skeptical_contestator",
+            "fea": 0.7689277933797384,
+            "recent_model_gold_accuracy": 0.8666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review_completion"
+          },
+          {
+            "ticket_id": "SX-Q2-REP-068",
+            "global_position": 680,
+            "observation": 592,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.800447613929871,
+            "recent_model_gold_accuracy": 0.8666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": -0.06621905273679574,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q3-ONB-074",
+            "global_position": 1001,
+            "observation": 592,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.800447613929871,
+            "recent_model_gold_accuracy": 0.8666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q3-BIL-085",
+            "global_position": 1100,
+            "observation": 692,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8005383950962373,
+            "recent_model_gold_accuracy": 0.7666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": 0.033871728429570536,
+            "trigger": "quarterly_ceo_review_completion"
+          },
+          {
+            "ticket_id": "SX-Q4-REP-038",
+            "global_position": 1501,
+            "observation": 692,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8005383950962373,
+            "recent_model_gold_accuracy": 0.7666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q2-PER-003",
+            "global_position": 600,
+            "observation": 509,
+            "from": "silent_observer",
+            "to": "skeptical_contestator",
+            "fea": 0.7299851810329754,
+            "recent_model_gold_accuracy": 0.7666666666666667,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review_completion"
+          },
+          {
+            "ticket_id": "SX-Q2-REP-071",
+            "global_position": 746,
+            "observation": 655,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8001292971917914,
+            "recent_model_gold_accuracy": 0.9333333333333333,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": -0.13320403614154197,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q3-REP-053",
+            "global_position": 1001,
+            "observation": 655,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8001292971917914,
+            "recent_model_gold_accuracy": 0.9333333333333333,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q3-ONB-084",
+            "global_position": 1168,
+            "observation": 823,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8000937071134051,
+            "recent_model_gold_accuracy": 0.8,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": 9.370711340506155e-05,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q4-INT-077",
+            "global_position": 1501,
+            "observation": 823,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8000937071134051,
+            "recent_model_gold_accuracy": 0.8,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q4-ONB-078",
+            "global_position": 1856,
+            "observation": 1178,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8000529163213199,
+            "recent_model_gold_accuracy": 0.7333333333333333,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": 0.06671958298798664,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q2-PER-077",
+            "global_position": 600,
+            "observation": 512,
+            "from": "silent_observer",
+            "to": "skeptical_contestator",
+            "fea": 0.7607442606538677,
+            "recent_model_gold_accuracy": 0.6333333333333333,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review_completion"
+          },
+          {
+            "ticket_id": "SX-Q2-PER-064",
+            "global_position": 693,
+            "observation": 605,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8001620323329638,
+            "recent_model_gold_accuracy": 0.8,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": 0.0001620323329637463,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q3-BIL-035",
+            "global_position": 1001,
+            "observation": 605,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8001620323329638,
+            "recent_model_gold_accuracy": 0.8,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q3-BIL-002",
+            "global_position": 1124,
+            "observation": 729,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8000317092012542,
+            "recent_model_gold_accuracy": 0.7,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": 0.10003170920125426,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q4-BIL-073",
+            "global_position": 1501,
+            "observation": 729,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8000317092012542,
+            "recent_model_gold_accuracy": 0.7,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q2-ONB-094",
+            "global_position": 600,
+            "observation": 506,
+            "from": "silent_observer",
+            "to": "skeptical_contestator",
+            "fea": 0.750318295096474,
+            "recent_model_gold_accuracy": 0.9,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review_completion"
+          },
+          {
+            "ticket_id": "SX-Q2-PER-022",
+            "global_position": 732,
+            "observation": 638,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8000282593925765,
+            "recent_model_gold_accuracy": 0.8333333333333334,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": -0.03330507394075688,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q3-REP-092",
+            "global_position": 1001,
+            "observation": 638,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8000282593925765,
+            "recent_model_gold_accuracy": 0.8333333333333334,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q3-ONB-069",
+            "global_position": 1200,
+            "observation": 838,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8000223079205033,
+            "recent_model_gold_accuracy": 0.9,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": -0.0999776920794967,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q4-INT-080",
+            "global_position": 1501,
+            "observation": 838,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8000223079205033,
+            "recent_model_gold_accuracy": 0.9,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q2-REP-076",
+            "global_position": 600,
+            "observation": 513,
+            "from": "silent_observer",
+            "to": "skeptical_contestator",
+            "fea": 0.7356674835338571,
+            "recent_model_gold_accuracy": 0.8333333333333334,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review_completion"
+          },
+          {
+            "ticket_id": "SX-Q2-INT-092",
+            "global_position": 780,
+            "observation": 693,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8002203048538612,
+            "recent_model_gold_accuracy": 0.8333333333333334,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": -0.03311302847947217,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q3-BIL-027",
+            "global_position": 1001,
+            "observation": 693,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8002203048538612,
+            "recent_model_gold_accuracy": 0.8333333333333334,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          },
+          {
+            "ticket_id": "SX-Q3-ONB-092",
+            "global_position": 1188,
+            "observation": 881,
+            "from": "skeptical_contestator",
+            "to": "deferring_surrogate",
+            "fea": 0.8001762631095769,
+            "recent_model_gold_accuracy": 0.8,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": 0.00017626310957685742,
+            "trigger": "reliability_threshold"
+          },
+          {
+            "ticket_id": "SX-Q4-ONB-044",
+            "global_position": 1501,
+            "observation": 881,
+            "from": "deferring_surrogate",
+            "to": "skeptical_contestator",
+            "fea": 0.8001762631095769,
+            "recent_model_gold_accuracy": 0.8,
+            "recent_model_gold_window_size": 30,
+            "fea_minus_gold_accuracy": null,
+            "trigger": "quarterly_ceo_review"
+          }
+        ],
+        "transition_summary": {
+          "deferring_surrogate->skeptical_contestator": {
+            "count": 20,
+            "mean_observation": 705.3,
+            "mean_global_position": 1251.0,
+            "mean_fea": 0.800390630959573,
+            "mean_recent_model_gold_accuracy": 0.8300000000000001,
+            "mean_fea_minus_gold_accuracy": null
+          },
+          "silent_observer->skeptical_contestator": {
+            "count": 10,
+            "mean_observation": 510.2,
+            "mean_global_position": 600.0,
+            "mean_fea": 0.7522164820297909,
+            "mean_recent_model_gold_accuracy": 0.7866666666666667,
+            "mean_fea_minus_gold_accuracy": null
+          },
+          "skeptical_contestator->deferring_surrogate": {
+            "count": 21,
+            "mean_observation": 727.8095238095239,
+            "mean_global_position": 980.0952380952381,
+            "mean_fea": 0.8003745493101323,
+            "mean_recent_model_gold_accuracy": 0.8253968253968254,
+            "mean_fea_minus_gold_accuracy": -0.02502227608669308
+          }
+        }
+      }
+    }
+  ],
+  "completed_at": "2026-08-14T10:32:30.389432+00:00",
+  "metadata_file": "metadata.json"
+}
