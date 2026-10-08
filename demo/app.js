@@ -9,7 +9,7 @@ const tourSteps = [
     stateClass: "",
     scenario: "refund",
     focus: "conversation",
-    principles: [2],
+    principles: [0],
   },
   {
     eyebrow: "A living knowledge base",
@@ -21,7 +21,7 @@ const tourSteps = [
     stateClass: "",
     scenario: "refund",
     focus: "assistant",
-    principles: [0],
+    principles: [1],
   },
   {
     eyebrow: "Recency changes the answer",
@@ -33,7 +33,7 @@ const tourSteps = [
     stateClass: "assisting",
     scenario: "refund",
     focus: "assistant",
-    principles: [1],
+    principles: [2],
   },
   {
     eyebrow: "Human-in-the-loop",
@@ -105,7 +105,7 @@ const tourSteps = [
     stateClass: "assisting",
     scenario: "autonomous",
     focus: "assistant",
-    principles: [1, 2, 3],
+    principles: [0, 2, 3],
   },
   {
     eyebrow: "Autonomous resolution",
