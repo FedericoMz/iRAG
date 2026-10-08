@@ -163,7 +163,38 @@ BEDROCK_GENERATION_MODEL="eu.amazon.nova-2-lite-v1:0"
 BEDROCK_AUXILIARY_MODEL="eu.amazon.nova-2-lite-v1:0"
 ```
 
-The Bedrock adapter uses JSON-schema structured output through `Converse`: Nova models return the schema through a forced tool call, while models supporting native structured output use `outputConfig`. Nova tool calls use greedy decoding (`temperature=0`, `topK=1`) and the configurable `BEDROCK_TOOL_MAX_TOKENS` ceiling, following AWS's malformed-tool troubleshooting guidance. If different model IDs are selected, both must support one of these mechanisms in the configured region. Boto3 reads `AWS_BEARER_TOKEN_BEDROCK` automatically. Compose passes it from `config.env` into the container. As alternatives, Boto3 can use its normal environment, shared-file, container-role, or instance-role credential sources; a host `BEDROCK_PROFILE` works inside Docker only if its shared AWS configuration is also mounted in the container. Bedrock uses adaptive SDK retries because a complete experiment makes thousands of calls to one runtime resource; `BEDROCK_RETRIES` controls total SDK attempts per request. If the SDK's retry quota is depleted, throttling receives an additional jittered application backoff controlled by `BEDROCK_THROTTLE_RETRIES` and `BEDROCK_THROTTLE_MAX_DELAY`. Transient 503/internal service errors receive their own backoff through `BEDROCK_SERVICE_RETRIES` and `BEDROCK_SERVICE_MAX_DELAY`, while DNS, endpoint-connect, connection-closed, and timeout failures use `BEDROCK_CONNECTION_RETRIES` and `BEDROCK_CONNECTION_MAX_DELAY`. `BEDROCK_MAX_CONCURRENCY` caps simultaneous Runtime calls across parallel repetitions to avoid connection storms. Retry messages include experiment, repetition, ticket, global position, and decision/judgment stage. Empty, malformed-tool, invalid-JSON, and missing-field structured responses are retried separately using `BEDROCK_RESPONSE_RETRIES` and `BEDROCK_RESPONSE_MAX_DELAY`. Generation decisions use the smaller `BEDROCK_DECISION_RESPONSE_RETRIES` budget and then fail safely as abstentions, leaving the human answer final and recording the fallback in `api_response`; auxiliary judgments remain strict because fabricating an evaluation would corrupt the metrics. These settings do not change retry behaviour for Ollama or OpenRouter.
+### Bedrock behavior
+
+The Bedrock adapter uses `Converse` with JSON-schema structured output. Nova
+models return schema-shaped data through a forced tool call; models with native
+structured output use `outputConfig`. Nova calls use greedy decoding
+(`temperature=0`, `topK=1`) and `BEDROCK_TOOL_MAX_TOKENS`. Any selected model
+must support one of these mechanisms in the configured region.
+
+- **Credentials:** Boto3 reads `AWS_BEARER_TOKEN_BEDROCK` automatically, and
+  Compose passes it from `config.env`. Standard environment, shared-file,
+  container-role, and instance-role credentials also work. A host
+  `BEDROCK_PROFILE` requires its shared AWS configuration to be mounted in the
+  container.
+- **Capacity and retries:** `BEDROCK_MAX_CONCURRENCY` limits simultaneous
+  Runtime calls. `BEDROCK_RETRIES` controls adaptive SDK attempts. Once the
+  SDK retry quota is exhausted, throttling uses the jittered backoff configured
+  by `BEDROCK_THROTTLE_RETRIES` and `BEDROCK_THROTTLE_MAX_DELAY`.
+- **Failure classes:** transient 503 and internal-service failures use
+  `BEDROCK_SERVICE_RETRIES` and `BEDROCK_SERVICE_MAX_DELAY`; DNS, endpoint,
+  connection, and timeout failures use `BEDROCK_CONNECTION_RETRIES` and
+  `BEDROCK_CONNECTION_MAX_DELAY`. Empty, malformed-tool, invalid-JSON, and
+  missing-field responses use `BEDROCK_RESPONSE_RETRIES` and
+  `BEDROCK_RESPONSE_MAX_DELAY`.
+- **Safe outcomes:** generation uses the smaller
+  `BEDROCK_DECISION_RESPONSE_RETRIES` budget, then safely abstains. The human
+  answer remains final and the fallback is recorded in `api_response`.
+  Auxiliary judgments remain strict because a fabricated evaluation would
+  corrupt the metrics.
+
+Retry messages include the experiment, repetition, ticket, global position,
+and decision or judgment stage. These settings affect Bedrock only, not Ollama
+or OpenRouter.
 
 The question embeddings are always read from the checked-in compressed `.npz` files under `experiment data/embeddings/qwen3-embedding-4b`. Neither provider is called for embeddings, and no runtime embedding generation is implemented.
 
