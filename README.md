@@ -7,6 +7,8 @@ decisions made while the system is operating. Each new case can therefore use
 earlier, human-supervised decisions as precedents, and every final decision is
 stored for future retrieval.
 
+![iRAG Overview](overview.png)
+
 The project studies two connected questions:
 
 1. How should decision-making authority move from a human to a language model
