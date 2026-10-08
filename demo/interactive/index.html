@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore how iRAG turns resolved work into time-aware memory and earned autonomy.">
+  <title>iRAG — Memory in motion</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="iRAG demo home"><span class="brand-icon" aria-hidden="true">ııı</span>iRAG<span class="brand-separator">/</span><span class="brand-caption">Memory in motion</span></a>
+    <div class="topbar-actions"><span class="simulation"><i></i>Interactive simulation</span><button class="text-button" id="about">How it works <span aria-hidden="true">↗</span></button></div>
+  </header>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-heading"><span class="eyebrow">THE EXPERIENCE</span><span class="duration">~3 MIN</span></div>
+      <nav class="chapters" aria-label="Demo chapters">
+        <button data-chapter="0" aria-current="step"><span class="chapter-number">01</span><span><strong>Find what still applies</strong><small>Time-aware retrieval</small></span></button>
+        <button data-chapter="1"><span class="chapter-number">02</span><span><strong>Close the memory loop</strong><small>Your decision, reused</small></span></button>
+        <button data-chapter="2"><span class="chapter-number">03</span><span><strong>Earn the right to act</strong><small>Autonomy &amp; intervention</small></span></button>
+        <button data-chapter="3"><span class="chapter-number">04</span><span><strong>Know when to stop</strong><small>Abstention &amp; escalation</small></span></button>
+      </nav>
+      <div class="memory-widget"><div><span class="tiny-icon" aria-hidden="true">▤</span><span>Resolution memory</span><strong id="memory-count">2</strong></div><p id="memory-caption">Two seeded precedents.<br>Your next decision belongs here.</p><button class="text-button" id="memory-open">Explore memory <span aria-hidden="true">↗</span></button></div>
+      <div class="sidebar-bottom"><p>Better evidence.<br><em>Appropriate authority.</em></p><div class="sidebar-links"><button class="text-button" id="audit-open">Activity log <span id="audit-count">0</span></button><button class="text-button" id="reset">Reset ↺</button></div></div>
+    </aside>
+
+    <main>
+      <section class="page-heading"><div class="eyebrow" id="chapter-label">01 / TIME-AWARE RETRIEVAL</div><h1 id="headline">Familiar question.<br><em>Different answer.</em></h1><p id="intro">The refund policy changed. Two past resolutions disagree.<br>Explore which precedent should guide the next decision.</p></section>
+
+      <section class="authority-strip" aria-label="Current decision authority">
+        <div class="authority-label"><span class="status-dot"></span><div><span class="eyebrow">DECISION AUTHORITY</span><strong id="authority-name">Human decides</strong></div></div>
+        <div class="state-track" aria-label="Authority stages"><span id="state-observe">Observe</span><i>→</i><span id="state-assist" class="selected">Assist</span><i>→</i><span id="state-auto">Autonomous</span></div>
+        <button class="reliability" id="reliability-open"><strong id="fea">86%</strong><span>recent agreement <span aria-hidden="true">ⓘ</span><small id="observation-count">18 illustrated reviews</small></span></button>
+      </section>
+
+      <div class="mobile-tabs" role="tablist" aria-label="Workspace panels"><button role="tab" id="tab-ticket" aria-controls="ticket-panel" aria-selected="true" data-tab="ticket">Ticket &amp; decision</button><button role="tab" id="tab-evidence" aria-controls="evidence-panel" aria-selected="false" tabindex="-1" data-tab="evidence">Evidence</button></div>
+      <div class="workspace" data-active-tab="ticket">
+        <section class="ticket-panel panel" id="ticket-panel" aria-label="Ticket and decision">
+          <div class="panel-toolbar"><span><span class="tiny-icon" aria-hidden="true">▣</span> ACME SUPPORT <span class="toolbar-divider">/</span> <span id="ticket-id">#5943</span></span><span class="pill" id="ticket-status">Needs reply</span></div>
+          <div class="ticket-content"><div class="customer"><span class="avatar" id="avatar">AL</span><div><strong id="customer-name">Alex Lewis</strong><small id="customer-detail">Professional plan · Billing &amp; refunds</small></div><span class="message-time">Just now</span></div><h2 id="ticket-title">A refund after 20 days?</h2><p class="customer-message" id="ticket-message">Hi, I purchased an annual subscription 20 days ago, but it isn’t the right fit for our team. Can I still receive a full refund?</p><div class="ticket-facts" id="ticket-facts"><span>Annual subscription</span><span>Purchased 20 days ago</span></div></div>
+          <div id="decision-area"></div>
+        </section>
+
+        <section class="evidence-panel panel" id="evidence-panel" aria-label="Retrieved evidence">
+          <div class="panel-toolbar"><span class="evidence-brand"><span aria-hidden="true">✳</span> iRAG <span class="toolbar-divider">/</span> EVIDENCE</span><span id="evidence-count" class="muted">2 precedents</span></div>
+          <div id="evidence-content"></div>
+        </section>
+      </div>
+      <div class="lesson-note"><span aria-hidden="true">↳</span><p id="lesson-text">Similarity finds the familiar answer. Temporal weighting changes which answer comes first.</p></div>
+      <footer class="page-footer"><span>Scripted concept · Synthetic data · No messages or payments sent</span><span>Built around the iRAG research loop</span></footer>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog id="detail-dialog" aria-labelledby="dialog-title"><div class="dialog-header"><span class="eyebrow" id="dialog-kicker">UNDER THE SURFACE</span><button id="dialog-close" class="close-button" aria-label="Close dialog">×</button></div><h2 id="dialog-title"></h2><div id="dialog-body"></div></dialog>
+  <noscript><p class="noscript">Enable JavaScript to explore this interactive demo.</p></noscript>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="An interactive concept demo of iRAG for customer-support teams."
+    >
+    <title>iRAG - Interactive support concept</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="page-glow" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="iRAG home">
+        <span class="brand-mark" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+        <span class="brand-name">iRAG</span>
+      </a>
+      <div class="topbar-context">
+        <span class="concept-pill">Interactive concept</span>
+        <span class="topbar-divider" aria-hidden="true"></span>
+        <span class="topbar-title">Adaptive resolution memory</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="text-button" id="openOverview" type="button">
+          How it works
+        </button>
+        <button class="icon-button" id="restartDemo" type="button" aria-label="Restart demo">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 11a8 8 0 1 0-2.34 5.66M20 5v6h-6"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="demo-layout">
+      <aside class="tour-rail" aria-label="Demo chapters">
+        <div class="rail-intro">
+          <span class="eyebrow">Product principles</span>
+          <h1>A support memory built to earn trust.</h1>
+          <p>Five principles shape every suggestion, decision, and abstention.</p>
+        </div>
+
+        <ul class="principle-list" id="principleList">
+          <li data-principle="0">
+            <span class="principle-marker" aria-hidden="true"><i></i></span>
+            <span>
+              <strong>Living organizational memory</strong>
+              <small>Learn from real, validated resolutions.</small>
+            </span>
+          </li>
+          <li data-principle="1">
+            <span class="principle-marker" aria-hidden="true"><i></i></span>
+            <span>
+              <strong>Time-aware relevance</strong>
+              <small>Current matters more than merely similar.</small>
+            </span>
+          </li>
+          <li data-principle="2" class="active">
+            <span class="principle-marker" aria-hidden="true"><i></i></span>
+            <span>
+              <strong>Evidence before answers</strong>
+              <small>Every suggestion shows its foundation.</small>
+            </span>
+          </li>
+          <li data-principle="3">
+            <span class="principle-marker" aria-hidden="true"><i></i></span>
+            <span>
+              <strong>Human-governed autonomy</strong>
+              <small>Teams define when iRAG can assist, act, or abstain.</small>
+            </span>
+          </li>
+          <li data-principle="4">
+            <span class="principle-marker" aria-hidden="true"><i></i></span>
+            <span>
+              <strong>No evidence, no guess</strong>
+              <small>Abstention is a feature, not a failure.</small>
+            </span>
+          </li>
+        </ul>
+
+        <div class="rail-footer">
+          <div class="privacy-lock" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <rect x="5" y="10" width="14" height="10" rx="2"/>
+              <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+            </svg>
+          </div>
+          <p><strong>Human-first by design</strong><br>Every suggestion remains attributable and reviewable.</p>
+        </div>
+      </aside>
+
+      <section class="workspace-shell" aria-label="Simulated support workspace">
+        <div class="workspace-header">
+          <div class="workspace-brand">
+            <span class="workspace-logo">A</span>
+            <span>
+              <strong>Acme Support</strong>
+              <small>Agent workspace</small>
+            </span>
+          </div>
+          <div class="workspace-search" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="7"/>
+              <path d="m20 20-4-4"/>
+            </svg>
+            <span>Search tickets and customers</span>
+            <kbd>⌘ K</kbd>
+          </div>
+          <div class="agent-avatar" aria-label="Signed in as Maya Chen">MC</div>
+        </div>
+
+        <div class="ticket-toolbar">
+          <div>
+            <button class="back-button" type="button" aria-label="Back to tickets">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <span class="ticket-id" id="ticketId">Ticket #5943</span>
+            <span class="ticket-status" id="ticketStatus">Open</span>
+          </div>
+          <div class="toolbar-actions">
+            <button type="button" aria-label="More ticket actions">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>
+              </svg>
+            </button>
+            <button class="secondary-button" type="button">Assign</button>
+          </div>
+        </div>
+
+        <div class="workspace-content">
+          <aside class="customer-column">
+            <div class="customer-card">
+              <div class="customer-heading">
+                <div class="customer-avatar" id="customerAvatar">AL</div>
+                <div>
+                  <strong id="customerName">Alex Lewis</strong>
+                  <span id="customerEmail">alex.lewis@example.com</span>
+                </div>
+              </div>
+              <dl>
+                <div>
+                  <dt>Plan</dt>
+                  <dd id="customerPlan">Professional</dd>
+                </div>
+                <div>
+                  <dt>Customer since</dt>
+                  <dd id="customerSince">March 2022</dd>
+                </div>
+                <div>
+                  <dt>Previous tickets</dt>
+                  <dd id="previousTickets">4</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div class="field-group">
+              <span class="field-label">Ticket fields</span>
+              <label>
+                Topic
+                <span class="select-display" id="ticketTopic">Billing &amp; refunds</span>
+              </label>
+              <label>
+                Priority
+                <span class="select-display">Normal</span>
+              </label>
+              <label>
+                Product
+                <span class="select-display">Acme Suite</span>
+              </label>
+            </div>
+          </aside>
+
+          <article class="conversation-column">
+            <div class="conversation-header">
+              <div>
+                <span class="channel-pill">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 4h16v16H4z"/><path d="m4 6 8 6 8-6"/>
+                  </svg>
+                  Email
+                </span>
+                <span class="received-time">Received 8 minutes ago</span>
+              </div>
+              <button class="watch-button" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+                Follow
+              </button>
+            </div>
+
+            <div class="message-card">
+              <div class="message-meta">
+                <div class="message-avatar" id="messageAvatar">AL</div>
+                <div>
+                  <strong id="messageSender">Alex Lewis</strong>
+                  <span>To: Acme Support</span>
+                </div>
+                <time id="messageTime">10:42 AM</time>
+              </div>
+              <div class="message-body">
+                <h2 id="ticketSubject">Refund request after 20 days</h2>
+                <p id="ticketMessage">
+                  Hi, I purchased an annual subscription 20 days ago, but it isn't
+                  the right fit for our team. Can I still receive a full refund?
+                </p>
+                <p id="ticketSignoff">Thanks,<br>Alex</p>
+              </div>
+            </div>
+
+            <div class="autonomous-reply" id="autonomousReply" hidden>
+              <div class="autonomous-reply-meta">
+                <span class="automation-avatar" aria-hidden="true">iR</span>
+                <div>
+                  <strong>iRAG autonomous resolution</strong>
+                  <span>Sent via Acme Support</span>
+                </div>
+                <time>11:24 AM</time>
+              </div>
+              <div class="autonomous-reply-body">
+                <p>
+                  Hi Jordan,<br><br>
+                  Your purchase was made 7 days ago and is eligible under our
+                  current 14-day refund policy. I have initiated a full refund.
+                  It should appear on your original payment method within 5 to 7
+                  business days.<br><br>
+                  Best,<br>Acme Support
+                </p>
+                <div>
+                  <span>Answered autonomously</span>
+                  <span>Evidence attached</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="reply-composer" id="replyComposer">
+              <div class="composer-tabs">
+                <button class="active" type="button">Public reply</button>
+                <button type="button">Internal note</button>
+              </div>
+              <div
+                class="composer-editor"
+                id="composerEditor"
+                contenteditable="true"
+                role="textbox"
+                aria-label="Reply editor"
+                data-placeholder="Write a reply…"
+              ></div>
+              <div class="composer-footer">
+                <div>
+                  <button type="button" aria-label="Format text"><strong>Aa</strong></button>
+                  <button type="button" aria-label="Attach file">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 11-8.5 8.5a6 6 0 0 1-8.5-8.5l9-9a4 4 0 1 1 5.5 5.8L9.8 16.5a2 2 0 0 1-2.8-2.8l8-8"/></svg>
+                  </button>
+                </div>
+                <button class="submit-button" id="submitReply" type="button" disabled>
+                  Submit as solved
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <aside class="irag-panel" aria-label="iRAG assistant panel">
+            <div class="irag-header">
+              <div class="irag-title">
+                <span class="irag-symbol" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M5 18V9m7 9V5m7 13v-7"/>
+                    <circle cx="5" cy="6" r="2"/><circle cx="12" cy="2.5" r="2"/><circle cx="19" cy="8" r="2"/>
+                  </svg>
+                </span>
+                <div>
+                  <strong>iRAG</strong>
+                  <small>Resolution memory</small>
+                </div>
+              </div>
+              <span class="state-badge" id="stateBadge">
+                <span></span>Observing
+              </span>
+            </div>
+
+            <div class="panel-scroll">
+              <section class="panel-screen active" data-screen="0">
+                <div class="panel-hero">
+                  <span class="panel-kicker">A familiar question</span>
+                  <h3>This ticket resembles earlier refund decisions.</h3>
+                  <p>iRAG is searching resolved tickets before offering any guidance.</p>
+                </div>
+                <div class="scan-visual" aria-label="Searching resolution memory">
+                  <div class="scan-line"></div>
+                  <div class="memory-row">
+                    <span></span><span></span><span></span>
+                  </div>
+                  <div class="memory-row short">
+                    <span></span><span></span>
+                  </div>
+                  <div class="memory-row">
+                    <span></span><span></span><span></span>
+                  </div>
+                </div>
+                <div class="quiet-note">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8v.01"/></svg>
+                  <p>While observing, iRAG evaluates silently. The human agent remains the only decision-maker.</p>
+                </div>
+              </section>
+
+              <section class="panel-screen" data-screen="1">
+                <div class="panel-section-heading">
+                  <div>
+                    <span class="panel-kicker">Resolution memory</span>
+                    <h3>2 strong precedents found</h3>
+                  </div>
+                  <span class="result-count">2 of 1,842</span>
+                </div>
+
+                <article class="precedent-card old">
+                  <div class="precedent-top">
+                    <span class="ticket-link">#1842</span>
+                    <span class="age-pill">14 months ago</span>
+                  </div>
+                  <h4>Annual plan refund after 22 days</h4>
+                  <blockquote>“A full refund is available within 30 days of purchase.”</blockquote>
+                  <div class="score-bars">
+                    <div>
+                      <span>Semantic match</span><strong>96%</strong>
+                      <i><b style="width: 96%"></b></i>
+                    </div>
+                    <div>
+                      <span>Temporal weight</span><strong>38%</strong>
+                      <i><b style="width: 38%"></b></i>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="precedent-card recent">
+                  <div class="precedent-top">
+                    <span class="ticket-link">#4921</span>
+                    <span class="age-pill new">12 days ago</span>
+                  </div>
+                  <h4>Refund requested after 18 days</h4>
+                  <blockquote>“The updated policy limits full refunds to 14 days.”</blockquote>
+                  <div class="score-bars">
+                    <div>
+                      <span>Semantic match</span><strong>89%</strong>
+                      <i><b style="width: 89%"></b></i>
+                    </div>
+                    <div>
+                      <span>Temporal weight</span><strong>98%</strong>
+                      <i><b style="width: 98%"></b></i>
+                    </div>
+                  </div>
+                </article>
+              </section>
+
+              <section class="panel-screen" data-screen="2">
+                <div class="drift-alert">
+                  <div class="drift-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M4 18 10 12l4 4 6-9"/><path d="M16 7h4v4"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <span>Knowledge drift detected</span>
+                    <strong>Refund policy changed recently</strong>
+                  </div>
+                </div>
+
+                <div class="ranking-card">
+                  <span class="panel-kicker">Temporal reranking</span>
+                  <h3>The newer precedent is more reliable.</h3>
+                  <p>
+                    Ticket #1842 is a closer wording match, but #4921 reflects the
+                    latest accepted outcome.
+                  </p>
+                  <div class="ranking-equation">
+                    <div>
+                      <span>Semantic relevance</span>
+                      <strong>×</strong>
+                      <span>Time-aware weight</span>
+                    </div>
+                    <p>= evidence priority</p>
+                  </div>
+                  <div class="rank-result">
+                    <span class="rank-number">1</span>
+                    <div>
+                      <strong>#4921 · Current policy</strong>
+                      <span>Final score 0.87</span>
+                    </div>
+                    <span class="rank-arrow">↑</span>
+                  </div>
+                  <div class="rank-result muted">
+                    <span class="rank-number">2</span>
+                    <div>
+                      <strong>#1842 · Superseded policy</strong>
+                      <span>Final score 0.36</span>
+                    </div>
+                    <span class="rank-arrow">↓</span>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel-screen" data-screen="3">
+                <div class="suggestion-heading">
+                  <div class="suggestion-icon">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M9 18h6M10 22h4M8.5 14.5A6 6 0 1 1 16 14c-.7.55-1 1.2-1 2H9c0-.7-.1-1-.5-1.5Z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="panel-kicker">Evidence-grounded draft</span>
+                    <h3>Suggested reply</h3>
+                  </div>
+                </div>
+
+                <div class="draft-card">
+                  <p>
+                    Hi Alex,<br><br>
+                    Thanks for reaching out. Under our current policy, full refunds
+                    are available within 14 days of purchase. Because your purchase
+                    was made 20 days ago, it is outside the refund window.
+                    <br><br>
+                    I can still help you review alternative plan options.
+                  </p>
+                  <div class="evidence-line">
+                    <span>Grounded in</span>
+                    <button type="button">#4921</button>
+                    <button type="button">Policy update · Jun 18</button>
+                  </div>
+                </div>
+
+                <div class="decision-actions" id="decisionActions">
+                  <button class="accept-button" type="button" data-decision="accept">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+                    Use reply
+                  </button>
+                  <button type="button" data-decision="edit">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.5-1L19 8.5 15.5 5 5 15.5 4 20Z"/><path d="m13.5 7 3.5 3.5"/></svg>
+                    Edit
+                  </button>
+                  <button type="button" data-decision="reject">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+                    Dismiss
+                  </button>
+                </div>
+
+                <div class="decision-confirmation" id="decisionConfirmation" aria-live="polite">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+                  <div>
+                    <strong>Draft added to the reply</strong>
+                    <span>The final response remains yours.</span>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel-screen" data-screen="4" aria-hidden="true"></section>
+
+              <section class="panel-screen" data-screen="5">
+                <div class="abstain-visual">
+                  <div class="abstain-rings">
+                    <span></span><span></span><span></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 8v5m0 3v.01"/>
+                    </svg>
+                  </div>
+                </div>
+                <div class="panel-hero centered">
+                  <span class="panel-kicker">Insufficient evidence</span>
+                  <h3>iRAG chose not to answer.</h3>
+                  <p>
+                    No resolved ticket directly supports recovery of a deleted custom
+                    integration. Guessing would create an unsupported promise.
+                  </p>
+                </div>
+                <div class="escalation-card">
+                  <div>
+                    <span>Recommended action</span>
+                    <strong>Escalate to Integrations Engineering</strong>
+                  </div>
+                  <button type="button">Apply</button>
+                </div>
+                <div class="quiet-note">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+                  <p>Abstention is a first-class outcome. Not a system failure.</p>
+                </div>
+              </section>
+
+              <section class="panel-screen" data-screen="6" aria-hidden="true"></section>
+              <section class="panel-screen" data-screen="7" aria-hidden="true"></section>
+              <section class="panel-screen" data-screen="8">
+                <div class="panel-hero">
+                  <span class="panel-kicker">Autonomy check</span>
+                  <h3>This case is proven and in scope.</h3>
+                  <p>
+                    Before acting, iRAG verifies that current evidence and every
+                    team-defined guardrail are satisfied.
+                  </p>
+                </div>
+
+                <div class="guardrail-checks">
+                  <div>
+                    <i>✓</i>
+                    <span><strong>Current policy match</strong><small>14-day refund policy · 99%</small></span>
+                  </div>
+                  <div>
+                    <i>✓</i>
+                    <span><strong>Validated precedents</strong><small>27 recent approved resolutions</small></span>
+                  </div>
+                  <div>
+                    <i>✓</i>
+                    <span><strong>Risk boundary</strong><small>Standard refund · Low risk</small></span>
+                  </div>
+                  <div>
+                    <i>✓</i>
+                    <span><strong>Knowledge stability</strong><small>No drift detected in 30 days</small></span>
+                  </div>
+                </div>
+
+                <div class="autonomy-decision-card">
+                  <span>Decision</span>
+                  <strong>Resolve autonomously</strong>
+                  <small>All 4 guardrails passed</small>
+                </div>
+              </section>
+
+              <section class="panel-screen" data-screen="9">
+                <div class="autonomous-success">
+                  <span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+                  </span>
+                  <div>
+                    <small>Autonomous action completed</small>
+                    <h3>Resolved in 1.8 seconds</h3>
+                  </div>
+                </div>
+
+                <div class="audit-card">
+                  <div class="audit-heading">
+                    <span>Decision record</span>
+                    <strong>AUTO-6127</strong>
+                  </div>
+                  <dl>
+                    <div><dt>Action</dt><dd>Refund initiated</dd></div>
+                    <div><dt>Policy</dt><dd>Refunds · Jun 18</dd></div>
+                    <div><dt>Evidence</dt><dd>27 approved cases</dd></div>
+                    <div><dt>Scope</dt><dd>Low-risk billing</dd></div>
+                  </dl>
+                </div>
+
+                <div class="monitoring-card">
+                  <i></i>
+                  <div>
+                    <strong>Post-action monitoring is active</strong>
+                    <p>Overrides or policy drift will immediately narrow this autonomous scope.</p>
+                  </div>
+                </div>
+
+                <div class="audit-actions">
+                  <button type="button">View evidence</button>
+                  <button type="button">Open audit log</button>
+                </div>
+              </section>
+
+              <section class="panel-screen" data-screen="10" aria-hidden="true"></section>
+              <section class="panel-screen" data-screen="11" aria-hidden="true"></section>
+            </div>
+          </aside>
+        </div>
+
+        <div class="workspace-disclaimer">
+          <span>Scripted product concept</span>
+          <span>•</span>
+          <span>Synthetic customer data</span>
+          <span>•</span>
+          <span>No live systems connected</span>
+        </div>
+      </section>
+    </main>
+
+    <section
+      class="intro-overlay active"
+      id="introOverlay"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="false"
+      aria-labelledby="introTitle"
+    >
+      <div class="intro-glow" aria-hidden="true"></div>
+      <header class="intro-header">
+        <div class="intro-brand">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+          <span class="brand-name">iRAG</span>
+          <i>Interactive concept</i>
+        </div>
+        <button id="introSkip" type="button">Skip intro</button>
+      </header>
+
+      <div class="intro-stage">
+        <article class="intro-slide intro-problem active" data-intro-slide="0">
+          <span class="intro-kicker">Built for the CRM you already use</span>
+          <h1 id="introTitle">
+            Your CRM remembers every answer.<br>
+            <em>It doesn’t know which one still applies.</em>
+          </h1>
+          <p>
+            iRAG plugs into the support workflow and turns resolved tickets into
+            a living, time-aware memory. Without asking support agents to leave their CRM.
+          </p>
+          <div class="intro-source-list" aria-label="Signals already present in a CRM">
+            <span>Resolved tickets</span>
+            <span>Human decisions</span>
+            <span>Policy changes</span>
+          </div>
+        </article>
+
+        <article class="intro-slide intro-architecture" data-intro-slide="1">
+          <span class="intro-kicker">An adaptive layer, not another destination</span>
+          <h2 id="introArchitectureTitle">From resolved work to the next best action.</h2>
+          <p>
+            iRAG sits inside the existing CRM loop, learns from validated outcomes,
+            and intervenes only when its evidence supports it.
+          </p>
+
+          <div class="integration-flow" aria-label="How iRAG integrates with a CRM">
+            <article>
+              <span class="flow-number">01</span>
+              <small>Your CRM</small>
+              <strong>Support work is resolved</strong>
+              <p>Tickets, decisions, and changing policies remain in the system of record.</p>
+            </article>
+            <div class="flow-connector" aria-hidden="true">
+              <span>Accepted outcomes</span>
+              <i>→</i>
+            </div>
+            <article class="irag-flow-card">
+              <span class="flow-number">02</span>
+              <small>iRAG</small>
+              <strong>A living memory forms</strong>
+              <p>Retrieve semantically, weight temporally, and keep evidence attached.</p>
+            </article>
+            <div class="flow-connector" aria-hidden="true">
+              <span>Contextual guidance</span>
+              <i>→</i>
+            </div>
+            <article>
+              <span class="flow-number">03</span>
+              <small>Agent + automation</small>
+              <strong>Assist or safely automate</strong>
+              <p>Suggest, resolve within guardrails, escalate, and learn from approved outcomes.</p>
+            </article>
+          </div>
+
+          <div class="integration-note">
+            <strong>No rip-and-replace.</strong>
+            iRAG learns from the work already happening inside the support team.
+          </div>
+        </article>
+      </div>
+
+      <footer class="intro-footer">
+        <div class="intro-progress" aria-label="Intro screen 1 of 2">
+          <span class="active"></span><span></span>
+          <small id="introProgressLabel">01 / 02</small>
+        </div>
+        <div>
+          <button class="intro-back" id="introBack" type="button" disabled>Back</button>
+          <button class="intro-next" id="introNext" type="button">
+            See how it fits
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+      </footer>
+    </section>
+
+    <section
+      class="question-interstitial"
+      id="questionInterstitial"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+      aria-labelledby="interstitialTitle"
+    >
+      <div class="interstitial-glow" aria-hidden="true"></div>
+      <div class="interstitial-brand" aria-hidden="true">
+        <span class="brand-mark">
+          <span></span><span></span><span></span>
+        </span>
+        <span class="brand-name">iRAG</span>
+      </div>
+      <div class="interstitial-content">
+        <span class="interstitial-kicker">The reliability test</span>
+        <span class="interstitial-question-mark" aria-hidden="true">?</span>
+        <h2 id="interstitialTitle">What if we don’t have evidence?</h2>
+        <p>
+          A trustworthy assistant is defined not only by what it answers,
+          but also by what it refuses to invent.
+        </p>
+        <div class="interstitial-principle">
+          <span>No precedent</span>
+          <i aria-hidden="true">→</i>
+          <strong>No unsupported answer</strong>
+        </div>
+      </div>
+      <div class="interstitial-controls">
+        <button id="interstitialBack" type="button">Back</button>
+        <button class="interstitial-next" id="interstitialNext" type="button">
+          Test uncertainty
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <section
+      class="autonomy-interstitial"
+      id="autonomyInterstitial"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+      aria-labelledby="trustTitle"
+    >
+      <div class="interstitial-glow" aria-hidden="true"></div>
+      <div class="interstitial-brand" aria-hidden="true">
+        <span class="brand-mark">
+          <span></span><span></span><span></span>
+        </span>
+        <span class="brand-name">iRAG</span>
+      </div>
+
+      <div class="autonomy-stage">
+        <article class="autonomy-slide active" data-autonomy-slide="0">
+          <span class="interstitial-kicker">Progressive autonomy</span>
+          <h2 id="trustTitle">Trust is earned one approved answer at a time.</h2>
+          <p>
+            iRAG starts by observing and suggesting. As support agents repeatedly
+            approve recent, evidence-backed answers, the system learns exactly
+            where its recommendations are reliable.
+          </p>
+          <div class="trust-evidence">
+            <article>
+              <strong>1,248</strong>
+              <span>Recent approved resolutions</span>
+            </article>
+            <article>
+              <strong>94%</strong>
+              <span>Accepted without edits</span>
+            </article>
+            <article>
+              <strong>30 days</strong>
+              <span>Stable policy window</span>
+            </article>
+          </div>
+          <small class="illustrative-note">Illustrative thresholds for this product concept</small>
+        </article>
+
+        <article class="autonomy-slide" data-autonomy-slide="1">
+          <span class="interstitial-kicker">Autonomy within guardrails</span>
+          <h2 id="autonomyTitle">
+            From copilot to autopilot, <em>only where trust is earned.</em>
+          </h2>
+          <p>
+            For repeatable, low-risk cases inside a proven scope, iRAG can answer
+            autonomously while still citing evidence, monitoring change, and
+            escalating anything uncertain.
+          </p>
+          <div class="autonomy-ladder" aria-label="iRAG progression toward autonomy">
+            <article class="complete">
+              <i></i><span>01</span><strong>Observe</strong><small>Learn silently</small>
+            </article>
+            <article class="complete">
+              <i></i><span>02</span><strong>Suggest</strong><small>Human approval</small>
+            </article>
+            <article class="active">
+              <i></i><span>03</span><strong>Resolve</strong><small>Within guardrails</small>
+            </article>
+            <article>
+              <i></i><span>04</span><strong>Escalate</strong><small>Whenever uncertain</small>
+            </article>
+          </div>
+          <div class="autonomy-promise">
+            Autonomy expands with validated evidence and contracts when the evidence changes.
+          </div>
+        </article>
+      </div>
+
+      <div class="interstitial-controls">
+        <button id="autonomyBack" type="button">Back</button>
+        <button class="interstitial-next" id="autonomyNext" type="button">
+          See guarded autonomy
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <section
+      class="duality-interstitial"
+      id="dualityInterstitial"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+      aria-labelledby="dualityTitle"
+    >
+      <div class="interstitial-glow" aria-hidden="true"></div>
+      <div class="interstitial-brand" aria-hidden="true">
+        <span class="brand-mark">
+          <span></span><span></span><span></span>
+        </span>
+        <span class="brand-name">iRAG</span>
+      </div>
+
+      <div class="duality-content">
+        <span class="interstitial-kicker">Two engines, one adaptive system</span>
+        <h2 id="dualityTitle">
+          It knows what matters <em>now.</em><br>
+          It earns the right to <em>act.</em>
+        </h2>
+
+        <div class="duality-grid">
+          <article>
+            <span class="duality-number">01</span>
+            <small>Temporal intelligence</small>
+            <h3>Relevant tickets, understood through time.</h3>
+            <p>
+              Semantic similarity finds related resolutions. Temporal weighting
+              determines which evidence still reflects the current reality.
+            </p>
+            <div class="duality-formula">
+              <span>Semantic relevance</span>
+              <i>+</i>
+              <span>Temporal weight</span>
+              <i>=</i>
+              <strong>Current evidence</strong>
+            </div>
+          </article>
+
+          <div class="duality-link" aria-hidden="true">
+            <span>+</span>
+          </div>
+
+          <article>
+            <span class="duality-number">02</span>
+            <small>Earned autonomy</small>
+            <h3>Trust accumulates, autonomy follows.</h3>
+            <p>
+              Every recent approved outcome strengthens measurable trust. Stable
+              evidence lets iRAG move from suggestion to guarded autonomous action.
+            </p>
+            <div class="duality-formula">
+              <span>Approved outcomes</span>
+              <i>+</i>
+              <span>Stable accuracy</span>
+              <i>=</i>
+              <strong>Guarded autonomy</strong>
+            </div>
+          </article>
+        </div>
+
+        <p class="duality-summary">
+          Know which answer still applies. Earn the confidence to act on it.
+        </p>
+      </div>
+
+      <div class="interstitial-controls">
+        <button id="dualityBack" type="button">Back</button>
+        <button class="interstitial-next" id="dualityNext" type="button">
+          See the finale
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <section
+      class="outro-interstitial"
+      id="outroInterstitial"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+      aria-labelledby="outroTitle"
+    >
+      <div class="interstitial-glow" aria-hidden="true"></div>
+      <div class="outro-content">
+        <div class="outro-logo" aria-label="iRAG">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+          <strong>iRAG</strong>
+        </div>
+        <span class="interstitial-kicker">Temporal-aware RAG · Human-governed autonomy</span>
+        <h2 id="outroTitle">
+          Support knowledge changes.<br>
+          <em>Your AI should know when.</em>
+        </h2>
+        <p>
+          iRAG is temporal-aware retrieval built on validated resolutions:
+          it knows what changed, shows its evidence, and scales from assistance
+          to autonomy inside human-defined guardrails.
+        </p>
+        <div class="outro-pillars" aria-label="iRAG principles">
+          <span>Time-aware</span>
+          <span>Evidence-grounded</span>
+          <span>Human-governed</span>
+        </div>
+        <div class="outro-contact">
+          <p>Full algorithm developed by <strong>Federico Mazzoni</strong> &amp; <strong>Andrea Failla</strong></p>
+          <span>Get in contact!</span>
+          <div>
+            <a href="mailto:mazzoni.federico1@gmail.com">mazzoni.federico1@gmail.com</a>
+            <i aria-hidden="true">·</i>
+            <a href="mailto:andrea.failla.ak@gmail.com">andrea.failla.ak@gmail.com</a>
+          </div>
+        </div>
+      </div>
+      <div class="interstitial-controls">
+        <button id="outroBack" type="button">Back</button>
+        <button class="interstitial-next" id="outroRestart" type="button">
+          Restart demo
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 11a8 8 0 1 0-2.34 5.66M20 5v6h-6"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="tour-card" id="tourCard" aria-live="polite">
+      <div class="tour-progress">
+        <span id="tourStepLabel">Step 1 of 12</span>
+        <div class="progress-track"><i id="tourProgressBar"></i></div>
+      </div>
+      <div class="tour-copy">
+        <div>
+          <span class="tour-eyebrow" id="tourEyebrow">Start with the ticket</span>
+          <h2 id="tourTitle">A customer asks a familiar question.</h2>
+          <p id="tourDescription">
+            The wording looks routine, but the refund policy changed recently.
+            Let’s see what iRAG remembers.
+          </p>
+        </div>
+        <div class="tour-controls">
+          <button class="tour-back" id="tourBack" type="button" disabled>Back</button>
+          <button class="tour-next" id="tourNext" type="button">
+            Inspect memory
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <dialog class="overview-dialog" id="overviewDialog">
+      <form method="dialog">
+        <button class="dialog-close" value="close" aria-label="Close overview">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+        <span class="eyebrow">The iRAG loop</span>
+        <h2>A support memory that learns from human decisions.</h2>
+        <p>
+          Conventional RAG starts with a static knowledge base. iRAG starts by
+          observing expert resolutions, then builds a living memory from the work
+          already happening inside support.
+        </p>
+        <div class="overview-flow">
+          <article>
+            <span>01</span>
+            <strong>Retrieve</strong>
+            <p>Find semantically relevant resolved tickets.</p>
+          </article>
+          <i>→</i>
+          <article>
+            <span>02</span>
+            <strong>Rerank</strong>
+            <p>Weight recent outcomes to adapt to policy drift.</p>
+          </article>
+          <i>→</i>
+          <article>
+            <span>03</span>
+            <strong>Deliberate</strong>
+            <p>Suggest, abstain, or escalate with evidence.</p>
+          </article>
+          <i>→</i>
+          <article>
+            <span>04</span>
+            <strong>Learn</strong>
+            <p>Add the human-approved resolution back to memory.</p>
+          </article>
+        </div>
+        <button class="dialog-primary" value="close">Continue the tour</button>
+      </form>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>

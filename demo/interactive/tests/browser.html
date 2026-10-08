@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>iRAG browser checks</title></head>
+<body>
+  <h1>iRAG browser checks</h1>
+  <p>Serve the demo over HTTP, then open this page. All checks use synthetic data.</p>
+  <pre id="results">RUNNING</pre>
+  <iframe title="Demo under test" src="../index.html" width="1440" height="1000"></iframe>
+  <script>
+    "use strict";
+    const frame = document.querySelector("iframe");
+    const results = document.querySelector("#results");
+    const previewWidth = Number(new URLSearchParams(location.search).get("preview"));
+    if (previewWidth >= 320 && previewWidth <= 1920) {
+      document.body.style.margin = "0";
+      document.querySelector("h1").hidden = true;
+      document.querySelector("p").hidden = true;
+      results.hidden = true;
+      frame.style.cssText = `display:block;border:0;width:${previewWidth}px;height:100vh`;
+    }
+    frame.addEventListener("load", async () => {
+      if (previewWidth) return;
+      const doc = frame.contentDocument;
+      const win = frame.contentWindow;
+      let passed = 0;
+      const lines = [];
+      const find = (selector) => doc.querySelector(selector);
+      const click = (selector) => {
+        const element = find(selector);
+        if (!element) throw new Error(`Missing control: ${selector}`);
+        element.click();
+      };
+      const assert = (condition, message) => {
+        if (!condition) throw new Error(message);
+        lines.push(`PASS ${++passed}: ${message}`);
+      };
+      const input = (text) => {
+        find("#reply").value = text;
+        find("#reply").dispatchEvent(new win.Event("input", { bubbles: true }));
+      };
+      try {
+        assert(find(".precedent").dataset.record === "4921", "Temporal weighting prefers the newer precedent");
+        click("#temporal-toggle");
+        assert(find(".precedent").dataset.record === "1842", "Disabling decay restores the semantic-only ranking");
+        assert(find("#reply").value.includes("30-day"), "An untouched draft follows the changed evidence");
+        click("#temporal-toggle");
+        find("#half-life").value = "100";
+        find("#half-life").dispatchEvent(new win.Event("input", { bubbles: true }));
+        find("#half-life").dispatchEvent(new win.Event("change", { bubbles: true }));
+        assert(find("#half-life-output").textContent === "100 insertions", "Half-life updates in insertion units");
+        const reply = find("#reply").value;
+        input("  ");
+        assert(find("#save-reply").disabled, "Blank replies cannot enter memory");
+        input(reply);
+        find("#reply").focus();
+        find("#reply").dispatchEvent(new win.KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+        assert(find("[aria-current]").dataset.chapter === "0", "Arrow keys in the editor do not navigate chapters");
+        click("#save-reply");
+        assert(find("#memory-count").textContent === "3", "Final human reply inserts one memory record");
+        click("[data-action=next]");
+        assert(find(".precedent").dataset.record === "5943", "The next ticket retrieves the user’s resolution first");
+        assert(find("#reply").value === reply, "The saved final reply is reused exactly");
+        click(".precedent");
+        assert(find("#detail-dialog").open && find("#dialog-body").textContent.includes(reply), "Evidence opens with exact text and provenance");
+        click("#dialog-close");
+        click("#save-reply");
+        assert(find("#observation-count").textContent.startsWith("20 "), "Human reviews advance the evidence count");
+        click("[data-action=next]");
+        assert(!find("[data-action=auto]").disabled, "Enough agreeing reviews unlock the illustrative gate");
+        click("#temporal-toggle");
+        assert(find("[data-action=auto]").disabled, "The scenario gate checks policy evidence before acting");
+        click("#temporal-toggle");
+        const feaBefore = find("#fea").textContent;
+        click("[data-action=auto]");
+        assert(find("#memory-count").textContent === "5" && find("#fea").textContent === feaBefore, "Model finalization enters memory without fabricating human agreement");
+        click("[data-action=intervene]");
+        assert(find("#authority-name").textContent === "Human decides", "Human intervention returns authority to Assist");
+        assert(find("#fea").textContent === feaBefore && find("#memory-count").textContent === "5", "Intervention preserves prior evidence and reliability");
+        click("[data-action=next]");
+        click("[data-action=escalate]");
+        assert(find("#ticket-status").textContent === "Escalated" && find("#memory-count").textContent === "5", "Escalation does not invent a resolved precedent");
+        click("[data-action=audit]");
+        assert(find("#dialog-body").textContent.includes("Human intervention restored Assist"), "Activity trail retains the authority change");
+        click("#dialog-close");
+        click("#reset");
+        assert(find("#memory-count").textContent === "2" && find("#fea").textContent === "86%", "Reset restores a clean session");
+        click('[data-chapter="1"]');
+        assert(Boolean(find("[data-action=first]")), "Direct chapter navigation handles missing earlier decisions");
+        click("[data-action=first]");
+        const literal = "Keep <strong>this exact text</strong> & review manually.";
+        input(literal);
+        click("#agrees");
+        click("#save-reply");
+        assert(parseInt(find("#fea").textContent, 10) < 86, "A reported correction lowers recent agreement");
+        assert(find(".result-box p").textContent === literal && !find(".result-box p strong"), "Edited text is preserved and escaped at rendering boundaries");
+        click("[data-action=next]");
+        assert(find("#reply").value === literal, "Custom edits survive the memory loop");
+        click('[data-chapter="2"]');
+        assert(find("[data-action=auto]").disabled, "Low evidence cannot silently grant autonomy");
+        click("[data-action=reviews]");
+        assert(!find("[data-action=auto]").disabled, "Explicit illustrative reviews update the gate");
+        click("#reset");
+        for (const width of [1440, 1024, 768, 600, 390, 320]) {
+          frame.style.width = `${width}px`;
+          await new Promise((resolve) => setTimeout(resolve, 30));
+          assert(doc.documentElement.scrollWidth <= win.innerWidth, `No horizontal overflow at ${width}px`);
+        }
+        click("#tab-evidence");
+        assert(win.getComputedStyle(find("#ticket-panel")).display === "none" && win.getComputedStyle(find("#evidence-panel")).display !== "none", "Mobile evidence tab displays the right panel");
+        find("#tab-evidence").dispatchEvent(new win.KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+        assert(find("#tab-ticket").getAttribute("aria-selected") === "true", "Mobile tabs support keyboard navigation");
+        frame.style.width = "1440px";
+        lines.push(`ALL ${passed} CHECKS PASSED`);
+        document.body.dataset.result = "passed";
+      } catch (error) {
+        lines.push(`FAIL: ${error.message}`);
+        document.body.dataset.result = "failed";
+      }
+      results.textContent = lines.join("\n");
+    });
+  </script>
+</body>
+</html>

@@ -366,7 +366,6 @@ logs/
 figures/
 drift-comparison.png
 .claude/
-demo/
 *.log
 .DS_Store
 
